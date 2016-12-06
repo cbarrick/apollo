@@ -135,7 +135,7 @@ print('trial 4: score={}, mse={}, mae={}'.format(score, mse, mae))
 
 # Trial 5
 # -------------------------
-# Random Forest using predicted airt temp and humidity.
+# Random Forest using predicted air temp and humidity.
 
 data_params = {
     'path'       : './gaemn15.zip',
