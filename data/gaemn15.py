@@ -3,19 +3,19 @@ import os
 import re
 import sys
 
-from zipfile import ZipFile
 from itertools import chain
 from weakref import WeakValueDictionary
+from zipfile import ZipFile
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
-pkg_dir = os.path.dirname(os.path.realpath(__file__))
 _cache = WeakValueDictionary()
 
 
 class DataSet:
     def __init__(self,
+            path='./gaemn15.zip',
             city='griffin',
             years=range(2003,2015),
             x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
@@ -23,7 +23,7 @@ class DataSet:
             window=4,
             deltas=False):
 
-        self.path = os.path.join(pkg_dir, 'gaemn_data', 'FifteenMinuteData.zip')
+        self.path = os.path.realpath(path)
         self.city = str(city).upper()
         self.years = tuple(years)
         self.x_features = tuple(FeatureSpec(s) for s in x_features)
