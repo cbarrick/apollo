@@ -44,13 +44,16 @@ from data import gaemn15
 # -------------------------
 # Random Forest using day and time
 
-x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation')
-y_features=('solar radiation (+4)',)
-window = 4
-deltas = True
+data_params = {
+    'path'       : './gaemn15.zip',
+    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'y_features' : ('solar radiation (+4)',),
+    'window'     : 4,
+    'deltas'     : True,
+}
 
-griffin_train = gaemn15.DataSet('griffin', range(2003,2011), x_features, y_features, window, deltas)
-griffin_test  = gaemn15.DataSet('griffin', range(2011,2013), x_features, y_features, window, deltas)
+griffin_train = gaemn15.DataSet(**data_params)
+griffin_test  = gaemn15.DataSet(**data_params)
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
@@ -67,13 +70,16 @@ print('trial 1: score={}, mse={}, mae={}'.format(score, mse, mae))
 # -------------------------
 # Random Forest using day and timestamp
 
-x_features=('day', 'timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation')
-y_features=('solar radiation (+4)',)
-window = 4
-deltas = True
+data_params = {
+    'path'       : './gaemn15.zip',
+    'x_features' : ('day', 'timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'y_features' : ('solar radiation (+4)',),
+    'window'     : 4,
+    'deltas'     : True,
+}
 
-griffin_train = gaemn15.DataSet('griffin', range(2003,2011), x_features, y_features, window, deltas)
-griffin_test  = gaemn15.DataSet('griffin', range(2011,2013), x_features, y_features, window, deltas)
+griffin_train = gaemn15.DataSet(**data_params)
+griffin_test  = gaemn15.DataSet(**data_params)
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
@@ -90,13 +96,16 @@ print('trial 2: score={}, mse={}, mae={}'.format(score, mse, mae))
 # -------------------------
 # Random Forest using only timestamp
 
-x_features=('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation')
-y_features=('solar radiation (+4)',)
-window = 4
-deltas = True
+data_params = {
+    'path'       : './gaemn15.zip',
+    'x_features' : ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'y_features' : ('solar radiation (+4)',),
+    'window'     : 4,
+    'deltas'     : True,
+}
 
-griffin_train = gaemn15.DataSet('griffin', range(2003,2011), x_features, y_features, window, deltas)
-griffin_test  = gaemn15.DataSet('griffin', range(2011,2013), x_features, y_features, window, deltas)
+griffin_train = gaemn15.DataSet(**data_params)
+griffin_test  = gaemn15.DataSet(**data_params)
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
@@ -113,13 +122,16 @@ print('trial 3: score={}, mse={}, mae={}'.format(score, mse, mae))
 # -------------------------
 # Random Forest using ideal signal
 
-x_features=('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation')
-y_features=('solar radiation (+4)',)
-window = 4
-deltas = True
+data_params = {
+    'path'       : './gaemn15.zip',
+    'x_features' : ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'y_features' : ('solar radiation (+4)',),
+    'window'     : 4,
+    'deltas'     : True,
+}
 
-griffin_train = gaemn15.DataSet('griffin', range(2003,2011), x_features, y_features, window, deltas)
-griffin_test  = gaemn15.DataSet('griffin', range(2011,2013), x_features, y_features, window, deltas)
+griffin_train = gaemn15.DataSet(**data_params)
+griffin_test  = gaemn15.DataSet(**data_params)
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
