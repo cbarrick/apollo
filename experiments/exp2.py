@@ -27,10 +27,10 @@ neural nets.
 
 Results:
 ```
-trial 1: score=0.9248649253911376, mse=6391.109196769234, mae=34.96985726632249
-trial 2: score=0.9097448311182562, mse=7677.248514078592, mae=39.094083869854835
-trial 3: score=0.9103845676366005, mse=7622.831506213977, mae=39.01085993136985
-trial 4: score=0.9253442570796144, mse=6350.336479386902, mae=34.80425414988737
+trial 1: score=0.9177848209609276, mse=6993.301615825644, mae=37.40623534652022
+trial 2: score=0.8955900553974068, mse=8881.209562902868, mae=43.93510424183818
+trial 3: score=0.8963773857259806, mse=8814.23849352909, mae=43.760859856823316
+trial 4: score=0.9172906988077565, mse=7035.332117888344, mae=37.54017640960852
 ```
 '''
 
@@ -46,16 +46,16 @@ from data import gaemn15
 
 data_params = {
     'path'       : './gaemn15.zip',
-    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : True,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 rand_forest = RandomForestRegressor()
 rand_forest.fit(train[0], train[1])
@@ -72,16 +72,16 @@ print('trial 1: score={}, mse={}, mae={}'.format(score, mse, mae))
 
 data_params = {
     'path'       : './gaemn15.zip',
-    'x_features' : ('day', 'timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'x_features' : ('day', 'timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : True,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 rand_forest = RandomForestRegressor()
 rand_forest.fit(train[0], train[1])
@@ -98,16 +98,16 @@ print('trial 2: score={}, mse={}, mae={}'.format(score, mse, mae))
 
 data_params = {
     'path'       : './gaemn15.zip',
-    'x_features' : ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'x_features' : ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : True,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 rand_forest = RandomForestRegressor()
 rand_forest.fit(train[0], train[1])
@@ -124,16 +124,16 @@ print('trial 3: score={}, mse={}, mae={}'.format(score, mse, mae))
 
 data_params = {
     'path'       : './gaemn15.zip',
-    'x_features' : ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'x_features' : ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : True,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 # build the ideal signal by hand since the DataSet class doesn't yet know how
 def ideal(data):

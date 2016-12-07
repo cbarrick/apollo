@@ -20,8 +20,7 @@ class DataSet:
             years=range(2003,2015),
             x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
             y_features=('solar radiation (+4)',),
-            window=4,
-            deltas=False):
+            window=4):
 
         self.path = os.path.realpath(path)
         self.city = str(city).upper()
@@ -30,7 +29,6 @@ class DataSet:
         self.y_features = tuple(FeatureSpec(s) for s in y_features)
         self.features = self.x_features + self.y_features
         self.window = int(window)
-        self.deltas = bool(deltas)
 
         # Load data from cache if possible
         key = (self.path, self.city, self.years, self.features, self.window)
@@ -39,58 +37,40 @@ class DataSet:
         except KeyError as e:
             data = self._load_data(*key)
             _cache[key] = data
+        self._data = data
 
-        # Separate data from targets
+    @property
+    def data(self):
         split = len(self.x_features)
-        self.data = data[..., :split]
-        self.target = data[..., split:]
+        d = self._data[..., :split]
+        if self.window:
+            return d.reshape(-1, d.shape[1] * d.shape[2])
+        else:
+            return d
 
-        # Apply deltas
-        if self.deltas:
-            d = self._get_deltas(self.data)
-            self.data = self.data[:-1]
-            self.target = self.target[:-1]
-            self.data = np.concatenate((self.data, d), axis=1)
-
-        # Apply windowing
-        if self.window > 0:
-            self.data = self._apply_window(self.data,   self.window)
-            self.target = self._apply_window(self.target, self.window)
+    @property
+    def target(self):
+        split = len(self.x_features)
+        d = self._data[..., split:]
+        if self.window:
+            return d[:, -1, :].ravel()
+        else:
+            return d.ravel()
 
     def dump(self, file=sys.stdout, delim=',', header=True, max_rows=-1):
-        # TODO: The header code needs to be rewritten to account for deltas
         if header:
-            if self.deltas:
-                logger.warn('cannot dump headers for delta columns')
-            elif self.window:
-                x_titles = ('{} {}'.format(f,i)
-                    for i in range(self.window)
-                    for f in self.x_features)
-                y_titles = ('{} {}'.format(f,i)
-                    for i in range(self.window)
-                    for f in self.y_features)
-                titles = chain(x_titles, y_titles)
-                print(delim.join(titles), file=file)
+            headers = (str(f) for f in self.features)
+            if delim == ' ':
+                headers = (s.replace(' ', '_') for s in headers)
             else:
-                print(delim.join(str(f) for f in self.features), file=file)
+                headers = (s.replace(delim, ' ') for s in headers)
+            print(delim.join(headers), file=file)
 
-        for row in self.data:
+        for row in self._data:
             print(delim.join(row.astype(str)), file=file)
             max_rows -= 1
             if max_rows == 0:
                 break
-
-    def _get_deltas(self, data):
-        return np.diff(data, axis=0)
-
-    def _apply_window(self, data, w):
-        shards = []
-        n = len(data)
-        for i in range(w):
-            d = data[i:n-((n-i)%w)]
-            d = d.reshape((d.shape[0]//w, d.shape[1]*w))
-            shards.append(d)
-        return np.concatenate(shards)
 
     def _load_data(self, path, city, years, features, window):
         logger.info('loading data: city=%s, years=%s, features=%s, window=%s',
@@ -103,21 +83,41 @@ class DataSet:
             tables = (np.loadtxt(archive.open(f), usecols=cols) for f in fnames)
             data = np.concatenate(tuple(tables))
 
-        # Roll the shifted features.
-        for i, f in enumerate(features):
-            if f.shift != 0:
+        # Some columns may be pseudo features, transforms of the raw features.
+        # Here we apply the various transforms.
+        for i, f in enumerate(self.features):
+            if f.noise:
+                z = float(f.noise)
+                std = np.std(data[..., i])
+                noise = np.random.randn(len(data)) * std * z
+                data[..., i] += noise
+
+            if f.shift:
                 data[..., i] = np.roll(data[..., i], -f.shift)
 
+            if f.delta:
+                d = np.diff(data[..., i])
+                data[1:, i] = d
+                data[0,  i] = 0
+
         # Discard rows that become invalid due to wrap around.
-        min_shift = min(f.shift for f in features)
-        max_shift = max(f.shift for f in features)
+        min_shift = min(f.shift or 0 for f in self.features)
+        max_shift = max(f.shift or 0 for f in self.features)
         if min_shift < 0: data = data[-min_shift:]
         if 0 < max_shift: data = data[:-max_shift]
 
-        # Discard partial window at the end of the data.
-        extra = len(data) % window
-        if extra > 0:
-            data = data[:-extra]
+        # Apply windowing
+        if window > 0:
+            shards = []
+            for i in range(window):
+                d = data[i:]
+                s = d.shape
+                extra = s[0] % window
+                if extra > 0: d = d[:-extra]
+                d = d.reshape((s[0]//window, window, s[1]))
+                shards.append(d)
+            data = np.concatenate(shards)
+
         return data
 
 
@@ -169,21 +169,38 @@ class FeatureSpec:
         'fuel moisture'
     ]
 
-    spec_fmt = re.compile('([^\(]+)(\(([+-][0-9]+)\))?')
+    spec_fmt = re.compile('([^\(]+)(\((.+)\))?')
+    key_val_fmt = re.compile('(.+)=(.+)')
 
     def __init__(self, spec):
-        m = FeatureSpec.spec_fmt.match(spec)
-        assert m is not None, 'invalid feature spec'
-        name = m.group(1)
-        shift = m.group(3)
-        self.name = name.strip()
+        spec = FeatureSpec.spec_fmt.match(spec)
+        assert spec is not None, 'invalid feature spec'
+        self.name = spec.group(1).strip()
         self.index = FeatureSpec.names.index(self.name)
-        self.shift = int(shift or 0)
+        try:
+            self.modifiers = spec.group(3).split(',')
+        except:
+            self.modifiers = []
+        for m in self.modifiers:
+            kv = FeatureSpec.key_val_fmt.match(m)
+            if kv:
+                key = kv.group(1).strip().replace(' ', '_')
+                val = kv.group(2).strip().replace(' ', '_')
+                setattr(self, key, val)
+            elif m[0] in '+-':
+                self.shift = int(m)
+            else:
+                setattr(self, m, True)
+
+    def __getattr__(self, key):
+        return None
 
     def __str__(self):
         s = self.name
-        if self.shift:
-            s += ' ({:+})'.format(self.shift)
+        if len(self.modifiers) > 0:
+            s += ' ('
+            s += ','.join(s.strip().replace(' ', '_') for s in self.modifiers)
+            s += ')'
         return s
 
     def __repr__(self):

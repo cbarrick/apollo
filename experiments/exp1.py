@@ -2,22 +2,26 @@
 ''' Experiment 1
 
 This experiment evaluates the benefits of using delta features and predicted
-auxiliary features to evaluate 1hr solar radiation predictions. For the trials
-using predicted features, we use the real future vaules to simulate perfect
-prediction.
+features to evaluate 1hr solar radiation predictions. We simulate perfect
+predictions of some features by using the future values.
 
 The regressor used for all experiments is Random Forest.
 
-The results indicate that both predicted features and delta features increase
-accuracy (assuming perfect predictions) and perfect predictions are more useful
-than deltas. The best result combines predictions and deltas.
+The results indicate that predicted features increase accuracy (assuming perfect
+predictions) and delta features on't help much.
+
+The results regarding predicted features may not be terribly valid. By
+simulating perfect predictions, our conclusions are equivalent to saying that
+it is easier to predict current solar radiation than to predict future
+radiation. See experiment 4 for a more meaningful inquiry on predicted
+features.
 
 Results:
 ```
-trial 1: score=0.9161372024960723, mse=7133.449615346033, mae=37.923192402365856
-trial 2: score=0.9250815014810756, mse=6372.6868893793935, mae=34.89397077718892
-trial 3: score=0.9356299286867611, mse=5475.379716825159, mae=33.32263329790161
-trial 4: score=0.9607142960857806, mse=3341.704588633028, mae=25.370811135824805
+trial 1: score=0.9166755592522465, mse=7087.656475723307, mae=37.76623897683379
+trial 2: score=0.9175471901287965, mse=7013.514721261111, mae=37.513857615811155
+trial 3: score=0.9352959488877691, mse=5503.788357361402, mae=33.373508791808504
+trial 4: score=0.9335297691536251, mse=5654.021291632063, mae=33.82115457236394
 ```
 '''
 
@@ -35,13 +39,12 @@ data_params = {
     'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : False,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 rand_forest = RandomForestRegressor()
 rand_forest.fit(train[0], train[1])
@@ -58,16 +61,16 @@ print('trial 1: score={}, mse={}, mae={}'.format(score, mse, mae))
 
 data_params = {
     'path'       : './gaemn15.zip',
-    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : True,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 rand_forest = RandomForestRegressor()
 rand_forest.fit(train[0], train[1])
@@ -88,13 +91,12 @@ data_params = {
                     'air temp (+4)', 'humidity (+4)', 'rainfall (+4)',),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : False,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 rand_forest = RandomForestRegressor()
 rand_forest.fit(train[0], train[1])
@@ -112,16 +114,16 @@ print('trial 3: score={}, mse={}, mae={}'.format(score, mse, mae))
 data_params = {
     'path'       : './gaemn15.zip',
     'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                    'air temp (+4)', 'humidity (+4)', 'rainfall (+4)',),
+                    'air temp (+4)', 'humidity (+4)', 'rainfall (+4)',
+                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
     'y_features' : ('solar radiation (+4)',),
     'window'     : 4,
-    'deltas'     : True,
 }
 
 griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
 griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
-test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
+train = griffin_train.data, griffin_train.target
+test  = griffin_test.data, griffin_test.target
 
 rand_forest = RandomForestRegressor()
 rand_forest.fit(train[0], train[1])
