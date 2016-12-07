@@ -52,8 +52,8 @@ data_params = {
     'deltas'     : True,
 }
 
-griffin_train = gaemn15.DataSet(**data_params)
-griffin_test  = gaemn15.DataSet(**data_params)
+griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
+griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
@@ -78,8 +78,8 @@ data_params = {
     'deltas'     : True,
 }
 
-griffin_train = gaemn15.DataSet(**data_params)
-griffin_test  = gaemn15.DataSet(**data_params)
+griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
+griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
@@ -104,8 +104,8 @@ data_params = {
     'deltas'     : True,
 }
 
-griffin_train = gaemn15.DataSet(**data_params)
-griffin_test  = gaemn15.DataSet(**data_params)
+griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
+griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
@@ -130,8 +130,8 @@ data_params = {
     'deltas'     : True,
 }
 
-griffin_train = gaemn15.DataSet(**data_params)
-griffin_test  = gaemn15.DataSet(**data_params)
+griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
+griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
 train = griffin_train.data, griffin_train.target[:, 3::4].ravel()
 test  = griffin_test.data, griffin_test.target[:, 3::4].ravel()
 
