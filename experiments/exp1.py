@@ -18,118 +18,74 @@ features.
 
 Results:
 ```
-trial 1: score=0.9166755592522465, mse=7087.656475723307, mae=37.76623897683379
-trial 2: score=0.9175471901287965, mse=7013.514721261111, mae=37.513857615811155
-trial 3: score=0.9352959488877691, mse=5503.788357361402, mae=33.373508791808504
-trial 4: score=0.9335297691536251, mse=5654.021291632063, mae=33.82115457236394
+METRIC  TRIAL
+------------------------------------------------------------------------
+31.135	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'humidity (+4)', 'rainfall (+4)'), y_features=('solar radiation (+4)',), window=4)
+		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+
+32.301	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'humidity (+4)', 'rainfall (+4)', 'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'), y_features=('solar radiation (+4)',), window=4)
+		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+
+35.645	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+4)',), window=4)
+		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+
+36.031	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'), y_features=('solar radiation (+4)',), window=4)
+		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+
+t-Test Matrix (p-values)
+------------------------------------------------------------------------
+   --      0.005%   0.000%   0.000%
+  0.005%    --      0.000%   0.000%
+  0.000%   0.000%    --      1.750%
+  0.000%   0.000%   1.750%    --
 ```
 '''
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
+from experiments import core
 from data import gaemn15
 
-# Trial 1
-# -------------------------
-# Random Forest using standard features
+core.setup()
 
-data_params = {
-    'path'       : './gaemn15.zip',
-    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
-    'y_features' : ('solar radiation (+4)',),
-    'window'     : 4,
+datasets = [
+    gaemn15.DataSet(
+        path       = './gaemn15.zip',
+        years      = range(2003,2013),
+        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
+        y_features = ('solar radiation (+4)',),
+        window     = 4,
+    ),
+    gaemn15.DataSet(
+        path       = './gaemn15.zip',
+        years      = range(2003,2013),
+        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
+        y_features = ('solar radiation (+4)',),
+        window     = 4,
+    ),
+    gaemn15.DataSet(
+        path       = './gaemn15.zip',
+        years      = range(2003,2013),
+        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+4)', 'humidity (+4)', 'rainfall (+4)',),
+        y_features = ('solar radiation (+4)',),
+        window     = 4,
+    ),
+    gaemn15.DataSet(
+        path       = './gaemn15.zip',
+        years      = range(2003,2013),
+        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+4)', 'humidity (+4)', 'rainfall (+4)',
+                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
+        y_features = ('solar radiation (+4)',),
+        window     = 4,
+    ),
+]
+
+estimators = {
+    RandomForestRegressor(): {},
 }
 
-griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
-griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target
-test  = griffin_test.data, griffin_test.target
-
-rand_forest = RandomForestRegressor()
-rand_forest.fit(train[0], train[1])
-pred = rand_forest.predict(test[0])
-
-score = r2_score(test[1], pred)
-mse = mean_squared_error(test[1], pred)
-mae = mean_absolute_error(test[1], pred)
-print('trial 1: score={}, mse={}, mae={}'.format(score, mse, mae))
-
-# Trial 2
-# -------------------------
-# Random Forest using standard features and deltas
-
-data_params = {
-    'path'       : './gaemn15.zip',
-    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-    'y_features' : ('solar radiation (+4)',),
-    'window'     : 4,
-}
-
-griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
-griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target
-test  = griffin_test.data, griffin_test.target
-
-rand_forest = RandomForestRegressor()
-rand_forest.fit(train[0], train[1])
-pred = rand_forest.predict(test[0])
-
-score = r2_score(test[1], pred)
-mse = mean_squared_error(test[1], pred)
-mae = mean_absolute_error(test[1], pred)
-print('trial 2: score={}, mse={}, mae={}'.format(score, mse, mae))
-
-# Trial 3
-# -------------------------
-# Random Forest using standard and "predicted" features
-
-data_params = {
-    'path'       : './gaemn15.zip',
-    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                    'air temp (+4)', 'humidity (+4)', 'rainfall (+4)',),
-    'y_features' : ('solar radiation (+4)',),
-    'window'     : 4,
-}
-
-griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
-griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target
-test  = griffin_test.data, griffin_test.target
-
-rand_forest = RandomForestRegressor()
-rand_forest.fit(train[0], train[1])
-pred = rand_forest.predict(test[0])
-
-score = r2_score(test[1], pred)
-mse = mean_squared_error(test[1], pred)
-mae = mean_absolute_error(test[1], pred)
-print('trial 3: score={}, mse={}, mae={}'.format(score, mse, mae))
-
-# Trial 4
-# -------------------------
-# Random Forest using standard and "predicted" features and deltas
-
-data_params = {
-    'path'       : './gaemn15.zip',
-    'x_features' : ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                    'air temp (+4)', 'humidity (+4)', 'rainfall (+4)',
-                    'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-    'y_features' : ('solar radiation (+4)',),
-    'window'     : 4,
-}
-
-griffin_train = gaemn15.DataSet(**data_params, years=range(2003,2011))
-griffin_test  = gaemn15.DataSet(**data_params, years=range(2011,2013))
-train = griffin_train.data, griffin_train.target
-test  = griffin_test.data, griffin_test.target
-
-rand_forest = RandomForestRegressor()
-rand_forest.fit(train[0], train[1])
-pred = rand_forest.predict(test[0])
-
-score = r2_score(test[1], pred)
-mse = mean_squared_error(test[1], pred)
-mae = mean_absolute_error(test[1], pred)
-print('trial 4: score={}, mse={}, mae={}'.format(score, mse, mae))
+results = core.compare(estimators, datasets, split=0.8, nfolds=10)
+print(results)

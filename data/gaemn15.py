@@ -12,7 +12,6 @@ import numpy as np
 logger = logging.getLogger(__name__)
 _cache = WeakValueDictionary()
 
-
 class DataSet:
     def __init__(self,
             path='./gaemn15.zip',
@@ -86,6 +85,14 @@ class DataSet:
         # Some columns may be pseudo features, transforms of the raw features.
         # Here we apply the various transforms.
         for i, f in enumerate(self.features):
+            if f.int:
+                x, n = np.modf(data[..., i])
+                data[..., i] = n
+
+            if f.frac:
+                x, n = np.modf(data[..., i])
+                data[..., i] = x
+
             if f.noise:
                 z = float(f.noise)
                 std = np.std(data[..., i])
@@ -119,6 +126,17 @@ class DataSet:
             data = np.concatenate(shards)
 
         return data
+
+    def __repr__(self):
+        return "DataSet(path={}, city={}, years={}, x_features={}, y_features={}, window={})"\
+            .format(
+                self.path.__repr__(),
+                self.city.__repr__(),
+                self.years.__repr__(),
+                tuple(f.__str__() for f in self.x_features),
+                tuple(f.__str__() for f in self.y_features),
+                self.window.__repr__(),
+            )
 
 
 class FeatureSpec:
