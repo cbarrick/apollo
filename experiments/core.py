@@ -38,14 +38,11 @@ def compare(estimators,
         split=0.8,
         nfolds=10,
         metric=mean_absolute_error,
-        sort='asc'):
+        desc=False):
     '''Compare estimators against the datasets.
 
     The results are returned as a `Results` object.
     '''
-    if sort not in ('asc', 'desc'):
-        raise ValueError("sort must be one of 'asc' or 'desc'")
-
     results = {}
     space = re.compile('\s+')
     for estimator, grid in estimators.items():
@@ -67,7 +64,7 @@ def compare(estimators,
                         results[key].append(score)
                     except:
                         results[key] = [score]
-    return Results(results, sort)
+    return Results(results, desc)
 
 
 class Results(OrderedDict):
@@ -79,15 +76,8 @@ class Results(OrderedDict):
     The `__str__` method is overridden to provide a pretty report of
     classifier accuracies, including a t-test.
     '''
-    def __init__(self, results, sort='asc'):
-        if sort == 'asc':
-            reverse = False
-        elif sort == 'desc':
-            reverse = True
-        else:
-            raise ValueError("sort must be one of 'asc' or 'desc'")
-
-        super().__init__(sorted(results.items(), key=lambda i:np.mean(i[1]), reverse=reverse))
+    def __init__(self, results, desc=False):
+        super().__init__(sorted(results.items(), key=lambda i:np.mean(i[1]), reverse=desc))
 
         logging.info('performing t-test')
         n = len(results)
