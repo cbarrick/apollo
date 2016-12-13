@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-''' Experiment 7: The Kitchen Sink
+''' Experiment 7: The Kitchen Sink, pt. 1
 
 In this experiment, we throw most of the regression algorithms supplied by
 Scikit at our basic dataset. We don't include neural nets since they take so
