@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 import re
@@ -8,77 +9,45 @@ from weakref import WeakValueDictionary
 from zipfile import ZipFile
 
 import numpy as np
+import sklearn
 
 logger = logging.getLogger(__name__)
-_cache = WeakValueDictionary()
+
 
 class DataSet:
+
     def __init__(self,
             path='./gaemn15.zip',
             city='griffin',
             years=range(2003,2015),
             x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
             y_features=('solar radiation (+4)',),
-            window=4):
+            window=4, # TODO: rename to `lag`
+            lead=0,
+            scale=None,
+            threshold=0.0):
 
-        self.path = os.path.realpath(path)
+        self.path = path
         self.city = str(city).upper()
         self.years = tuple(years)
         self.x_features = tuple(FeatureSpec(s) for s in x_features)
         self.y_features = tuple(FeatureSpec(s) for s in y_features)
         self.features = self.x_features + self.y_features
-        self.window = int(window)
+        self.lag = max(1, int(window))
+        self.scale = scale
+        self.threshold = threshold
 
-        # Load data from cache if possible
-        key = (self.path, self.city, self.years, self.features, self.window)
-        try:
-            data = _cache[key]
-        except KeyError as e:
-            data = self._load_data(*key)
-            _cache[key] = data
-        self._data = data
+        self._split = len(self.x_features)
+        self._shards = self.load_data()
 
-    @property
-    def data(self):
-        split = len(self.x_features)
-        d = self._data[..., :split]
-        if self.window:
-            return d.reshape(-1, d.shape[1] * d.shape[2])
-        else:
-            return d
+    def load_data(self):
+        logger.info('loading data: %s', self)
 
-    @property
-    def target(self):
-        split = len(self.x_features)
-        d = self._data[..., split:]
-        if self.window:
-            return d[:, -1, :].ravel()
-        else:
-            return d.ravel()
-
-    def dump(self, file=sys.stdout, delim=',', header=True, max_rows=-1):
-        if header:
-            headers = (str(f) for f in self.features)
-            if delim == ' ':
-                headers = (s.replace(' ', '_') for s in headers)
-            else:
-                headers = (s.replace(delim, ' ') for s in headers)
-            print(delim.join(headers), file=file)
-
-        for row in self._data:
-            print(delim.join(row.astype(str)), file=file)
-            max_rows -= 1
-            if max_rows == 0:
-                break
-
-    def _load_data(self, path, city, years, features, window):
-        logger.info('loading data: city=%s, years=%s, features=%s, window=%s',
-                    city, years, features, window)
-
-        # Data is split across space-separated files with names like `GRIFFIN.F03`.
-        with ZipFile(path) as archive:
-            cols = tuple(f.index for f in features)
-            fnames = ('FifteenMinuteData/{}.F{:02d}'.format(city, y-2000) for y in years)
+        # Load raw data from the zip archive. Within the zip, data is split
+        # across space-separated files with names like `GRIFFIN.F03`.
+        cols = tuple(f.index for f in self.features)
+        with ZipFile(self.path) as archive:
+            fnames = ('FifteenMinuteData/{}.F{:02d}'.format(self.city, y-2000) for y in self.years)
             tables = (np.loadtxt(archive.open(f), usecols=cols) for f in fnames)
             data = np.concatenate(tuple(tables))
 
@@ -113,29 +82,98 @@ class DataSet:
         if min_shift < 0: data = data[-min_shift:]
         if 0 < max_shift: data = data[:-max_shift]
 
-        # Apply windowing
-        if window > 0:
-            shards = []
-            for i in range(window):
-                d = data[i:]
-                s = d.shape
-                extra = s[0] % window
-                if extra > 0: d = d[:-extra]
-                d = d.reshape((s[0]//window, window, s[1]))
-                shards.append(d)
-            data = np.concatenate(shards)
+        # Apply scaling
+        if callable(self.scale):
+            data[..., :self._split] = self.scale(data[..., :self._split])
 
-        return data
+        # Apply windowing
+        shards = []
+        for i in range(self.lag):
+            d = data[i:]
+            s = d.shape
+            extra = s[0] % self.lag
+            if extra > 0: d = d[:-extra]
+            d = d.reshape((s[0]//self.lag, self.lag, s[1]))
+            shards.append(d)
+
+        # Apply filtering
+        if self.threshold > 0:
+            discarded = 0
+            for i,sh in enumerate(shards):
+                fsh = np.ndarray(sh.shape)
+                j = 0
+                for instance in sh:
+                    m = np.mean(instance[..., self._split:])
+                    if self.threshold <= m:
+                        fsh[j] = instance
+                        j += 1
+                    else:
+                        discarded += 1
+                shards[i] = fsh[:j]
+            logger.debug('discarded %d', discarded)
+
+        return tuple(shards)
+
+    def batch(self, batch_size=32):
+        xn = len(self.x_features) * self.lag
+        for sh in self._shards:
+            for i in range(0,len(sh),batch_size):
+                batch = sh[i:i+batch_size]
+                x = batch[..., :self._split].reshape((-1,xn))
+                y = batch[..., self.lag-1, self._split:]
+                yield x, y
+
+    @property
+    def data(self):
+        xn = len(self.x_features) * self.lag
+        return self._join_shards()[..., :self._split].reshape((-1,xn))
+
+    @property
+    def target(self):
+        return self._join_shards()[..., self.lag-1, self._split:]
+
+    def _join_shards(self):
+        if len(self._shards) > 1:
+            d = np.concatenate(self._shards)
+            self._shards = [d]
+        return self._shards[0]
+
+    def split(self, p):
+        n = len(self._shards[0])
+        s = int(n * p)
+        a = copy.copy(self)
+        b = copy.copy(self)
+        shards = self._shards
+        a._shards = tuple(sh[:s] for sh in shards)
+        b._shards = tuple(sh[s:] for sh in shards)
+        return a, b
+
+    def dump(self, file=sys.stdout, delim=',', header=True, max_rows=-1):
+        # TODO WINDOW SUPPORT
+        if header:
+            headers = (str(f) for f in self.features)
+            if delim == ' ':
+                headers = (s.replace(' ', '_') for s in headers)
+            else:
+                headers = (s.replace(delim, ' ') for s in headers)
+            print(delim.join(headers), file=file)
+
+        for sh in self._shards:
+            for row in sh:
+                print(delim.join(row.astype(str)), file=file)
+                max_rows -= 1
+                if max_rows == 0:
+                    return
 
     def __repr__(self):
-        return "DataSet(path={}, city={}, years={}, x_features={}, y_features={}, window={})"\
+        return "DataSet(path={}, city={}, years={}, x_features={}, y_features={}, lag={})"\
             .format(
                 self.path.__repr__(),
                 self.city.__repr__(),
                 self.years.__repr__(),
                 tuple(f.__str__() for f in self.x_features),
                 tuple(f.__str__() for f in self.y_features),
-                self.window.__repr__(),
+                self.lag.__repr__(),
             )
 
 
@@ -191,6 +229,7 @@ class FeatureSpec:
     key_val_fmt = re.compile('(.+)=(.+)')
 
     def __init__(self, spec):
+        spec = str(spec)
         spec = FeatureSpec.spec_fmt.match(spec)
         assert spec is not None, 'invalid feature spec'
         self.name = spec.group(1).strip()

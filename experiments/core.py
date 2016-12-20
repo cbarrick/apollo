@@ -1,10 +1,14 @@
 import logging
 import math
 import re
+import signal
+import sys
+
 from collections import OrderedDict
 
 import numpy as np
 import scipy as sp
+import tensorflow as tf
 
 from scipy import stats
 from sklearn.model_selection import KFold
@@ -14,6 +18,8 @@ from sklearn.model_selection import ParameterGrid
 from sklearn.metrics import mean_absolute_error
 
 from data import gaemn15
+
+logger = logging.getLogger(__name__)
 
 
 def setup():
@@ -31,6 +37,13 @@ def setup():
     logging.basicConfig(level=numeric_level)
 
     np.random.seed(args.seed)
+    tf.set_random_seed(np.random.randint(0xffffffff))
+
+    def sigint_handler(signal, frame):
+        print()
+        logger.warn('Manual halt (SIGINT)')
+        sys.exit()
+    signal.signal(signal.SIGINT, sigint_handler)
 
 
 def compare(estimators,
@@ -44,27 +57,61 @@ def compare(estimators,
     The results are returned as a `Results` object.
     '''
     results = {}
-    space = re.compile('\s+')
     for estimator, grid in estimators.items():
         for params in ParameterGrid(grid):
             for dataset in datasets:
+                # Setup estimator and key
                 estimator.set_params(**params)
-                dataset_repr = space.sub(' ', dataset.__repr__())
-                estimator_repr = space.sub(' ', estimator.__repr__())
+                dataset_repr = re.sub('\s+', ' ', dataset.__repr__())
+                estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
                 key = (dataset_repr, estimator_repr)
-                logging.info('fitting {1} to {0}'.format(*key))
-                s = int(len(dataset.data) * split)
-                estimator.fit(dataset.data[:s], dataset.target[:s])
-                n = len(dataset.data[s:]) // nfolds
+                logger.info('fitting {1} to {0}'.format(*key))
+
+                train, test = dataset.split(split)
+
+                # Train
+                if hasattr(estimator, 'partial_fit'):
+                    sgd_train(estimator, train, metric, desc)
+                else:
+                    batch_train(estimator, train)
+
+                # Test
+                n = len(test.data) // nfolds
                 for i in range(nfolds):
-                    test_slice = slice(s+n*i,s+n*(i+1))
-                    pred = estimator.predict(dataset.data[test_slice])
-                    score = metric(dataset.target[test_slice], pred)
+                    test_slice = slice(n*i,n*(i+1))
+                    pred = estimator.predict(test.data)
+                    score = metric(test.target, pred)
                     try:
                         results[key].append(score)
                     except:
                         results[key] = [score]
+
     return Results(results, desc)
+
+
+def batch_train(estimator, dataset):
+    estimator.fit(dataset.data, dataset.target)
+
+
+def sgd_train(estimator, dataset, metric, desc,
+        val_split=0.9,
+        val_tolerance=10,
+        batch_size=32):
+    train, val = dataset.split(val_split)
+    t = val_tolerance
+    best = math.inf if not desc else -math.inf
+    for eopch in range(20000):
+        for x,y in train.batch():
+            estimator.partial_fit(x, y)
+        pred = estimator.predict(val.data)
+        score = metric(val.target, pred)
+        logger.info('eopch={}, score={}'.format(eopch, score))
+        if (desc and score < best) or best < score:
+            t -= 1
+            if t == 0: return
+        else:
+            t = val_tolerance
+            best = score
 
 
 class Results(OrderedDict):
@@ -79,7 +126,7 @@ class Results(OrderedDict):
     def __init__(self, results, desc=False):
         super().__init__(sorted(results.items(), key=lambda i:np.mean(i[1]), reverse=desc))
 
-        logging.info('performing t-test')
+        logger.info('performing t-test')
         n = len(results)
         self.ttest = np.zeros((n,n))
         for i, a_scores in enumerate(self.values()):
