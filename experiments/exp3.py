@@ -17,28 +17,28 @@ Results:
 ```
 METRIC  TRIAL
 ------------------------------------------------------------------------
-31.049	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'humidity (+4)', 'rainfall (+4)'), y_features=('solar radiation (+4)',), window=4)
+31.049	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'humidity (+4)', 'rainfall (+4)'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-31.394	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'humidity (+4)'), y_features=('solar radiation (+4)',), window=4)
+31.394	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'humidity (+4)'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-31.733	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'humidity (+4)', 'rainfall (+4)'), y_features=('solar radiation (+4)',), window=4)
+31.733	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'humidity (+4)', 'rainfall (+4)'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-32.152	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'humidity (+4)'), y_features=('solar radiation (+4)',), window=4)
+32.152	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'humidity (+4)'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-32.485	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)'), y_features=('solar radiation (+4)',), window=4)
+32.485	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-32.513	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'rainfall (+4)'), y_features=('solar radiation (+4)',), window=4)
+32.513	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (+4)', 'rainfall (+4)'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-35.195	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'rainfall (+4)'), y_features=('solar radiation (+4)',), window=4)
+35.195	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'rainfall (+4)'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-35.645	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+4)',), window=4)
+35.645	DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+4)',), lag=4)
 		RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
 
@@ -68,7 +68,7 @@ datasets = [
         years      = range(2003,2013),
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
     gaemn15.DataSet(
         path       = './gaemn15.zip',
@@ -76,7 +76,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
                       'air temp (+4)',),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
     gaemn15.DataSet(
         path       = './gaemn15.zip',
@@ -84,7 +84,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
                       'humidity (+4)',),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
     gaemn15.DataSet(
         path       = './gaemn15.zip',
@@ -92,7 +92,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
                       'rainfall (+4)',),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
     gaemn15.DataSet(
         path       = './gaemn15.zip',
@@ -100,7 +100,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
                       'air temp (+4)', 'humidity (+4)'),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
     gaemn15.DataSet(
         path       = './gaemn15.zip',
@@ -108,7 +108,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
                       'humidity (+4)', 'rainfall (+4)'),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
     gaemn15.DataSet(
         path       = './gaemn15.zip',
@@ -116,7 +116,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
                       'air temp (+4)', 'rainfall (+4)'),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
     gaemn15.DataSet(
         path       = './gaemn15.zip',
@@ -124,7 +124,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
                       'air temp (+4)', 'humidity (+4)', 'rainfall (+4)'),
         y_features = ('solar radiation (+4)',),
-        window     = 4,
+        lag        = 4,
     ),
 ]
 

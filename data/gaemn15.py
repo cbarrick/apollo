@@ -22,7 +22,7 @@ class DataSet:
             years=range(2003,2015),
             x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
             y_features=('solar radiation (+4)',),
-            window=4, # TODO: rename to `lag`
+            lag=4,
             lead=0,
             scale=None,
             threshold=0.0):
@@ -33,7 +33,7 @@ class DataSet:
         self.x_features = tuple(FeatureSpec(s) for s in x_features)
         self.y_features = tuple(FeatureSpec(s) for s in y_features)
         self.features = self.x_features + self.y_features
-        self.lag = max(1, int(window))
+        self.lag = max(1, int(lag))
         self.scale = scale
         self.threshold = threshold
 
