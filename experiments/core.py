@@ -141,7 +141,8 @@ class Results(OrderedDict):
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
         for key, scores in self.items():
-            str += '{:.3f}\t{}\n\t\t{}\n\n'.format(np.mean(scores), key[0], key[1])
+            str += '{:<7.3f} {}\n'.format(np.mean(scores), key[0])
+            str += ' '*8 + '{}\n\n'.format(key[1])
         str += '\n'
 
         str += 't-Test Matrix (p-values)\n'
