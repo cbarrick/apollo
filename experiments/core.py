@@ -79,8 +79,8 @@ def compare(estimators,
                 n = len(test.data) // nfolds
                 for i in range(nfolds):
                     test_slice = slice(n*i,n*(i+1))
-                    pred = estimator.predict(test.data)
-                    score = metric(test.target, pred)
+                    pred = estimator.predict(test.data[test_slice])
+                    score = metric(test.target[test_slice], pred)
                     try:
                         results[key].append(score)
                     except:
