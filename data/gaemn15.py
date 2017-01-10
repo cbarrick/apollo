@@ -133,8 +133,12 @@ class DataSet:
         return self._join_shards()[..., self.lag-1, self._split:]
 
     def _join_shards(self):
-        if len(self._shards) > 1:
-            d = np.concatenate(self._shards)
+        n = len(self._shards)
+        if n > 1:
+            size = sum(len(sh) for sh in self._shards)
+            d = np.ndarray((size,) + self._shards[0].shape[1:])
+            for i in range(size):
+                d[i] = self._shards[i%n][i//n]
             self._shards = [d]
         return self._shards[0]
 
