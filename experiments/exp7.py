@@ -93,7 +93,6 @@ from sklearn.linear_model import BayesianRidge, ElasticNet, HuberRegressor, \
     PassiveAggressiveRegressor, RANSACRegressor, TheilSenRegressor
 from xgboost import XGBRegressor
 
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import scale as standard_scale
 
 from experiments import core

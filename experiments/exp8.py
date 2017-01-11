@@ -37,7 +37,6 @@ from sklearn.ensemble import BaggingRegressor, ExtraTreesRegressor, \
 	GradientBoostingRegressor, RandomForestRegressor
 from xgboost import XGBRegressor
 
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import scale as standard_scale
 
 from experiments import core
