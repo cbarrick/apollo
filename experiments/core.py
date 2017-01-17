@@ -33,7 +33,7 @@ def setup():
 
     numeric_level = getattr(logging, args.log.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % args.log)
+        raise ValueError(f'Invalid log level: {args.log}')
     logging.basicConfig(level=numeric_level)
 
     np.random.seed(args.seed)
@@ -65,7 +65,7 @@ def compare(estimators,
                 dataset_repr = re.sub('\s+', ' ', dataset.__repr__())
                 estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
                 key = (dataset_repr, estimator_repr)
-                logger.info('fitting {1} to {0}'.format(*key))
+                logger.info(f'fitting {key[1]} to {key[0]}')
 
                 train, test = dataset.split(split)
 
@@ -85,24 +85,26 @@ def bgd(estimator, train, test, nfolds, metric):
 
 def sgd(estimator, train, test, nfolds, metric, desc,
         val_split=0.9,
-        val_tolerance=10,
+        max_epochs=1000,
+        patience=10,
         batch_size=32):
     train, val = train.split(val_split)
-    t = val_tolerance
+    t = patience
     best = math.inf if not desc else -math.inf
-    for eopch in range(20000):
+    for epoch in range(max_epochs):
         for x,y in train.batch():
             estimator.partial_fit(x, y)
         pred = estimator.predict(val.data)
         score = metric(val.target, pred)
-        logger.info('eopch={}, score={}'.format(eopch, score))
+        logger.info(f'epoch={epoch}, score={score}')
         if (desc and score < best) or best < score:
             t -= 1
             if t == 0: return
         else:
-            t = val_tolerance
+            t = patience
             best = score
             results = predict(estimator, test, nfolds, metric)
+    logger.debug(results)
     return results
 
 def predict(estimator, dataset, nfolds, metric):
@@ -113,7 +115,7 @@ def predict(estimator, dataset, nfolds, metric):
         pred = estimator.predict(dataset.data[s])
         score = metric(dataset.target[s], pred)
         results.append(score)
-    logger.debug(str(results))
+    logger.debug(results)
     return results
 
 
@@ -144,8 +146,8 @@ class Results(OrderedDict):
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
         for key, scores in self.items():
-            str += '{:<7.3f} {}\n'.format(np.mean(scores), key[0])
-            str += ' '*8 + '{}\n\n'.format(key[1])
+            str += f'{scores:<7.3f} {key[0]}\n'
+            str += ' '*8 + f'{key[1]}\n\n'
         str += '\n'
 
         str += 't-Test Matrix (p-values)\n'
@@ -155,6 +157,6 @@ class Results(OrderedDict):
                 if i == j:
                     str += '   --    '
                 else:
-                    str += '{:8.3%} '.format(p)
+                    str += f'{p:8.3%} '
             str += '\n'
         return str
