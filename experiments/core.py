@@ -69,35 +69,25 @@ def compare(estimators,
 
                 train, test = dataset.split(split)
 
-                # Train
+                # Fit and transform
                 if hasattr(estimator, 'partial_fit'):
-                    sgd_train(estimator, train, metric, desc)
+                    results[key] = sgd(estimator, train, test, nfolds, metric, desc)
                 else:
-                    batch_train(estimator, train)
-
-                # Test
-                n = len(test.data) // nfolds
-                for i in range(nfolds):
-                    test_slice = slice(n*i,n*(i+1))
-                    pred = estimator.predict(test.data[test_slice])
-                    score = metric(test.target[test_slice], pred)
-                    try:
-                        results[key].append(score)
-                    except:
-                        results[key] = [score]
+                    results[key] = bgd(estimator, train, test, nfolds, metric)
 
     return Results(results, desc)
 
 
-def batch_train(estimator, dataset):
-    estimator.fit(dataset.data, dataset.target)
+def bgd(estimator, train, test, nfolds, metric):
+    estimator.fit(train.data, train.target)
+    return predict(estimator, test, nfolds, metric)
 
 
-def sgd_train(estimator, dataset, metric, desc,
+def sgd(estimator, train, test, nfolds, metric, desc,
         val_split=0.9,
         val_tolerance=10,
         batch_size=32):
-    train, val = dataset.split(val_split)
+    train, val = train.split(val_split)
     t = val_tolerance
     best = math.inf if not desc else -math.inf
     for eopch in range(20000):
@@ -112,6 +102,19 @@ def sgd_train(estimator, dataset, metric, desc,
         else:
             t = val_tolerance
             best = score
+            results = predict(estimator, test, nfolds, metric)
+    return results
+
+def predict(estimator, dataset, nfolds, metric):
+    n = len(dataset.data) // nfolds
+    results = []
+    for i in range(nfolds):
+        s = slice(n*i,n*(i+1))
+        pred = estimator.predict(dataset.data[s])
+        score = metric(dataset.target[s], pred)
+        results.append(score)
+    logger.debug(str(results))
+    return results
 
 
 class Results(OrderedDict):
