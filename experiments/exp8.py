@@ -52,7 +52,7 @@ datasets = [
         x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
         y_features = ('solar radiation (+24)',),
         lag        = 4,
-		scale      = standard_scale,
+        scale      = standard_scale,
     ),
 ]
 
