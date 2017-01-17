@@ -117,6 +117,7 @@ class DataSet:
     def batch(self, batch_size=32):
         xn = len(self.x_features) * self.lag
         for sh in self._shards:
+            sh = np.random.permutation(sh)
             for i in range(0,len(sh),batch_size):
                 batch = sh[i:i+batch_size]
                 x = batch[..., :self._split].reshape((-1,xn))
