@@ -99,7 +99,8 @@ def sgd(estimator, train, test, nfolds, metric, desc,
         logger.info(f'epoch={epoch}, score={score}')
         if (desc and score < best) or best < score:
             t -= 1
-            if t == 0: return
+            if t == 0:
+                break
         else:
             t = patience
             best = score
