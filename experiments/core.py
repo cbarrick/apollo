@@ -147,7 +147,7 @@ class Results(OrderedDict):
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
         for key, scores in self.items():
-            str += f'{scores:<7.3f} {key[0]}\n'
+            str += f'{np.mean(scores):<7.3f} {key[0]}\n'
             str += ' '*8 + f'{key[1]}\n\n'
         str += '\n'
 
