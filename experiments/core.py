@@ -86,7 +86,7 @@ def bgd(estimator, train, test, nfolds, metric):
 def sgd(estimator, train, test, nfolds, metric, desc,
         val_split=0.9,
         max_epochs=1000,
-        patience=10,
+        patience=20,
         batch_size=32):
     train, val = train.split(val_split)
     t = patience
