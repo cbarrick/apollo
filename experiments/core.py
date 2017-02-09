@@ -33,7 +33,7 @@ def setup():
 
     numeric_level = getattr(logging, args.log.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError(f'Invalid log level: {args.log}')
+        raise ValueError('Invalid log level: {}'.format(args.log))
     logging.basicConfig(level=numeric_level)
 
     np.random.seed(args.seed)
@@ -65,7 +65,7 @@ def compare(estimators,
                 dataset_repr = re.sub('\s+', ' ', dataset.__repr__())
                 estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
                 key = (dataset_repr, estimator_repr)
-                logger.info(f'fitting {key[1]} to {key[0]}')
+                logger.info('fitting {} to {}'.format(key[1], key[0]))
 
                 train, test = dataset.split(split)
 
@@ -96,7 +96,7 @@ def sgd(estimator, train, test, nfolds, metric, desc,
             estimator.partial_fit(x, y)
         pred = estimator.predict(val.data)
         score = metric(val.target, pred)
-        logger.info(f'epoch={epoch}, score={score}')
+        logger.info('epoch={}, score={}'.format(epoch, score))
         if (desc and score < best) or best < score:
             t -= 1
             if t == 0:
@@ -147,8 +147,8 @@ class Results(OrderedDict):
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
         for key, scores in self.items():
-            str += f'{np.mean(scores):<7.3f} {key[0]}\n'
-            str += ' '*8 + f'{key[1]}\n\n'
+            str += '{:<7.3f} {}\n'.format(np.mean(scores, key[0]))
+            str += ' '*8 + '{}\n\n'.format(key[1])
         str += '\n'
 
         str += 't-Test Matrix (p-values)\n'
@@ -158,6 +158,6 @@ class Results(OrderedDict):
                 if i == j:
                     str += '   --    '
                 else:
-                    str += f'{p:8.3%} '
+                    str += '{:8.3%} '.format(p)
             str += '\n'
         return str
