@@ -46,9 +46,14 @@ class DataSet:
         # Load raw data from the zip archive. Within the zip, data is split
         # across space-separated files with names like `GRIFFIN.F03`.
         cols = tuple(f.index for f in self.features)
-        with ZipFile(self.path) as archive:
-            fnames = ('FifteenMinuteData/{}.F{:02d}'.format(self.city, y-2000) for y in self.years)
-            tables = (np.loadtxt(archive.open(f), usecols=cols) for f in fnames)
+        if self.path.endswith('.zip'):
+            with ZipFile(self.path) as archive:
+                fnames = ('FifteenMinuteData/{}.F{:02d}'.format(self.city, y-2000) for y in self.years)
+                tables = (np.loadtxt(archive.open(f), usecols=cols) for f in fnames)
+                data = np.concatenate(tuple(tables))
+        else:
+            fnames = (self.path + '/FifteenMinuteData/{}.F{:02d}'.format(self.city, y-2000) for y in self.years)
+            tables = (np.loadtxt(open(f), usecols=cols) for f in fnames)
             data = np.concatenate(tuple(tables))
 
         # Some columns may be pseudo features, transforms of the raw features.

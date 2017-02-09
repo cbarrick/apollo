@@ -46,8 +46,7 @@ def setup():
     signal.signal(signal.SIGINT, sigint_handler)
 
 
-def compare(estimators,
-        datasets=[gaemn15.DataSet()],
+def compare(estimators, datasets,
         split=0.8,
         nfolds=10,
         metric=mean_absolute_error,
