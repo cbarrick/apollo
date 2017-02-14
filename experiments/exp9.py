@@ -46,23 +46,23 @@ from data import gaemn15
 
 core.setup()
 
-datasets = [
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('timestamp (int)', 'timestamp (frac)', 'solar radiation'),
-        y_features = ('solar radiation (+96)',),
-        lag        = 4,
-        scale      = standard_scale,
-    ),
-]
+datasets = {
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('timestamp (int)', 'timestamp (frac)', 'solar radiation')],
+        'y_features' : [('solar radiation (+96)',)],
+        'lag'        : [4],
+        'scale'      : [standard_scale],
+    },
+}
 
 estimators = {
-    ExtraTreesRegressor(): {},
-    RandomForestRegressor(): {},
-    BaggingRegressor(): {},
-    GradientBoostingRegressor(): {},
-	XGBRegressor(): {},
+    ExtraTreesRegressor: {},
+    RandomForestRegressor: {},
+    BaggingRegressor: {},
+    GradientBoostingRegressor: {},
+	XGBRegressor: {},
 }
 
 results = core.compare(estimators, datasets, split=0.8, nfolds=10)

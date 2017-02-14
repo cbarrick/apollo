@@ -196,19 +196,19 @@ from models.nn import ConvRegressor, MLPRegressor
 
 core.setup()
 
-datasets = [
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'solar radiation'),
-        y_features = ('solar radiation (+96)',),
-        lag        = 96,
-		scale      = standard_scale,
-    ),
-]
+datasets = {
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'solar radiation')],
+        'y_features' : [('solar radiation (+96)',)],
+        'lag'        : [96],
+        'scale'      : [standard_scale],
+    },
+}
 
 estimators = {
-    ConvRegressor(): [{
+    ConvRegressor: [{
         'lag': [96],
         'activation': [tf.nn.elu, tf.nn.tanh],
         'initializer': [tf.contrib.layers.xavier_initializer(),
@@ -216,7 +216,7 @@ estimators = {
         'regularizer': [tf.contrib.layers.l2_regularizer(0.01), None],
         'optimizer': [tf.train.AdamOptimizer(1e-4)],
     }],
-    MLPRegressor(): {
+    MLPRegressor: {
         'layers': [(32,), (64,), (128,), (64,32)],
         'activation': [tf.nn.elu, tf.nn.tanh],
         'initializer': [tf.contrib.layers.xavier_initializer(),

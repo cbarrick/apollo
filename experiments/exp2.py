@@ -58,43 +58,43 @@ from data import gaemn15
 
 core.setup()
 
-datasets = [
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-        y_features = ('solar radiation (+4)',),
-        lag        = 4,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-        y_features = ('solar radiation (+4)',),
-        lag        = 4,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-        y_features = ('solar radiation (+4)',),
-        lag        = 4,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('timestamp (int)', 'timestamp (frac)', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-        y_features = ('solar radiation (+4)',),
-        lag        = 4,
-    ),
-]
+datasets = {
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)')],
+        'y_features' : [('solar radiation (+4)',)],
+        'lag'        : [4],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)')],
+        'y_features' : [('solar radiation (+4)',)],
+        'lag'        : [4],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)')],
+        'y_features' : [('solar radiation (+4)',)],
+        'lag'        : [4],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('timestamp (int)', 'timestamp (frac)', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)')],
+        'y_features' : [('solar radiation (+4)',)],
+        'lag'        : [4],
+    },
+}
 
 estimators = {
-    RandomForestRegressor(): {},
+    RandomForestRegressor: {},
 }
 
 results = core.compare(estimators, datasets, split=0.8)

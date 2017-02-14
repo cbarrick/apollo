@@ -33,35 +33,35 @@ from data import gaemn15
 
 core.setup()
 
-datasets = [
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('timestamp (int)', 'timestamp (frac)', 'solar radiation'),
-        y_features = ('solar radiation (+96)',),
-        lag        = 4,
-        scale      = standard_scale,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('timestamp (int)', 'timestamp (frac)', 'solar radiation', 'wind speed', 'wind direction',),
-        y_features = ('solar radiation (+96)',),
-        lag        = 4,
-        scale      = standard_scale,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('timestamp (int)', 'timestamp (frac)', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 4,
-        scale      = standard_scale,
-    ),
-]
+datasets = {
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('timestamp (int)', 'timestamp (frac)', 'solar radiation')],
+        'y_features' : [('solar radiation (+96)',)],
+        'lag'        : [4],
+        'scale'      : [standard_scale],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('timestamp (int)', 'timestamp (frac)', 'solar radiation', 'wind speed', 'wind direction',)],
+        'y_features' : [('solar radiation (+96)',)],
+        'lag'        : [4],
+        'scale'      : [standard_scale],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('timestamp (int)', 'timestamp (frac)', 'air temp', 'humidity', 'rainfall', 'solar radiation')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [4],
+        'scale'      : [standard_scale],
+    },
+}
 
 estimators = {
-	XGBRegressor(): {},
+	XGBRegressor: {},
 }
 
 results = core.compare(estimators, datasets, split=0.8, nfolds=10)

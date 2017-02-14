@@ -56,23 +56,30 @@ def compare(estimators, datasets,
     The results are returned as a `Results` object.
     '''
     results = {}
-    for estimator, grid in estimators.items():
-        for params in ParameterGrid(grid):
-            for dataset in datasets:
-                # Setup estimator and key
-                estimator.set_params(**params)
-                dataset_repr = re.sub('\s+', ' ', dataset.__repr__())
-                estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
-                key = (dataset_repr, estimator_repr)
-                logger.info('fitting {} to {}'.format(key[1], key[0]))
 
-                train, test = dataset.split(split)
+    def experiment(estimator, dataset):
+        # Setup estimator and key
+        estimator = est_class(**est_params)
+        dataset_repr = re.sub('\s+', ' ', dataset.__repr__())
+        estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
+        key = (dataset_repr, estimator_repr)
+        logger.info('fitting {} to {}'.format(key[1], key[0]))
 
-                # Fit and transform
-                if hasattr(estimator, 'partial_fit'):
-                    results[key] = sgd(estimator, train, test, nfolds, metric, desc)
-                else:
-                    results[key] = bgd(estimator, train, test, nfolds, metric)
+        train, test = dataset.split(split)
+
+        # Fit and transform
+        if hasattr(estimator, 'partial_fit'):
+            results[key] = sgd(estimator, train, test, nfolds, metric, desc)
+        else:
+            results[key] = bgd(estimator, train, test, nfolds, metric)
+
+    for dataset_class, datasets_grid in datasets.items():
+        for dataset_params in ParameterGrid(datasets_grid):
+            for est_class, est_grid in estimators.items():
+                for est_params in ParameterGrid(est_grid):
+                    estimator = est_class(**est_params)
+                    dataset = dataset_class(**dataset_params)
+                    experiment(estimator, dataset)
 
     return Results(results, desc)
 

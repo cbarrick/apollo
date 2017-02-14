@@ -56,75 +56,75 @@ from data import gaemn15
 
 core.setup()
 
-datasets = [
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (+24,noise=0)', 'humidity (+24,noise=0)', 'rainfall (+24,noise=0)'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (+24,noise=0.1)', 'humidity (+24,noise=0.1)', 'rainfall (+24,noise=0.1)'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (+24,noise=0.2)', 'humidity (+24,noise=0.2)', 'rainfall (+24,noise=0.2)'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (+24,noise=0.5)', 'humidity (+24,noise=0.5)', 'rainfall (+24,noise=0.5)'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (+24,noise=1)', 'humidity (+24,noise=1)', 'rainfall (+24,noise=1)'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (+24,noise=2)', 'humidity (+24,noise=2)', 'rainfall (+24,noise=2)'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-    gaemn15.DataSet(
-        path       = './gaemn15.zip',
-        years      = range(2003,2013),
-        x_features = ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
-                      'air temp (+24,noise=3)', 'humidity (+24,noise=3)', 'rainfall (+24,noise=3)'),
-        y_features = ('solar radiation (+24)',),
-        lag        = 24,
-    ),
-]
+datasets = {
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+24,noise=0)', 'humidity (+24,noise=0)', 'rainfall (+24,noise=0)')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+24,noise=0.1)', 'humidity (+24,noise=0.1)', 'rainfall (+24,noise=0.1)')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+24,noise=0.2)', 'humidity (+24,noise=0.2)', 'rainfall (+24,noise=0.2)')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+24,noise=0.5)', 'humidity (+24,noise=0.5)', 'rainfall (+24,noise=0.5)')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+24,noise=1)', 'humidity (+24,noise=1)', 'rainfall (+24,noise=1)')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+24,noise=2)', 'humidity (+24,noise=2)', 'rainfall (+24,noise=2)')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+    gaemn15.DataSet: {
+        'path'       : ['./gaemn15.zip'],
+        'years'      : [range(2003,2013)],
+        'x_features' : [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation',
+                      'air temp (+24,noise=3)', 'humidity (+24,noise=3)', 'rainfall (+24,noise=3)')],
+        'y_features' : [('solar radiation (+24)',)],
+        'lag'        : [24],
+    },
+}
 
 
 estimators = {
-    RandomForestRegressor(): {},
+    RandomForestRegressor: {},
 }
 
 results = core.compare(estimators, datasets, split=0.8)
