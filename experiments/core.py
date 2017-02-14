@@ -27,8 +27,16 @@ def setup():
     import argparse
 
     parser = argparse.ArgumentParser(description='Perform the experiment')
-    parser.add_argument('--log', default='WARNING', type=str, help='the level of logging details')
-    parser.add_argument('--seed', default=1337, type=int, help='the random seed of the experiment')
+    parser.add_argument(
+        '--log',
+        default='WARNING',
+        type=str,
+        help='the level of logging details')
+    parser.add_argument(
+        '--seed',
+        default=1337,
+        type=int,
+        help='the random seed of the experiment')
     args = parser.parse_args()
 
     numeric_level = getattr(logging, args.log.upper(), None)
@@ -43,53 +51,76 @@ def setup():
         print()
         logger.warn('Manual halt (SIGINT)')
         sys.exit()
+
     signal.signal(signal.SIGINT, sigint_handler)
 
 
-def compare(estimators, datasets,
-        split=0.8,
-        nfolds=10,
-        metric=mean_absolute_error,
-        desc=False):
-    '''Compare estimators against the datasets.
-
-    The results are returned as a `Results` object.
-    '''
+def cross_site(estimators,
+               datasets,
+               nfolds=10,
+               metric=mean_absolute_error,
+               desc=False):
     results = {}
+    for dataset_class, datasets_grid in datasets.items():
+        for dataset_params in ParameterGrid(datasets_grid):
+            for est_class, est_grid in estimators.items():
+                for est_params in ParameterGrid(est_grid):
+                    estimator = est_class(**est_params)
+                    train = dataset_class(**dataset_params)
+                    train_repr = re.sub('\s+', ' ', train.__repr__())
+                    estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
+                    fit(estimator, train, desc)
+                    key = (train_repr, estimator_repr)
+                    results[key] = []
+            for dataset_class, datasets_grid in datasets.items():
+                for dataset_params in ParameterGrid(datasets_grid):
+                    test = dataset_class(**dataset_params)
+                    scores = score(estimator, test, nfolds, metric)
+                    results[key] += scores
+    return Results(results, desc)
 
-    def experiment(estimator, dataset):
-        # Setup estimator and key
-        estimator = est_class(**est_params)
-        dataset_repr = re.sub('\s+', ' ', dataset.__repr__())
-        estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
-        key = (dataset_repr, estimator_repr)
-        logger.info('fitting {} to {}'.format(key[1], key[0]))
 
-        train, test = dataset.split(split)
-
-        # Fit and transform
-        if hasattr(estimator, 'partial_fit'):
-            results[key] = sgd(estimator, train, test, nfolds, metric, desc)
-        else:
-            results[key] = bgd(estimator, train, test, nfolds, metric)
-
+def percent_split(estimators,
+                  datasets,
+                  split=0.8,
+                  nfolds=10,
+                  metric=mean_absolute_error,
+                  desc=False):
+    results = {}
     for dataset_class, datasets_grid in datasets.items():
         for dataset_params in ParameterGrid(datasets_grid):
             for est_class, est_grid in estimators.items():
                 for est_params in ParameterGrid(est_grid):
                     estimator = est_class(**est_params)
                     dataset = dataset_class(**dataset_params)
-                    experiment(estimator, dataset)
-
+                    train, test = dataset.split(split)
+                    fit(estimator, train, desc)
+                    scores = score(estimator, test, nfolds, metric)
+                    train_repr = re.sub('\s+', ' ', train.__repr__())
+                    estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
+                    key = (train_repr, estimator_repr)
+                    results[key] = scores
     return Results(results, desc)
 
 
-def bgd(estimator, train, test, nfolds, metric):
+compare = percent_split
+
+
+def fit(estimator, dataset, desc):
+    logger.info('fitting {} to {}'.format(estimator, dataset))
+    if hasattr(estimator, 'partial_fit'):
+        sgd(estimator, dataset, desc)
+    else:
+        bgd(estimator, dataset)
+
+
+def bgd(estimator, train):
     estimator.fit(train.data, train.target)
-    return predict(estimator, test, nfolds, metric)
 
 
-def sgd(estimator, train, test, nfolds, metric, desc,
+def sgd(estimator,
+        train,
+        desc,
         val_split=0.9,
         max_epochs=1000,
         patience=20,
@@ -98,7 +129,7 @@ def sgd(estimator, train, test, nfolds, metric, desc,
     t = patience
     best = math.inf if not desc else -math.inf
     for epoch in range(max_epochs):
-        for x,y in train.batch():
+        for x, y in train.batch():
             estimator.partial_fit(x, y)
         pred = estimator.predict(val.data)
         score = metric(val.target, pred)
@@ -110,15 +141,16 @@ def sgd(estimator, train, test, nfolds, metric, desc,
         else:
             t = patience
             best = score
-            results = predict(estimator, test, nfolds, metric)
-    logger.debug(results)
-    return results
+    # TODO: rewind to best model
+    return
 
-def predict(estimator, dataset, nfolds, metric):
+
+def score(estimator, dataset, nfolds, metric):
+    logger.info('scoring {} on {}'.format(estimator, dataset))
     n = len(dataset.data) // nfolds
     results = []
     for i in range(nfolds):
-        s = slice(n*i,n*(i+1))
+        s = slice(n * i, n * (i + 1))
         pred = estimator.predict(dataset.data[s])
         score = metric(dataset.target[s], pred)
         results.append(score)
@@ -135,18 +167,20 @@ class Results(OrderedDict):
     The `__str__` method is overridden to provide a pretty report of
     classifier accuracies, including a t-test.
     '''
+
     def __init__(self, results, desc=False):
-        super().__init__(sorted(results.items(), key=lambda i:np.mean(i[1]), reverse=desc))
+        super().__init__(
+            sorted(results.items(), key=lambda i: np.mean(i[1]), reverse=desc))
 
         logger.info('performing t-test')
         n = len(results)
-        self.ttest = np.zeros((n,n))
+        self.ttest = np.zeros((n, n))
         for i, a_scores in enumerate(self.values()):
             for j, b_scores in enumerate(self.values()):
                 if i == j:
                     continue
                 t, p = sp.stats.ttest_rel(a_scores, b_scores)
-                self.ttest[i,j] = p
+                self.ttest[i, j] = p
 
     def __str__(self):
         str = ''
@@ -154,7 +188,7 @@ class Results(OrderedDict):
         str += '------------------------------------------------------------------------\n'
         for key, scores in self.items():
             str += '{:<7.3f} {}\n'.format(np.mean(scores, key[0]))
-            str += ' '*8 + '{}\n\n'.format(key[1])
+            str += ' ' * 8 + '{}\n\n'.format(key[1])
         str += '\n'
 
         str += 't-Test Matrix (p-values)\n'
