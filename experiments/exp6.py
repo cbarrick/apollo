@@ -49,19 +49,16 @@ datasets = {
         'y_features' : [('solar radiation (+4)',)],
         'lag'        : [4],
     },
-}
+} # yapf: disable
 
 estimators = {
     Pipeline: {
         'steps': [
             [('predict', RandomForestRegressor())],
-
             [('stdandardize', StandardScaler()),
              ('predict', RandomForestRegressor())],
-
             [('min_max_scale', MinMaxScaler()),
              ('predict', RandomForestRegressor())],
-
             [('max_abs_scale', MaxAbsScaler()),
              ('predict', RandomForestRegressor())],
         ],

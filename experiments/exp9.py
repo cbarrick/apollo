@@ -35,14 +35,13 @@ t-Test Matrix (p-values)
 '''
 
 from sklearn.ensemble import BaggingRegressor, ExtraTreesRegressor, \
-	GradientBoostingRegressor, RandomForestRegressor
+ GradientBoostingRegressor, RandomForestRegressor
 from xgboost import XGBRegressor
 
 from sklearn.preprocessing import scale as standard_scale
 
 from experiments import core
 from data import gaemn15
-
 
 core.setup()
 
@@ -55,14 +54,14 @@ datasets = {
         'lag'        : [4],
         'scale'      : [standard_scale],
     },
-}
+} # yapf: disable
 
 estimators = {
     ExtraTreesRegressor: {},
     RandomForestRegressor: {},
     BaggingRegressor: {},
     GradientBoostingRegressor: {},
-	XGBRegressor: {},
+    XGBRegressor: {},
 }
 
 results = core.compare(estimators, datasets, split=0.8, nfolds=10)

@@ -106,7 +106,7 @@ data = gaemn15.DataSet(
     y_features = ('solar radiation (+96)',),
     lag        = 1,
     scale      = standard_scale,
-)
+) # yapf: disable
 
 model = RandomForestRegressor()
 model.fit(data.data, data.target)

@@ -193,7 +193,6 @@ from data import gaemn15
 from experiments import core
 from models.nn import ConvRegressor, MLPRegressor
 
-
 core.setup()
 
 datasets = {
@@ -205,7 +204,7 @@ datasets = {
         'lag'        : [96],
         'scale'      : [standard_scale],
     },
-}
+} # yapf: disable
 
 estimators = {
     ConvRegressor: [{
@@ -224,7 +223,7 @@ estimators = {
         'regularizer': [tf.contrib.layers.l2_regularizer(0.01), None],
         'optimizer': [tf.train.AdamOptimizer(1e-4)],
     },
-}
+} # yapf: disable
 
 results = core.compare(estimators, datasets, split=0.8, nfolds=10)
 print(results)

@@ -98,7 +98,6 @@ from sklearn.preprocessing import scale as standard_scale
 from experiments import core
 from data import gaemn15
 
-
 core.setup()
 
 datasets = {
@@ -110,7 +109,7 @@ datasets = {
         'lag'        : [4],
         'scale'      : [standard_scale],
     },
-}
+} # yapf: disable
 
 estimators = {
     AdaBoostRegressor: {},
