@@ -47,14 +47,14 @@ core.setup()
 
 datasets = {
     gaemn15.DataSet: {
-        'path'       : ['./gaemn15.zip'],
-        'years'      : [range(2003,2013)],
-        'x_features' : [('timestamp (int)', 'timestamp (frac)', 'solar radiation')],
-        'y_features' : [('solar radiation (+96)',)],
-        'lag'        : [4],
-        'scale'      : [standard_scale],
+        'path': ['./gaemn15.zip'],
+        'years': [range(2003, 2013)],
+        'x_features': [('timestamp (int)', 'timestamp (frac)', 'solar radiation')],
+        'y_features': [('solar radiation (+96)', )],
+        'lag': [4],
+        'scale': [standard_scale],
     },
-} # yapf: disable
+}  # yapf: disable
 
 estimators = {
     ExtraTreesRegressor: {},

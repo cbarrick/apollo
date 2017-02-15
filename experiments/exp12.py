@@ -210,20 +210,24 @@ estimators = {
     ConvRegressor: [{
         'lag': [96],
         'activation': [tf.nn.elu, tf.nn.tanh],
-        'initializer': [tf.contrib.layers.xavier_initializer(),
-                        tf.contrib.layers.variance_scaling_initializer(2)],
+        'initializer': [
+            tf.contrib.layers.xavier_initializer(),
+            tf.contrib.layers.variance_scaling_initializer(2)
+        ],
         'regularizer': [tf.contrib.layers.l2_regularizer(0.01), None],
         'optimizer': [tf.train.AdamOptimizer(1e-4)],
     }],
     MLPRegressor: {
-        'layers': [(32,), (64,), (128,), (64,32)],
+        'layers': [(32, ), (64, ), (128, ), (64, 32)],
         'activation': [tf.nn.elu, tf.nn.tanh],
-        'initializer': [tf.contrib.layers.xavier_initializer(),
-                        tf.contrib.layers.variance_scaling_initializer(2)],
+        'initializer': [
+            tf.contrib.layers.xavier_initializer(),
+            tf.contrib.layers.variance_scaling_initializer(2)
+        ],
         'regularizer': [tf.contrib.layers.l2_regularizer(0.01), None],
         'optimizer': [tf.train.AdamOptimizer(1e-4)],
     },
-} # yapf: disable
+}
 
 results = core.percent_split(estimators, datasets, 0.8, nfolds=10)
 print(results)

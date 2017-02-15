@@ -35,11 +35,13 @@ core.setup()
 
 datasets = {
     gaemn15.DataSet: {
-        'path'       : ['./gaemn15.zip'],
-        'years'      : [range(2003,2013)],
-        'x_features' : [('timestamp (int)', 'timestamp (frac)', 'solar radiation'),
-                        ('timestamp (int)', 'timestamp (frac)', 'solar radiation', 'wind speed', 'wind direction'),
-                        ('timestamp (int)', 'timestamp (frac)', 'solar radiation', 'air temp', 'humidity', 'rainfall')],
+        'path': ['./gaemn15.zip'],
+        'years': [range(2003,2013)],
+        'x_features' : [
+            ('timestamp (int)', 'timestamp (frac)', 'solar radiation'),
+            ('timestamp (int)', 'timestamp (frac)', 'solar radiation', 'wind speed', 'wind direction'),
+            ('timestamp (int)', 'timestamp (frac)', 'solar radiation', 'air temp', 'humidity', 'rainfall'),
+        ],
         'y_features' : [('solar radiation (+24)',)],
         'lag'        : [4],
         'scale'      : [standard_scale],
