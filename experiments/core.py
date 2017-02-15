@@ -92,9 +92,7 @@ def percent_split(estimators,
                     train, test = dataset.split(split)
                     fit(estimator, train, desc)
                     scores = score(estimator, test, nfolds, metric)
-                    est_repr = est_class.__name__ + str(est_params)
-                    data_repr = dataset_class.__name__ + str(dataset_params)
-                    results.record(scores, est_repr, data_repr)
+                    results.record(scores, estimator, train)
     return results
 
 
@@ -159,8 +157,10 @@ class Results:
         self.depth = -1
 
     def record(self, scores, *keys):
+        # Convert keys to strings.
+        # This avoids a memory leak:
+        # we don't want to keep references to datasets!
         keys = list(keys)
-        print(keys)
         for i, k in enumerate(keys):
             keys[i] = Results.space.sub(' ', repr(k))
 
@@ -219,7 +219,7 @@ class Results:
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
         for key, scores in trials.items():
-            str += '{:<7.3f} {}\n'.format(np.mean(scores), key)
+            str += '{:<7.3f} {}\n'.format(np.mean(scores), key[0])
             for k in key[1:]:
                 str += ' ' * 8 + '{}\n'.format(k)
             str += '\n'
