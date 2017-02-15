@@ -83,5 +83,5 @@ estimators = {
     RandomForestRegressor: {},
 }
 
-results = core.compare(estimators, datasets, split=0.8)
+results = core.percent_split(estimators, datasets, 0.8)
 print(results)

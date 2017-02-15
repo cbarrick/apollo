@@ -225,5 +225,5 @@ estimators = {
     },
 } # yapf: disable
 
-results = core.compare(estimators, datasets, split=0.8, nfolds=10)
+results = core.percent_split(estimators, datasets, 0.8, nfolds=10)
 print(results)

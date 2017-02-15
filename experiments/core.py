@@ -98,10 +98,6 @@ def percent_split(estimators,
     return results
 
 
-# DEPRECATED
-compare = percent_split
-
-
 def fit(estimator, dataset, desc):
     logger.info('fitting {} to {}'.format(estimator, dataset))
     if hasattr(estimator, 'partial_fit'):
