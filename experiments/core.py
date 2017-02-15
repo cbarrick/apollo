@@ -60,24 +60,20 @@ def cross_site(estimators,
                nfolds=10,
                metric=mean_absolute_error,
                desc=False):
-    results = {}
+    results = Results()
     for dataset_class, datasets_grid in datasets.items():
         for dataset_params in ParameterGrid(datasets_grid):
             for est_class, est_grid in estimators.items():
                 for est_params in ParameterGrid(est_grid):
                     estimator = est_class(**est_params)
                     train = dataset_class(**dataset_params)
-                    train_repr = re.sub('\s+', ' ', train.__repr__())
-                    estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
                     fit(estimator, train, desc)
-                    key = (train_repr, estimator_repr)
-                    results[key] = []
             for dataset_class, datasets_grid in datasets.items():
                 for dataset_params in ParameterGrid(datasets_grid):
                     test = dataset_class(**dataset_params)
                     scores = score(estimator, test, nfolds, metric)
-                    results[key] += scores
-    return Results(results, desc)
+                    results.record(scores, estimator, train, test)
+    return results
 
 
 def percent_split(estimators,
@@ -86,7 +82,7 @@ def percent_split(estimators,
                   nfolds=10,
                   metric=mean_absolute_error,
                   desc=False):
-    results = {}
+    results = Results()
     for dataset_class, datasets_grid in datasets.items():
         for dataset_params in ParameterGrid(datasets_grid):
             for est_class, est_grid in estimators.items():
@@ -96,13 +92,13 @@ def percent_split(estimators,
                     train, test = dataset.split(split)
                     fit(estimator, train, desc)
                     scores = score(estimator, test, nfolds, metric)
-                    train_repr = re.sub('\s+', ' ', train.__repr__())
-                    estimator_repr = re.sub('\s+', ' ', estimator.__repr__())
-                    key = (train_repr, estimator_repr)
-                    results[key] = scores
-    return Results(results, desc)
+                    est_repr = est_class.__name__ + str(est_params)
+                    data_repr = dataset_class.__name__ + str(dataset_params)
+                    results.record(scores, est_repr, data_repr)
+    return results
 
 
+# DEPRECATED
 compare = percent_split
 
 
@@ -158,42 +154,84 @@ def score(estimator, dataset, nfolds, metric):
     return results
 
 
-class Results(OrderedDict):
-    '''Results are the return type of `Experiment.compare`.
+class Results:
+    space = re.compile('\s+')
 
-    The results are given as an ordered dict mapping classifiers to the list
-    of accuracies for each fold of the cross-validation.
+    def __init__(self, desc=False):
+        self.desc = desc
+        self.trials = OrderedDict()
+        self.depth = -1
 
-    The `__str__` method is overridden to provide a pretty report of
-    classifier accuracies, including a t-test.
-    '''
+    def record(self, scores, *keys):
+        keys = list(keys)
+        print(keys)
+        for i, k in enumerate(keys):
+            keys[i] = Results.space.sub(' ', repr(k))
 
-    def __init__(self, results, desc=False):
-        super().__init__(
-            sorted(results.items(), key=lambda i: np.mean(i[1]), reverse=desc))
-
-        logger.info('performing t-test')
-        n = len(results)
-        self.ttest = np.zeros((n, n))
-        for i, a_scores in enumerate(self.values()):
-            for j, b_scores in enumerate(self.values()):
-                if i == j:
-                    continue
-                t, p = sp.stats.ttest_rel(a_scores, b_scores)
-                self.ttest[i, j] = p
+        if self.depth == -1:
+            self.depth = len(keys)
+        elif self.depth != len(keys):
+            raise ValueError("inconsistent number of keys")
+        trials = self.trials
+        for k in keys[:-1]:
+            try:
+                trials = trials[k]
+            except:
+                trials[k] = OrderedDict()
+                trials = trials[k]
+        k = keys[-1]
+        try:
+            trials[k] += scores
+        except:
+            trials[k] = scores
 
     def __str__(self):
+        return self.summary()
+
+    def level(self, lvl):
+        def descend(group, lvl):
+            trials = []
+            for k1, v1 in group.items():
+                if lvl == 1:
+                    trials.append(((k1, ), combine(v1)))
+                else:
+                    lower = descend(v1, lvl - 1)
+                    for k2, v2 in lower:
+                        trials.append((((k1, ) + k2), v2))
+            return trials
+
+        def combine(group):
+            data = []
+            try:
+                for v in group.values():
+                    data += combine(v)
+            except:
+                data += group
+            return data
+
+        data = descend(self.trials, lvl)
+        data = sorted(data, key=lambda i: np.mean(i[1]), reverse=self.desc)
+        return OrderedDict(data)
+
+    def summary(self, lvl=-1):
+        if lvl == -1:
+            lvl = self.depth
+        trials = self.level(lvl)
+        t_mat = ttest(trials)
+
         str = ''
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
-        for key, scores in self.items():
-            str += '{:<7.3f} {}\n'.format(np.mean(scores, key[0]))
-            str += ' ' * 8 + '{}\n\n'.format(key[1])
+        for key, scores in trials.items():
+            str += '{:<7.3f} {}\n'.format(np.mean(scores), key)
+            for k in key[1:]:
+                str += ' ' * 8 + '{}\n'.format(k)
+            str += '\n'
         str += '\n'
 
         str += 't-Test Matrix (p-values)\n'
         str += '------------------------------------------------------------------------\n'
-        for i, row in enumerate(self.ttest):
+        for i, row in enumerate(t_mat):
             for j, p in enumerate(row):
                 if i == j:
                     str += '   --    '
@@ -201,3 +239,15 @@ class Results(OrderedDict):
                     str += '{:8.3%} '.format(p)
             str += '\n'
         return str
+
+
+def ttest(trials):
+    n = len(trials)
+    t_mat = np.zeros((n, n))
+    for i, a_scores in enumerate(trials.values()):
+        for j, b_scores in enumerate(trials.values()):
+            if i == j:
+                continue
+            t, p = sp.stats.ttest_rel(a_scores, b_scores)
+            t_mat[i, j] = p
+    return t_mat
