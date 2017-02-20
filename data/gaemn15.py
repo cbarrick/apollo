@@ -15,13 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class DataSet:
-
-    def __init__(self,
+    def __init__(
+            self,
             path='./gaemn15.zip',
             city='griffin',
-            years=range(2003,2015),
+            years=range(2003, 2015),
             x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'),
-            y_features=('solar radiation (+4)',),
+            y_features=('solar radiation (+4)', ),
             lag=1,
             lead=0,
             scale=None,
@@ -46,15 +46,13 @@ class DataSet:
         # Load raw data from the zip archive. Within the zip, data is split
         # across space-separated files with names like `GRIFFIN.F03`.
         cols = tuple(f.index for f in self.features)
+        fnames = ('FifteenMinuteData/{}.F{:02d}'.format(self.city, y - 2000) for y in self.years)
         if self.path.endswith('.zip'):
             with ZipFile(self.path) as archive:
-                fnames = ('FifteenMinuteData/{}.F{:02d}'.format(self.city, y-2000) for y in self.years)
                 tables = (np.loadtxt(archive.open(f), usecols=cols) for f in fnames)
-                data = np.concatenate(tuple(tables))
         else:
-            fnames = (self.path + '/FifteenMinuteData/{}.F{:02d}'.format(self.city, y-2000) for y in self.years)
-            tables = (np.loadtxt(open(f), usecols=cols) for f in fnames)
-            data = np.concatenate(tuple(tables))
+            tables = (np.loadtxt(open(self.path + f), usecols=cols) for f in fnames)
+        data = np.concatenate(tuple(tables))
 
         # Some columns may be pseudo features, transforms of the raw features.
         # Here we apply the various transforms.
@@ -79,7 +77,7 @@ class DataSet:
             if f.delta:
                 d = np.diff(data[..., i])
                 data[1:, i] = d
-                data[0,  i] = 0
+                data[0, i] = 0
 
         # Discard rows that become invalid due to wrap around.
         min_shift = min(f.shift or 0 for f in self.features)
@@ -98,13 +96,13 @@ class DataSet:
             s = d.shape
             extra = s[0] % self.lag
             if extra > 0: d = d[:-extra]
-            d = d.reshape((s[0]//self.lag, self.lag, s[1]))
+            d = d.reshape((s[0] // self.lag, self.lag, s[1]))
             shards.append(d)
 
         # Apply filtering
         if self.threshold > 0:
             discarded = 0
-            for i,sh in enumerate(shards):
+            for i, sh in enumerate(shards):
                 fsh = np.ndarray(sh.shape)
                 j = 0
                 for instance in sh:
@@ -123,28 +121,28 @@ class DataSet:
         xn = len(self.x_features) * self.lag
         for sh in self._shards:
             sh = np.random.permutation(sh)
-            for i in range(0,len(sh),batch_size):
-                batch = sh[i:i+batch_size]
-                x = batch[..., :self._split].reshape((-1,xn))
-                y = batch[..., self.lag-1, self._split:]
+            for i in range(0, len(sh), batch_size):
+                batch = sh[i:i + batch_size]
+                x = batch[..., :self._split].reshape((-1, xn))
+                y = batch[..., self.lag - 1, self._split:]
                 yield x, y
 
     @property
     def data(self):
         xn = len(self.x_features) * self.lag
-        return self._join_shards()[..., :self._split].reshape((-1,xn))
+        return self._join_shards()[..., :self._split].reshape((-1, xn))
 
     @property
     def target(self):
-        return self._join_shards()[..., self.lag-1, self._split:]
+        return self._join_shards()[..., self.lag - 1, self._split:]
 
     def _join_shards(self):
         n = len(self._shards)
         if n > 1:
             size = sum(len(sh) for sh in self._shards)
-            d = np.ndarray((size,) + self._shards[0].shape[1:])
+            d = np.ndarray((size, ) + self._shards[0].shape[1:])
             for i in range(size):
-                d[i] = self._shards[i%n][i//n]
+                d[i] = self._shards[i % n][i // n]
             self._shards = [d]
         return self._shards[0]
 
@@ -190,49 +188,15 @@ class DataSet:
 class FeatureSpec:
     # Mapping from column index to feature name.
     names = [
-        'id',
-        'year',
-        'day',
-        'time',
-        'timestamp',
-        'air temp',
-        'humidity',
-        'dewpoint',
-        'vapor pressure',
-        'vapor pressure deficit',
-        'barometric pressure',
-        'wind speed',
-        'wind direction',
-        'wind direction stddev',
-        'max wind speed',
-        'time of max wind speed',
-        'soil temp 2cm',
-        'soil temp 5cm',
-        'soil temp 10cm',
-        'soil temp 20cm',
-        'soil temp a',
-        'soil temp b',
-        'soil moisture',
-        'pan',
-        'evap',
-        'water temp',
-        'solar radiation',
-        'total solar radiation',
-        'par',
-        'total par',
-        'net radiation',
-        'total net radiation',
-        'rainfall',
-        'rainfall 2',
-        'max rainfall',
-        'time of max rainfall',
-        'max rainfall 2',
-        'time of max rainfall 2',
-        'leaf wetness',
-        'wetness frequency',
-        'battery voltage',
-        'fuel temp',
-        'fuel moisture'
+        'id', 'year', 'day', 'time', 'timestamp', 'air temp', 'humidity', 'dewpoint',
+        'vapor pressure', 'vapor pressure deficit', 'barometric pressure', 'wind speed',
+        'wind direction', 'wind direction stddev', 'max wind speed', 'time of max wind speed',
+        'soil temp 2cm', 'soil temp 5cm', 'soil temp 10cm', 'soil temp 20cm', 'soil temp a',
+        'soil temp b', 'soil moisture', 'pan', 'evap', 'water temp', 'solar radiation',
+        'total solar radiation', 'par', 'total par', 'net radiation', 'total net radiation',
+        'rainfall', 'rainfall 2', 'max rainfall', 'time of max rainfall', 'max rainfall 2',
+        'time of max rainfall 2', 'leaf wetness', 'wetness frequency', 'battery voltage',
+        'fuel temp', 'fuel moisture'
     ]
 
     spec_fmt = re.compile('([^\(]+)(\((.+)\))?')
