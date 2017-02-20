@@ -4,3 +4,6 @@
 [submodule "pygrib"]
 	path = pygrib
 	url = https://github.com/jswhit/pygrib
+[submodule "basemap"]
+	path = basemap
+	url = https://github.com/matplotlib/basemap
