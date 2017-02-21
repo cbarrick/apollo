@@ -48,11 +48,13 @@ class DataSet:
         cols = tuple(f.index for f in self.features)
         fnames = ('FifteenMinuteData/{}.F{:02d}'.format(self.city, y - 2000) for y in self.years)
         if self.path.endswith('.zip'):
-            with ZipFile(self.path) as archive:
-                tables = (np.loadtxt(archive.open(f), usecols=cols) for f in fnames)
+            archive = ZipFile(self.path)
+            tables = (np.loadtxt(archive.open(f), usecols=cols) for f in fnames)
+            data = np.concatenate(tuple(tables))
+            archive.close()
         else:
             tables = (np.loadtxt(open(self.path + f), usecols=cols) for f in fnames)
-        data = np.concatenate(tuple(tables))
+            data = np.concatenate(tuple(tables))
 
         # Some columns may be pseudo features, transforms of the raw features.
         # Here we apply the various transforms.
