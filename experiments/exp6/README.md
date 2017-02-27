@@ -1,21 +1,20 @@
-#!/usr/bin/env python3
-''' Experiment 12
+# Experiment 6
 
 This experiment tests the neural net models on 24hr predictions using 24hr lag.
-Many combinations of hyper parameters were compared. The results inicate that
-MLP networks performe significantly better than the MC-DNN (1D convoltional)
+Many combinations of hyper parameters were compared. The results indicate that
+MLP networks perform significantly better than the MC-DNN (1D convolutional)
 networks. The results also indicate that elu activation performs significantly
 better than tanh activation.
 
 Comparing initializers is fruitless here because xavier_initializer is a wrapper
-around variance_scaling_initializer, and the output of this experiemnt only
+around variance_scaling_initializer, and the output of this experiment only
 distinguishes the initializers by memory location without giving the parameters.
 
 The top two are not significantly different in results, but differ both in
 initializer and regularizer. Perhaps the architecture and activation are more
 important than the initializer and regularizer.
 
-Results:
+### Results:
 ```
 METRIC  TRIAL
 ------------------------------------------------------------------------
@@ -183,51 +182,3 @@ t-Test Matrix (p-values)
   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   2.773%    --      1.609%
   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.883%   1.609%    --
 ```
-'''
-
-import tensorflow as tf
-
-from sklearn.preprocessing import scale as standard_scale
-
-from data import gaemn15
-from experiments import core
-from models.nn import ConvRegressor, MLPRegressor
-
-core.setup()
-
-datasets = {
-    gaemn15.DataSet: {
-        'path'       : ['./gaemn15.zip'],
-        'years'      : [range(2003,2013)],
-        'x_features' : [('day', 'time', 'solar radiation')],
-        'y_features' : [('solar radiation (+96)',)],
-        'lag'        : [96],
-        'scale'      : [standard_scale],
-    },
-} # yapf: disable
-
-estimators = {
-    ConvRegressor: [{
-        'lag': [96],
-        'activation': [tf.nn.elu, tf.nn.tanh],
-        'initializer': [
-            tf.contrib.layers.xavier_initializer(),
-            tf.contrib.layers.variance_scaling_initializer(2)
-        ],
-        'regularizer': [tf.contrib.layers.l2_regularizer(0.01), None],
-        'optimizer': [tf.train.AdamOptimizer(1e-4)],
-    }],
-    MLPRegressor: {
-        'layers': [(32, ), (64, ), (128, ), (64, 32)],
-        'activation': [tf.nn.elu, tf.nn.tanh],
-        'initializer': [
-            tf.contrib.layers.xavier_initializer(),
-            tf.contrib.layers.variance_scaling_initializer(2)
-        ],
-        'regularizer': [tf.contrib.layers.l2_regularizer(0.01), None],
-        'optimizer': [tf.train.AdamOptimizer(1e-4)],
-    },
-}
-
-results = core.percent_split(estimators, datasets, 0.8, nfolds=10)
-print(results)

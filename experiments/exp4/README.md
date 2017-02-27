@@ -1,18 +1,19 @@
-#!/usr/bin/env python3
-''' Experiment 7: The Kitchen Sink, pt. 1
+# Experiment 4
 
-In this experiment, we throw most of the regression algorithms supplied by
-Scikit at our basic dataset. We don't include neural nets since they take so
-long train, and we don't include some of the hybrid linear models because we
-only want to compare the basic components for now.
+This experiment attempts to find the best models out of those supplied by Scikit-learn and XGBoost.
 
-Some of the regressors were crashing on me. Probably due to out-of-memory
-errors. Those have been commented out.
+- Part 1 runs all of the algorithms on a 1hr prediction test.
+- Part 2 takes the top 5 and runs them on a 6hr prediction test.
+- Part 3 takes the top 5 and runs them on a 24hr prediction test.
 
-The results indicate that Extra Trees is an improvement over Random Forest that
-I have been using. Bagging also did alright, but worse than Random Forest.
 
-Results:
+## Part 1
+
+In this experiment, I throw all of the candidate algorithms supplied at a 1hr prediction test.
+
+The results indicate that Extra Trees is an improvement over Random Forest that I have been using. Bagging also did alright, but worse than Random Forest.
+
+### Results:
 ```
 METRIC  TRIAL
 ------------------------------------------------------------------------
@@ -84,51 +85,71 @@ t-Test Matrix (p-values)
   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%  18.143%    --      1.469%
   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%   1.469%    --
 ```
-'''
 
-from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, \
-    ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
-from sklearn.linear_model import BayesianRidge, ElasticNet, HuberRegressor, \
-    Lars, Lasso, LinearRegression, OrthogonalMatchingPursuit, \
-    PassiveAggressiveRegressor, RANSACRegressor, TheilSenRegressor
-from xgboost import XGBRegressor
 
-from sklearn.preprocessing import scale as standard_scale
+## Part 2
 
-from experiments import core
-from data import gaemn15
+I took the top 5 algorithms from part 1 and ran them on 6hr windows.
 
-core.setup()
+### Results:
+```
+METRIC  TRIAL
+------------------------------------------------------------------------
+62.299  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+24)',), lag=4)
+        RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-datasets = {
-    gaemn15.DataSet: {
-        'path': ['./gaemn15.zip'],
-        'years': [range(2003, 2013)],
-        'x_features': [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation')],
-        'y_features': [('solar radiation (+4)', )],
-        'lag': [4],
-        'scale': [standard_scale],
-    },
-}  # yapf: disable
+62.363  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+24)',), lag=4)
+        BaggingRegressor(base_estimator=None, bootstrap=True, bootstrap_features=False, max_features=1.0, max_samples=1.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-estimators = {
-    AdaBoostRegressor: {},
-    BaggingRegressor: {},
-    ExtraTreesRegressor: {},
-    GradientBoostingRegressor: {},
-    RandomForestRegressor: {},
-    BayesianRidge: {},
-    ElasticNet: {},
-    HuberRegressor: {},
-    Lars: {},
-    Lasso: {},
-    LinearRegression: {},
-    OrthogonalMatchingPursuit: {},
-    PassiveAggressiveRegressor: {},
-    RANSACRegressor: {},
-    TheilSenRegressor: {},
-    XGBRegressor: {},
-}
+62.657  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+24)',), lag=4)
+        ExtraTreesRegressor(bootstrap=False, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
 
-results = core.percent_split(estimators, datasets, 0.8, nfolds=10)
-print(results)
+67.345  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+24)',), lag=4)
+        GradientBoostingRegressor(alpha=0.9, criterion='friedman_mse', init=None, learning_rate=0.1, loss='ls', max_depth=3, max_features=None, max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=100, presort='auto', random_state=None, subsample=1.0, verbose=0, warm_start=False)
+
+67.345  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation'), y_features=('solar radiation (+24)',), lag=4)
+        XGBRegressor(base_score=0.5, colsample_bylevel=1, colsample_bytree=1, gamma=0, learning_rate=0.1, max_delta_step=0, max_depth=3, min_child_weight=1, missing=None, n_estimators=100, nthread=-1, objective='reg:linear', reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=0, silent=True, subsample=1)
+
+
+t-Test Matrix (p-values)
+------------------------------------------------------------------------
+   --     82.412%  28.905%   0.039%   0.039%
+ 82.412%    --     37.252%   0.047%   0.047%
+ 28.905%  37.252%    --      0.050%   0.050%
+  0.039%   0.047%   0.050%    --     11.238%
+  0.039%   0.047%   0.050%  11.238%    --
+```
+
+
+## Part 3
+
+Like part 2, but with 1 day predictions and only using solar radiation as an input feature.
+
+### Results:
+```
+METRIC  TRIAL
+------------------------------------------------------------------------
+67.258  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+96)',), lag=4)
+        GradientBoostingRegressor(alpha=0.9, criterion='friedman_mse', init=None, learning_rate=0.1, loss='ls', max_depth=3, max_features=None, max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=100, presort='auto', random_state=None, subsample=1.0, verbose=0, warm_start=False)
+
+67.366  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+96)',), lag=4)
+        XGBRegressor(base_score=0.5, colsample_bylevel=1, colsample_bytree=1, gamma=0, learning_rate=0.1, max_delta_step=0, max_depth=3, min_child_weight=1, missing=None, n_estimators=100, nthread=-1, objective='reg:linear', reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=0, silent=True, subsample=1)
+
+68.305  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+96)',), lag=4)
+        RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+
+68.826  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+96)',), lag=4)
+        BaggingRegressor(base_estimator=None, bootstrap=True, bootstrap_features=False, max_features=1.0, max_samples=1.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+
+69.226  DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+96)',), lag=4)
+        ExtraTreesRegressor(bootstrap=False, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+
+
+t-Test Matrix (p-values)
+------------------------------------------------------------------------
+   --     12.242%  22.747%   8.453%   3.546%
+ 12.242%    --     26.692%   9.811%   3.945%
+ 22.747%  26.692%    --      0.486%   2.849%
+  8.453%   9.811%   0.486%    --     20.409%
+  3.546%   3.945%   2.849%  20.409%    --
+```

@@ -1,32 +1,21 @@
-#!/usr/bin/env python3
-''' Experiment 2
+# Experiment 2
 
-This experiment is designed to test the various timestamp features of the
-dataset. We have the following features:
+This experiment is designed to test the various timestamp features of the dataset. We have the following features:
 
-- 'day' gives the day of the year, between 1 and 366.
-- 'time' gives the time of day like 145 for 1:45AM and 200 for 2:00AM.
-- 'timestamp' gives a floating point timestamp. The integer part is the day of
+- `day` gives the day of the year, between 1 and 366.
+- `time` gives the time of day like 145 for 1:45AM and 200 for 2:00AM.
+- `timestamp` gives a floating point timestamp. The integer part is the day of
   the year and the fractional part is the time of day.
 
-The problem with 'time' is that the value increases by 15 within the hour, e.g.
-from 100 (1:00AM) to 115 (1:15AM), and by 55 between hours, e.g. 145 (1:45AM) to
-200 (2:00AM). The problem with 'timestamp' is that it combines two periodic
-signals, the day of year and time of day. Ideally, we'd like separate uniform
-signals for day of year and time of day.
+The problem with `time` is that the value increases by 15 within the hour, e.g. from 100 (1:00AM) to 115 (1:15AM), and by 55 between hours, e.g. 145 (1:45AM) to 200 (2:00AM). The problem with `timestamp` is that it combines two periodic signals, the day of year and time of day. Ideally, we'd like separate uniform signals for day of year and time of day.
 
-This experiment uses Random Forest to compare the use of the features 'day' and
-'time' together vs. 'timestamp' alone vs. 'day' and 'timestamp' together vs. a
-realization of the ideal signals.
+This experiment uses Random Forest to compare the use of the features `day` and `time` together vs. `timestamp` alone vs. `day` and `timestamp` together vs. a realization of the ideal signals.
 
-The results show that the ideal signal is almost significatly better than using
-'day' and 'time' together, which is better than using 'timestamp' alone or 'day'
-and 'timestamp' together.
+The results show that the ideal signal is almost significatly better than using `day` and `time` together, which is better than using `timestamp` alone or `day` and `timestamp` together.
 
-This experiment applies to Random Forest. My gut tells me that neural nets may
-prefer the ideal signal more heavily.
+This experiment applies to Random Forest. My gut tells me that neural nets may prefer the ideal signal more heavily.
 
-Results:
+### Results:
 ```
 METRIC  TRIAL
 ------------------------------------------------------------------------
@@ -49,33 +38,3 @@ t-Test Matrix (p-values)
   0.000%   0.000%    --     36.613%
   0.000%   0.000%  36.613%    --
 ```
-'''
-
-from sklearn.ensemble import RandomForestRegressor
-
-from experiments import core
-from data import gaemn15
-
-core.setup()
-
-datasets = {
-    gaemn15.DataSet: {
-        'path': ['./gaemn15.zip'],
-        'years': [range(2003,2013)],
-        'x_features': [
-            ('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-            ('day', 'timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-            ('timestamp', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-            ('timestamp (int)', 'timestamp (frac)', 'air temp', 'humidity', 'rainfall', 'solar radiation', 'air temp (delta)', 'humidity (delta)', 'rainfall (delta)', 'solar radiation (delta)'),
-        ],
-        'y_features' : [('solar radiation (+4)',)],
-        'lag'        : [4],
-    },
-} # yapf: disable
-
-estimators = {
-    RandomForestRegressor: {},
-}
-
-results = core.percent_split(estimators, datasets, 0.8)
-print(results)

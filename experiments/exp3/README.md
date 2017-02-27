@@ -1,12 +1,10 @@
-#!/usr/bin/env python3
-''' Experiment 6
+# Experiment 3
 
-This experiment compares different scaling schemes under a random forest
-regrssion. The result is that no kind of scaling has a significant effect.
+This experiment compares different scaling schemes under a random forest regression. The result is that no kind of scaling has a significant effect.
 
 The results are likely different for neural nets.
 
-Results:
+### Results:
 ```
 METRIC  TRIAL
 ------------------------------------------------------------------------
@@ -30,40 +28,3 @@ t-Test Matrix (p-values)
  49.600%  67.331%    --     23.230%
  10.503%  10.099%  23.230%    --
 ```
-'''
-
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-
-from experiments import core
-from data import gaemn15
-
-core.setup()
-
-datasets = {
-    gaemn15.DataSet: {
-        'path': ['./gaemn15.zip'],
-        'years': [range(2003, 2013)],
-        'x_features': [('day', 'time', 'air temp', 'humidity', 'rainfall', 'solar radiation')],
-        'y_features': [('solar radiation (+4)', )],
-        'lag': [4],
-    },
-} # yapf: disable
-
-estimators = {
-    Pipeline: {
-        'steps': [
-            [('predict', RandomForestRegressor())],
-            [('stdandardize', StandardScaler()),
-             ('predict', RandomForestRegressor())],
-            [('min_max_scale', MinMaxScaler()),
-             ('predict', RandomForestRegressor())],
-            [('max_abs_scale', MaxAbsScaler()),
-             ('predict', RandomForestRegressor())],
-        ],
-    },
-}
-
-results = core.percent_split(estimators, datasets, 0.8, nfolds=10)
-print(results)
