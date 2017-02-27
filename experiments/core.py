@@ -164,68 +164,29 @@ class Results:
 
     def __init__(self, desc=False):
         self.desc = desc
-        self.trials = OrderedDict()
-        self.depth = -1
+        self._trials = {}
+        self.nkeys = -1
+
+    def __str__(self):
+        return self.summary()
 
     def record(self, scores, *keys):
         # Convert keys to strings.
         # This avoids a memory leak:
         # we don't want to keep references to datasets!
-        keys = list(keys)
-        for i, k in enumerate(keys):
-            keys[i] = Results.space.sub(' ', repr(k))
+        keys = tuple(Results.space.sub(' ', str(k)) for k in keys)
+        l = self._trials.setdefault(keys, [])
+        l += scores
 
-        if self.depth == -1:
-            self.depth = len(keys)
-        elif self.depth != len(keys):
-            raise ValueError("inconsistent number of keys")
-        trials = self.trials
-        for k in keys[:-1]:
-            try:
-                trials = trials[k]
-            except:
-                trials[k] = OrderedDict()
-                trials = trials[k]
-        k = keys[-1]
-        try:
-            trials[k] += scores
-        except:
-            trials[k] = scores
+    def trials(self, level=None):
+        flat = {}
+        for k, v in self._trials.items():
+            l = flat.setdefault(k[:level], [])
+            l += v
+        return flat
 
-    def __str__(self):
-        return self.summary()
-
-    def level(self, lvl):
-        def descend(group, lvl):
-            trials = []
-            for k1, v1 in group.items():
-                if lvl == 1:
-                    trials.append(((k1, ), combine(v1)))
-                else:
-                    lower = descend(v1, lvl - 1)
-                    for k2, v2 in lower:
-                        trials.append((((k1, ) + k2), v2))
-            return trials
-
-        def combine(group):
-            data = []
-            try:
-                for v in group.values():
-                    data += combine(v)
-            except:
-                data += group
-            return data
-
-        data = descend(self.trials, lvl)
-        data = sorted(data, key=lambda i: np.mean(i[1]), reverse=self.desc)
-        return OrderedDict(data)
-
-    def summary(self, lvl=-1):
-        if lvl == -1:
-            lvl = self.depth
-        trials = self.level(lvl)
-        t_mat = ttest(trials)
-
+    def summary(self, level=None):
+        trials = self.trials(level)
         str = ''
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
@@ -235,26 +196,16 @@ class Results:
                 str += ' ' * 8 + '{}\n'.format(k)
             str += '\n'
         str += '\n'
-
-        str += 't-Test Matrix (p-values)\n'
-        str += '------------------------------------------------------------------------\n'
-        for i, row in enumerate(t_mat):
-            for j, p in enumerate(row):
-                if i == j:
-                    str += '   --    '
-                else:
-                    str += '{:8.3%} '.format(p)
-            str += '\n'
         return str
 
-
-def ttest(trials):
-    n = len(trials)
-    t_mat = np.zeros((n, n))
-    for i, a_scores in enumerate(trials.values()):
-        for j, b_scores in enumerate(trials.values()):
-            if i == j:
-                continue
-            t, p = sp.stats.ttest_rel(a_scores, b_scores)
-            t_mat[i, j] = p
-    return t_mat
+    def ttest(self, level=None):
+        trials = self.trials(level)
+        n = len(trials)
+        t_mat = np.zeros((n, n))
+        for i, a_scores in enumerate(trials.values()):
+            for j, b_scores in enumerate(trials.values()):
+                if i == j:
+                    continue
+                t, p = sp.stats.ttest_rel(a_scores, b_scores)
+                t_mat[i, j] = p
+        return t_mat
