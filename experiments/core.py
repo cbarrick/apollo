@@ -27,16 +27,8 @@ def setup():
     import argparse
 
     parser = argparse.ArgumentParser(description='Perform the experiment')
-    parser.add_argument(
-        '--log',
-        default='WARNING',
-        type=str,
-        help='the level of logging details')
-    parser.add_argument(
-        '--seed',
-        default=1337,
-        type=int,
-        help='the random seed of the experiment')
+    parser.add_argument('--log', default='WARNING', type=str, help='the level of logging details')
+    parser.add_argument('--seed', default=1337, type=int, help='the random seed of the experiment')
     args = parser.parse_args()
 
     numeric_level = getattr(logging, args.log.upper(), None)
@@ -55,44 +47,69 @@ def setup():
     signal.signal(signal.SIGINT, sigint_handler)
 
 
-def cross_site(estimators,
-               datasets,
-               nfolds=10,
-               metric=mean_absolute_error,
-               desc=False):
+def percent_split(
+        estimators,
+        datasets,
+        split=0.8,
+        nfolds=10,
+        metric=mean_absolute_error,
+        desc=False,
+):
     results = Results()
     for dataset_class, datasets_grid in datasets.items():
         for dataset_params in ParameterGrid(datasets_grid):
             for est_class, est_grid in estimators.items():
                 for est_params in ParameterGrid(est_grid):
                     estimator = est_class(**est_params)
-                    train = dataset_class(**dataset_params)
+                    train, test = dataset_class(**dataset_params).split(split)
+                    fit(estimator, train, desc)
+                    scores = score(estimator, test, nfolds, metric)
+                    results.record(scores, estimator, train)
+    return results
+
+
+def cross_site_percent_split(
+        estimators,
+        datasets,
+        split=0.8,
+        nfolds=10,
+        metric=mean_absolute_error,
+        desc=False,
+):
+    results = Results()
+    for dataset_class, datasets_grid in datasets.items():
+        for dataset_params in ParameterGrid(datasets_grid):
+            for est_class, est_grid in estimators.items():
+                for est_params in ParameterGrid(est_grid):
+                    estimator = est_class(**est_params)
+                    train, _ = dataset_class(**dataset_params).split(split)
                     fit(estimator, train, desc)
             for dataset_class, datasets_grid in datasets.items():
                 for dataset_params in ParameterGrid(datasets_grid):
-                    test = dataset_class(**dataset_params)
+                    _, test = dataset_class(**dataset_params).split(split)
                     scores = score(estimator, test, nfolds, metric)
                     results.record(scores, estimator, train, test)
     return results
 
 
-def percent_split(estimators,
-                  datasets,
-                  split=0.8,
-                  nfolds=10,
-                  metric=mean_absolute_error,
-                  desc=False):
+def train_test(
+        estimators,
+        train_set,
+        test_sets,
+        nfolds=10,
+        metric=mean_absolute_error,
+        desc=False,
+):
     results = Results()
-    for dataset_class, datasets_grid in datasets.items():
-        for dataset_params in ParameterGrid(datasets_grid):
-            for est_class, est_grid in estimators.items():
-                for est_params in ParameterGrid(est_grid):
-                    estimator = est_class(**est_params)
-                    dataset = dataset_class(**dataset_params)
-                    train, test = dataset.split(split)
-                    fit(estimator, train, desc)
+    for est_class, est_grid in estimators.items():
+        for est_params in ParameterGrid(est_grid):
+            estimator = est_class(**est_params)
+            fit(estimator, train_set, desc)
+            for dataset_class, datasets_grid in test_sets.items():
+                for dataset_params in ParameterGrid(datasets_grid):
+                    test = dataset_class(**dataset_params)
                     scores = score(estimator, test, nfolds, metric)
-                    results.record(scores, estimator, train)
+                    results.record(scores, estimator, test.city)
     return results
 
 
@@ -108,13 +125,7 @@ def bgd(estimator, train):
     estimator.fit(train.data, train.target)
 
 
-def sgd(estimator,
-        train,
-        desc,
-        val_split=0.9,
-        max_epochs=1000,
-        patience=20,
-        batch_size=32):
+def sgd(estimator, train, desc, val_split=0.9, max_epochs=1000, patience=20, batch_size=32):
     train, val = train.split(val_split)
     t = patience
     best = math.inf if not desc else -math.inf
