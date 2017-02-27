@@ -17,7 +17,7 @@ datasets = {
         'y_features': [('solar radiation (+4)', )],
         'lag': [4],
     },
-} # yapf: disable
+}
 
 estimators = {
     Pipeline: {
