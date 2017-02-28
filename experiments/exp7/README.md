@@ -10,3 +10,13 @@ The map also helps identify outliers. In particular, the Dunwoody predictions ha
 
 ### Results:
 ![figure 1](./figure1.png)
+
+
+## Part 2
+
+I repeated the experiment without the cities `ALPHARET`, `CALHOUN`, `DEARING`, `DUNWOODY`, `SKIDAWAY`, and `WANSLEY`.
+
+There is still a notable outlier in the south-west.
+
+### Results:
+![figure 2](./figure2.png)
