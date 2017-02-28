@@ -183,10 +183,12 @@ class Results:
         for k, v in self._trials.items():
             l = flat.setdefault(k[:level], [])
             l += v
+        flat = OrderedDict(sorted(flat.items(), key=lambda i: np.mean(i[1])))
         return flat
 
     def summary(self, level=None):
         trials = self.trials(level)
+        ttest = self._ttest(trials)
         str = ''
         str += 'METRIC  TRIAL\n'
         str += '------------------------------------------------------------------------\n'
@@ -196,10 +198,22 @@ class Results:
                 str += ' ' * 8 + '{}\n'.format(k)
             str += '\n'
         str += '\n'
+        str += 't-Test Matrix (p-values)\n'
+        str += '------------------------------------------------------------------------\n'
+        for i, row in enumerate(ttest):
+            for j, val in enumerate(row):
+                if i == j:
+                    str += '   --    '
+                else:
+                    str += '{:8.3%} '.format(val)
+            str += '\n'
         return str
 
     def ttest(self, level=None):
         trials = self.trials(level)
+        return _ttest(trials)
+
+    def _ttest(self, trials):
         n = len(trials)
         t_mat = np.zeros((n, n))
         for i, a_scores in enumerate(trials.values()):
