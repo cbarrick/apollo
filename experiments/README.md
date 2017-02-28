@@ -11,3 +11,4 @@ This directory contains code and notes for experiments on solar radiation predic
 - `exp5` - feature selection.
 - `exp6` - neural networks.
 - `exp7` - cross site evaluation.
+- `exp8` - hyper-parameter tuning.
