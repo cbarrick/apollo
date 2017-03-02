@@ -173,3 +173,39 @@ t-Test Matrix (p-values)
   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%    --      0.000%
   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%   0.000%    --    
   ```
+
+
+## Part 4
+
+In part 3, the results got better as the number of trees increased. This experiment sought to find the optimal number of trees.
+
+The results are confusing. The accuracy still continues to increase with the number of trees, except 750 trees jumps ahead. The significance numbers are not very convincing though. But I'll stick with 750 being the best for Extremely Randomized Trees.
+
+### Results:
+```
+METRIC  TRIAL
+------------------------------------------------------------------------
+36.072  ExtraTreesRegressor(bootstrap=False, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=750, n_jobs=-1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+        DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+4)',), lag=24)
+
+36.078  ExtraTreesRegressor(bootstrap=False, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=2000, n_jobs=-1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+        DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+4)',), lag=24)
+
+36.092  ExtraTreesRegressor(bootstrap=False, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=1500, n_jobs=-1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+        DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+4)',), lag=24)
+
+36.109  ExtraTreesRegressor(bootstrap=False, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=1000, n_jobs=-1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+        DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+4)',), lag=24)
+
+36.121  ExtraTreesRegressor(bootstrap=False, criterion='mse', max_depth=None, max_features='auto', max_leaf_nodes=None, min_impurity_split=1e-07, min_samples_leaf=1, min_samples_split=2, min_weight_fraction_leaf=0.0, n_estimators=500, n_jobs=-1, oob_score=False, random_state=None, verbose=0, warm_start=False)
+        DataSet(path='./gaemn15.zip', city='GRIFFIN', years=(2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012), x_features=('timestamp (int)', 'timestamp (frac)', 'solar radiation'), y_features=('solar radiation (+4)',), lag=24)
+
+
+t-Test Matrix (p-values)
+------------------------------------------------------------------------
+   --     61.349%   2.469%   1.266%   0.723%
+ 61.349%    --     14.030%   3.119%   0.894%
+  2.469%  14.030%    --     16.186%   2.460%
+  1.266%   3.119%  16.186%    --     57.393%
+  0.723%   0.894%   2.460%  57.393%    --    
+```
