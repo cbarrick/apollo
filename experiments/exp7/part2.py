@@ -9,8 +9,9 @@ from sklearn.preprocessing import scale as standard_scale
 
 from data import gaemn15
 from experiments import core, map
-from experiments.map import GeorgiaMap
 from models.nn import ConvRegressor, MLPRegressor
+
+from experiments.exp7.map import GeorgiaMap
 
 core.setup()
 
