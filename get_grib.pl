@@ -155,13 +155,13 @@ if( $LEVS =~ m/ALL/ig ) { $LEVS = "."; }
 else { $LEVS = ":($LEVS)" ; }
 
 $URL =~ s/\$YYYY/$YYYY/g;
-$URL =~ s/\${YYYY}/$YYYY/g;
+$URL =~ s/\$\{YYYY\}/$YYYY/g;
 $URL =~ s/\$MM/$MM/g;
-$URL =~ s/\${MM}/$MM/g;
+$URL =~ s/\$\{MM\}/$MM/g;
 $URL =~ s/\$DD/$DD/g;
-$URL =~ s/\${DD}/$DD/g;
+$URL =~ s/\$\{DD\}/$DD/g;
 $URL =~ s/\$HH/$HH/g;
-$URL =~ s/\${HH}/$HH/g;
+$URL =~ s/\$\{HH\}/$HH/g;
 
 $output = '';
 
@@ -172,9 +172,9 @@ while ($fhr <= $hr1) {
    if ($fhr <= 99) { $fhr3="0$fhr"; }
    $url = $URL;
    $url =~ s/\$FHR3/$fhr3/g;
-   $url =~ s/\${FHR3}/$fhr3/g;
+   $url =~ s/\$\{FHR3\}/$fhr3/g;
    $url =~ s/\$FHR/$fhr/g;
-   $url =~ s/\${FHR}/$fhr/g;
+   $url =~ s/\$\{FHR\}/$fhr/g;
    $file = $url;
    $file =~ s/^.*\///;
 
