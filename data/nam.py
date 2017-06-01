@@ -566,22 +566,24 @@ if __name__ == '__main__':
     import argparse
     import logging
 
+    now = datetime.now(timezone.utc)
+
     parser = argparse.ArgumentParser(description='Download and preprocess the NAM-NMM dataset.')
     parser.add_argument('--log', type=str, help='Set the log level')
-    parser.add_argument('--ref', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='Set the reference time')
-    parser.add_argument('dir', nargs='?', default='.', type=str, help='Base directory for downloads')
+    parser.add_argument('--start', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The first reference time')
+    parser.add_argument('--stop', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The last reference time')
+    parser.add_argument('dir', nargs='?', type=str, help='Base directory for downloads')
     args = parser.parse_args()
 
     log_level = args.log or 'INFO'
     logging.basicConfig(level=log_level, format='{message}', style='{')
 
-    now = datetime.now(timezone.utc)
-    ref_time = args.ref.astimezone(timezone.utc)
-    one_hour = timedelta(hours=1)
+    data_dir = args.dir or '.'
 
-    data_dir = args.dir
+    start = args.start.replace(tzinfo=timezone.utc) if args.start else now
+    stop = args.stop.replace(tzinfo=timezone.utc) if args.stop else now
+    delta = timedelta(hours=6)
 
-    print(ref_time, now, ref_time < now)
-
-    while ref_time < now:
-        load(ref_time, data_dir=data_dir)
+    while start <= stop:
+        load(start, data_dir=data_dir)
+        start += delta
