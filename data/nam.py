@@ -380,7 +380,7 @@ class NAMLoader:
         if not url_fmt:
             days_delta = (now - ref_time).days
             if days_delta > 7:
-                if ref_time <= datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
+                if ref_time < datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
                     url_fmt = ARCHIVE_URL
                 else:
                     url_fmt = ARCHIVE_URL2
