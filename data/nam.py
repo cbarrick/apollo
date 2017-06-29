@@ -722,7 +722,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     log_level = args.log or 'INFO'
-    logging.basicConfig(level=log_level, format='{message}', style='{')
+    logging.basicConfig(level=log_level, format='[{asctime}] {levelname}: {message}', style='{')
 
     data_dir = args.dir or '.'
 
