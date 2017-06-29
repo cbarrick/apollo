@@ -472,8 +472,11 @@ class NAMLoader:
 
             # Attempt download.
             # In case of error, retry with exponential backoff.
-            # Give up after 10 tries (~35 minutes).
-            max_tries = 10
+            # Total time increases with max_tries:
+            #    8 tries  =   8.5   minutes
+            #    9 tries  =  17.033 minutes
+            #   10 tries  =  34.1   minutes
+            max_tries = 8
             timeout = 10  # the servers are kinda slow
             for i in range(max_tries):
                 try:
