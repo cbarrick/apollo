@@ -69,7 +69,8 @@ logger = getLogger(__name__)
 # PROD_URL typically has the most recent 7 days.
 # ARCHIVE_URL typically has the most recent 11 months, about 1 week behind.
 PROD_URL = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/nam/prod/nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2'
-ARCHIVE_URL = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb2'
+ARCHIVE_URL = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb'
+ARCHIVE_URL2 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb2'
 
 # The default file name formats for local grib and cdf datasets.
 LOCAL_GRIB_FMT = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2'
@@ -379,7 +380,10 @@ class NAMLoader:
         if not url_fmt:
             days_delta = (now - ref_time).days
             if days_delta > 7:
-                url_fmt = ARCHIVE_URL
+                if ref_time <= datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
+                    url_fmt = ARCHIVE_URL
+                else:
+                    url_fmt = ARCHIVE_URL2
             else:
                 url_fmt = PROD_URL
 
