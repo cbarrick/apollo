@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''A NAM dataset loader.
 
 > The North American Mesoscale Forecast System (NAM) is one of the
