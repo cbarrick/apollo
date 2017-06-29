@@ -741,5 +741,8 @@ if __name__ == '__main__':
         start = stop
 
     while start <= stop:
-        load(start, data_dir=data_dir)
+        try:
+            load(start, data_dir=data_dir)
+        except IOError:
+            logger.warn('Could not load dataset from {}'.format(start))
         start += delta
