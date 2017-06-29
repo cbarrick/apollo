@@ -487,10 +487,10 @@ class NAMLoader:
                 except IOError as err:
                     # IOError includes both system and HTTP errors.
                     path.unlink()
-                    logger.info(err)
+                    logger.warn(err)
                     if i != max_tries - 1:
                         delay = 2**i
-                        logger.info('Download failed, retrying in {}s'.format(delay))
+                        logger.warn('Download failed, retrying in {}s'.format(delay))
                         sleep(delay)
                     else:
                         logger.error('Download failed, giving up')
