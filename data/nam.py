@@ -348,7 +348,7 @@ class NAMLoader:
             center=(32.8, -83.6),
             apo=50,
             url_fmt=None,
-            local_grib_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2',
+            local_grib_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib',
             local_cdf_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys.tm00.nc'):
         '''Creates a loader for NAM data.
 
@@ -541,7 +541,10 @@ class NAMLoader:
             # Try to get a good layer name
             layer_type = g.typeOfLevel
             if layer_type == 'unknown':
-                layer_type = 'z' + str(g.typeOfFirstFixedSurface)
+                try:
+                    layer_type = 'z' + str(g.typeOfFirstFixedSurface)
+                except:
+                    layer_type = 'z' + str(g.indicatorOfTypeOfLevel)
 
             # Try to make a good variable name
             name = '_'.join([g.shortName, layer_type])
@@ -551,7 +554,19 @@ class NAMLoader:
             ref_time = np.datetime64(ref_time)
 
             # Get the forecast time as an offset from the reference time.
-            forecast = np.timedelta64(g.forecastTime, 'h')
+            try:
+                forecast = np.timedelta64(g.forecastTime, 'h')
+            except:
+                forecast = np.timedelta64(g.dataTime, 'h')
+
+            # Get the units of the layer
+            try:
+                layer_units = g.unitsOfFirstFixedSurface
+            except:
+                layer_units = g.pressureUnits
+
+            # Get the value of the z-axis
+            level = g.level
 
             # Get the lats, lons
             # and x, y coordinates
@@ -607,8 +622,8 @@ class NAMLoader:
                     # # units and calendar are handled automatically by xarray
                     # 'units': 'seconds',
                 }),
-                layer_type: (layer_type, [g.level], {
-                    'units': g.unitsOfFirstFixedSurface,
+                layer_type: (layer_type, [level], {
+                    'units': layer_units,
                     'axis': 'Z',
                 }),
                 'y': ('y', y, {
@@ -720,6 +735,7 @@ if __name__ == '__main__':
     parser.add_argument('--stop', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The last reference time')
     parser.add_argument('--start', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The first reference time')
     parser.add_argument('--fail-fast', action='store_true', help='Do not retry downloads')
+    parser.add_argument('--keep-gribs', action='store_true', help='Do not delete grib files')
     parser.add_argument('-n', type=int, help='The number of most recent releases to process.')
     parser.add_argument('dir', nargs='?', type=str, help='Base directory for downloads')
     args = parser.parse_args()
@@ -740,11 +756,13 @@ if __name__ == '__main__':
         start = stop
 
     fail_fast = args.fail_fast
+    keep_gribs = args.keep_gribs
 
     while start <= stop:
         try:
-            load(start, data_dir=data_dir, fail_fast=fail_fast)
+            load(start, data_dir=data_dir, fail_fast=fail_fast, keep_gribs=keep_gribs)
         except Exception as e:
+            raise e
             logger.error(e)
             logger.error('Could not load data from {}'.format(start))
         start += delta
