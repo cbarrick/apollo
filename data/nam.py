@@ -457,9 +457,11 @@ class NAMLoader:
         # TODO: verify that the data matches the requested feature/geo subsets
         if self.local_cdf.exists() and not force_download:
             data = xr.open_dataset(str(self.local_cdf))
-        else:
-            self.download(force=force_download, fail_fast=fail_fast)
-            data = self.read_gribs()
+            return data
+
+        # Download and process gribs
+        self.download(force=force_download, fail_fast=fail_fast)
+        data = self.read_gribs()
 
         # Save as netCDF.
         if save_netcdf:
