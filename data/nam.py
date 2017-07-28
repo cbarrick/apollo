@@ -674,7 +674,7 @@ class NAMLoader:
         Returns (slice, slice):
             A pair of slices characterizing the subset.
         '''
-        if not self._geo:
+        if not hasattr(self, '_geo'):
             # Get lats and lons from the first variable of the first grib.
             paths = tuple(self.local_gribs)
             first_file = str(paths[0])
