@@ -181,7 +181,12 @@ FEATURES = {
 }
 
 
-def load(ref_time=None, data_dir='.', url_fmt=None, save_netcdf=True, keep_gribs=False):
+def load(ref_time=None,
+        data_dir='.',
+        url_fmt=None,
+        save_netcdf=True,
+        keep_gribs=False,
+        fail_fast=False):
     '''Load a NAM-NMM dataset for the given reference time.
 
     Args:
@@ -202,9 +207,12 @@ def load(ref_time=None, data_dir='.', url_fmt=None, save_netcdf=True, keep_gribs
         keep_gribs (bool):
             If true, the GRIB files are not deleted.
             This argument is ignored if loading from netCDF.
+        fail_fast (bool):
+            If true, the download errors are treated as fatal. Otherwise
+            downloads are retried with exponential backoff.
     '''
     loader = NAMLoader(ref_time=ref_time, data_dir=data_dir, url_fmt=url_fmt)
-    return loader.load(save_netcdf=save_netcdf, keep_gribs=keep_gribs)
+    return loader.load(save_netcdf=save_netcdf, keep_gribs=keep_gribs, fail_fast=fail_fast)
 
 
 def reftime(ds, tz=None):
@@ -410,7 +418,8 @@ class NAMLoader:
     def load(self,
             save_netcdf=True,
             keep_gribs=False,
-            force_download=False):
+            force_download=False
+            fail_fast=False):
         '''Load the dataset, downloading and preprocessing GRIBs as necessary.
 
         If the dataset exists as a local netCDF file, it is loaded and
@@ -439,6 +448,9 @@ class NAMLoader:
             force_download (bool):
                 Force the download and processing of grib files, ignoring any
                 existing grib or netCDF datasets.
+            fail_fast (bool):
+                If true, the download errors are treated as fatal. Otherwise
+                downloads are retried with exponential backoff.
         '''
         # If the dataset already exists, just load it.
         # Otherwise, download and convert gribs.
@@ -446,7 +458,7 @@ class NAMLoader:
         if self.local_cdf.exists() and not force_download:
             data = xr.open_dataset(str(self.local_cdf))
         else:
-            self.download(force=force_download)
+            self.download(force=force_download, fail_fast=fail_fast)
             data = self.read_gribs()
 
         # Save as netCDF.
@@ -460,12 +472,15 @@ class NAMLoader:
 
         return data
 
-    def download(self, force=False):
+    def download(self, force=False, fail_fast=False):
         '''Download the missing GRIB files for this dataset.
 
         Args:
             force (bool):
                 Download the GRIB files even if they already exists locally.
+            fail_fast (bool):
+                If true, the download errors are treated as fatal. Otherwise
+                downloads are retried with exponential backoff.
         '''
         for path, url in zip(self.local_gribs, self.remote_gribs):
             path.parent.mkdir(exist_ok=True)
@@ -496,7 +511,7 @@ class NAMLoader:
                     # IOError includes both system and HTTP errors.
                     path.unlink()
                     logger.warn(err)
-                    if i != max_tries - 1:
+                    if i != max_tries - 1 and not fail_fast:
                         delay = 2**i
                         logger.warn('Download failed, retrying in {}s'.format(delay))
                         sleep(delay)
@@ -706,6 +721,7 @@ if __name__ == '__main__':
     parser.add_argument('--log', type=str, help='Set the log level')
     parser.add_argument('--stop', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The last reference time')
     parser.add_argument('--start', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The first reference time')
+    parser.add_argument('--fail-fast', type=bool, help='Do not retry downloads')
     parser.add_argument('-n', type=int, help='The number of most recent releases to process.')
     parser.add_argument('dir', nargs='?', type=str, help='Base directory for downloads')
     args = parser.parse_args()
@@ -725,9 +741,11 @@ if __name__ == '__main__':
     else:
         start = stop
 
+    fail_fast = args['fail-fast']
+
     while start <= stop:
         try:
-            load(start, data_dir=data_dir)
+            load(start, data_dir=data_dir, fail_fast=fail_fast)
         except Exception as e:
             logger.error(e)
             logger.error('Could not load data from {}'.format(start))
