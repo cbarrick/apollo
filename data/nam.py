@@ -690,8 +690,7 @@ class NAMLoader:
         for i in FORECAST_PERIOD:
             url = self.url_fmt.format(
                 forecast=i,
-                ref=self.ref_time,
-                extension=self.grib_extension)
+                ref=self.ref_time)
             yield url
 
     @property
@@ -700,8 +699,7 @@ class NAMLoader:
         for i in FORECAST_PERIOD:
             p = self.local_grib_fmt.format(
                 forecast=i,
-                ref=self.ref_time,
-                extension=self.grib_extension)
+                ref=self.ref_time)
             yield self.data_dir / Path(p)
 
     @property
@@ -721,7 +719,7 @@ if __name__ == '__main__':
     parser.add_argument('--log', type=str, help='Set the log level')
     parser.add_argument('--stop', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The last reference time')
     parser.add_argument('--start', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The first reference time')
-    parser.add_argument('--fail-fast', type=bool, help='Do not retry downloads')
+    parser.add_argument('--fail-fast', action='store_true', help='Do not retry downloads')
     parser.add_argument('-n', type=int, help='The number of most recent releases to process.')
     parser.add_argument('dir', nargs='?', type=str, help='Base directory for downloads')
     args = parser.parse_args()
@@ -741,7 +739,7 @@ if __name__ == '__main__':
     else:
         start = stop
 
-    fail_fast = args['fail-fast']
+    fail_fast = args.fail_fast
 
     while start <= stop:
         try:
