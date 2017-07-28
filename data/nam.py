@@ -418,7 +418,7 @@ class NAMLoader:
     def load(self,
             save_netcdf=True,
             keep_gribs=False,
-            force_download=False
+            force_download=False,
             fail_fast=False):
         '''Load the dataset, downloading and preprocessing GRIBs as necessary.
 
