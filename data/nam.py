@@ -762,7 +762,6 @@ if __name__ == '__main__':
         try:
             load(start, data_dir=data_dir, fail_fast=fail_fast, keep_gribs=keep_gribs)
         except Exception as e:
-            raise e
             logger.error(e)
             logger.error('Could not load data from {}'.format(start))
         start += delta
