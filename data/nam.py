@@ -69,26 +69,11 @@ logger = getLogger(__name__)
 # PROD_URL typically has the most recent 7 days.
 # ARCHIVE_URL typically has the most recent 11 months, about 1 week behind.
 PROD_URL = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/nam/prod/nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2'
-ARCHIVE_URL = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb'
-ARCHIVE_URL2 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb2'
-
-# The default file name formats for local grib and cdf datasets.
-LOCAL_GRIB_FMT = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2'
-LOCAL_CDF_FMT = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys.tm00.nc'
+ARCHIVE_URL_1 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb'
+ARCHIVE_URL_2 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb2'
 
 # The forecast period of the NAM-NMM dataset.
 FORECAST_PERIOD = tuple(range(0, 36)) + tuple(range(36, 85, 3))
-
-# The default features to extract from the gribs.
-# A list of feature abreviations.
-DEFAULT_FEATURES = ['dlwrf', 'dswrf', 'pres', 'vis', 'tcc', 't', 'r', 'u', 'v', 'w']
-
-# The default geographic subset to extract from the gribs.
-# Given as the kwargs to `NAMLoader.latlon_subset`.
-DEFAULT_GEO = {
-    'center': (32.8, -83.6),
-    'apo': 50,
-}
 
 # The projection of the NAM-NMM dataset as a `cartopy.crs.CRS`.
 # Useful for programatically reasoning about the projection.
@@ -299,6 +284,26 @@ def latlon_subset(lats, lons, center, apo):
     return slice(i - apo, i + apo + 1), slice(j - apo, j + apo + 1)
 
 
+def proj_coords(lats, lons):
+    '''Transform a grid of geographic coordinates into projection coordinates
+    for the x and y axes.
+
+    Args:
+        lats (matrix): The latitudes for every cell of the map.
+        lons (matrix): The longitudes for tevery cell on the map.
+
+    Returns:
+        x (vector): The coordinates for the x axis in meters.
+        y (vector): The coordinates for the y axis in meters.
+    '''
+    unproj = ccrs.PlateCarree()
+    coords = PROJ.transform_points(unproj, lons, lats)
+    x, y = coords[:,:,0], coords[:,:,1]
+    x, y = x[0,:], y[:,0]
+    x, y = np.copy(x), np.copy(y)
+    return y, x
+
+
 def show(data):
     '''A helper to plot NAM data.
 
@@ -318,37 +323,43 @@ def show(data):
 
 
 class NAMLoader:
-    '''A data loader for the NAM-NMM dataset.
+    '''A downloader and preprocessor for NAM forecast data.
 
-    The main method is `load` which is equivalent to the module-level function
-    of the same name with the additional functionality of controling the
-    feature list and grid subset in the preprocessing step.
+    NAM releases are downloaded from the web and the variables and geographic
+    region are subsetted. The result can be saved back to disk as a netCDF
+    file.
 
-    The `load` method is built from a pipeline of the `download`, `unpack`, and
-    `repack` methods. `download` ensures that the GRIB files exist locally,
-    `unpack` extracts a subset of the data, and `repack` recombines the data
-    into an `xarray.Dataset` which can be serialized to a netCDF file. Custom
-    preprocessing pipelines can be built from these methods.
-
-    Additionally, this class includes helpers to extract lat-lon grids from the
-    GRIB files, compute grid subsets, and access the files of the dataset.
+    TODO:
+        - describe the data format
     '''
 
     def __init__(self,
             ref_time=None,
             data_dir='.',
+            features=['dlwrf', 'dswrf', 'pres', 'vis', 'tcc', 't', 'r', 'u', 'v', 'w'],
+            center=(32.8, -83.6),
+            apo=50,
             url_fmt=None,
-            local_grib_fmt=LOCAL_GRIB_FMT,
-            local_cdf_fmt=LOCAL_CDF_FMT):
-        '''Creates a NAM data loader for the given reference time.
+            local_grib_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2',
+            local_cdf_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys.tm00.nc'):
+        '''Creates a loader for NAM data.
 
         Args:
             ref_time (datetime):
-                The reference time of the data set. It is rounded down to the
-                previous model run. It may be given as a string with the format
-                '%Y%m%d %H%M'. The default is the current time.
+                The default reference time of the data set. It is rounded down
+                to the previous model run. It may be given as a string with the
+                format '%Y%m%d %H%M'. The default is the most recent release.
             data_dir (Path):
                 The base path for the dataset.
+            features (list of str):
+                Filter the dataset to only include these features.
+                This argument is ignored when loading from netCDF.
+            center (float, float):
+                The geographic center of the of the data as a
+                `(latitude, longitude)` pair.
+            apo (int):
+                The apothem of the geographic subset in grid units, i.e. the
+                number of cells from the center to the edge.
             url_fmt (string):
                 The format for GRIB URLs. It uses the keys `ref` and `forecast`
                 for the reference time and forecast hour respectively. The
@@ -381,21 +392,22 @@ class NAMLoader:
             days_delta = (now - ref_time).days
             if days_delta > 7:
                 if ref_time < datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
-                    url_fmt = ARCHIVE_URL
+                    url_fmt = ARCHIVE_URL_1
                 else:
-                    url_fmt = ARCHIVE_URL2
+                    url_fmt = ARCHIVE_URL_2
             else:
                 url_fmt = PROD_URL
 
         self.ref_time = ref_time
         self.data_dir = Path(data_dir)
+        self.features = features
+        self.center = center
+        self.apo = apo
         self.url_fmt = url_fmt
         self.local_grib_fmt = local_grib_fmt
         self.local_cdf_fmt = local_cdf_fmt
 
     def load(self,
-            features=None,
-            geo=None,
             save_netcdf=True,
             keep_gribs=False,
             force_download=False):
@@ -428,12 +440,6 @@ class NAMLoader:
                 Force the download and processing of grib files, ignoring any
                 existing grib or netCDF datasets.
         '''
-        if not features:
-            features = DEFAULT_FEATURES
-
-        if not geo:
-            geo = DEFAULT_GEO
-
         # If the dataset already exists, just load it.
         # Otherwise, download and convert gribs.
         # TODO: verify that the data matches the requested feature/geo subsets
@@ -441,8 +447,7 @@ class NAMLoader:
             data = xr.open_dataset(str(self.local_cdf))
         else:
             self.download(force=force_download)
-            data = self.unpack(features, geo)
-            data = self.repack(data)
+            data = self.read_gribs()
 
         # Save as netCDF.
         if save_netcdf:
@@ -503,130 +508,122 @@ class NAMLoader:
                     path.unlink()
                     raise err
 
-    def unpack(self, features=None, geo=None):
-        '''Unpacks and subsets the local GRIB files.
-
-        Args:
-            features (list of str):
-                If not None, filter the dataset to only include these features.
-            geo (slice, slice) or (dict):
-                If not None, reduce the variables to this geographic subset.
-                The subset is given in the form `(y, x)` where `y` and `x` are
-                slices for their respective dimensions. If given as a dict, the
-                subset is the result of forwarding this as the kwargs to
-                `self.latlon_subset`.
-
-        Returns:
-            A list of `DataArray`s for each feature in the GRIB files.
+    def read_grib(self, path):
+        '''Reads and processes a grib file at the given path.
         '''
-        if isinstance(geo, dict):
-            geo = self.latlon_subset(**geo)
+        logger.info('Processing {}'.format(path))
+
+        # Open grib and select the variable subset.
+        grbs = pygrib.open(str(path))
+        grbs = grbs.select(shortName=self.features)
+
+        # The geographic area to extract.
+        geo = self.latlon_subset()
 
         variables = []
-        for path in self.local_gribs:
-            logger.info('Processing {}'.format(path))
-            grbs = pygrib.open(str(path))
-            if features:
-                grbs = grbs.select(shortName=features)
-            for g in grbs:
+        for g in grbs:
 
-                layer_type = g.typeOfLevel
-                if layer_type == 'unknown':
-                    layer_type = 'z' + str(g.typeOfFirstFixedSurface)
+            # Try to get a good layer name
+            layer_type = g.typeOfLevel
+            if layer_type == 'unknown':
+                layer_type = 'z' + str(g.typeOfFirstFixedSurface)
 
-                name = '_'.join([g.shortName, layer_type])
+            # Try to make a good variable name
+            name = '_'.join([g.shortName, layer_type])
 
-                ref_time = datetime(g.year, g.month, g.day, g.hour, g.minute, g.second)
-                ref_time = np.datetime64(ref_time)
+            # Get the official reference time
+            ref_time = datetime(g.year, g.month, g.day, g.hour, g.minute, g.second)
+            ref_time = np.datetime64(ref_time)
 
-                forecast = np.timedelta64(g.forecastTime, 'h')
+            # Get the forecast time as an offset from the reference time.
+            forecast = np.timedelta64(g.forecastTime, 'h')
 
-                lats, lons = g.latlons()  # lats and lons are in (y, x) order
-                if geo:
-                    lats, lons = lats[geo], lons[geo]  # subset applies to (y, x) order
-                lats, lons = np.copy(lats), np.copy(lons)  # release reference to the grib
-                y, x = self.proj_coords(lats, lons) # convert to projected coordinates
+            # Get the lats, lons
+            # and x, y coordinates
+            lats, lons = g.latlons()                   # lats and lons are in (y, x) order
+            lats, lons = lats[geo], lons[geo]          # subset applies to (y, x) order
+            lats, lons = np.copy(lats), np.copy(lons)  # release reference to the grib
+            y, x = proj_coords(lats, lons)             # convert to projected coordinates
 
-                values = g.values  # values are in (y, x) order
-                if geo:
-                    values = values[geo]  # subset applies to (y, x) order
-                values = np.copy(values)  # release reference to the grib
-                values = np.expand_dims(values, 0)  # (z, y, x)
-                values = np.expand_dims(values, 0)  # (forecast, z, y, x)
-                values = np.expand_dims(values, 0)  # (reftime, forecast, z, y, x)
+            # Get the data values
+            values = g.values                   # values are in (y, x) order
+            values = values[geo]                # subset applies to (y, x) order
+            values = np.copy(values)            # release reference to the grib
+            values = np.expand_dims(values, 0)  # (z, y, x)
+            values = np.expand_dims(values, 0)  # (forecast, z, y, x)
+            values = np.expand_dims(values, 0)  # (reftime, forecast, z, y, x)
 
-                attrs = {
-                    'standard_name': g.cfName or g.name.replace(' ', '_').lower(),
-                    'short_name': g.shortName,
-                    'layer_type': layer_type,
-                    'units': g.units,
-                    'grid_mapping': 'NAM218',
-                }
+            # The metadata associated with this variable.
+            attrs = {
+                'standard_name': g.cfName or g.name.replace(' ', '_').lower(),
+                'short_name': g.shortName,
+                'layer_type': layer_type,
+                'units': g.units,
+                'grid_mapping': 'NAM218',
+            }
 
-                dims = ['reftime', 'forecast', layer_type, 'y', 'x']
+            # The names of the data axes.
+            dims = ['reftime', 'forecast', layer_type, 'y', 'x']
 
-                coords = {
-                    'NAM218': ([], 0, CF_PROJ),
-                    'lat': (('y', 'x'), lats, {
-                        'standard_name': 'latitude',
-                        'long_name': 'latitude',
-                        'units': 'degrees_north',
-                    }),
-                    'lon': (('y', 'x'), lons, {
-                        'standard_name': 'longitude',
-                        'long_name': 'longitude',
-                        'units': 'degrees_east',
-                    }),
-                    'reftime': ('reftime', [ref_time], {
-                        'standard_name': 'forecast_reference_time',
-                        'long_name': 'reference time',
-                        # # units and calendar are handled automatically by xarray
-                        # 'units': 'seconds since 1970-01-01 0:0:0',
-                        # 'calendar': 'standard',
-                    }),
-                    'forecast': ('forecast', [forecast], {
-                        'standard_name': 'forecast_period',
-                        'long_name': 'forecast period',
-                        'axis': 'T',
-                        # # units and calendar are handled automatically by xarray
-                        # 'units': 'seconds',
-                    }),
-                    layer_type: (layer_type, [g.level], {
-                        'units': g.unitsOfFirstFixedSurface,
-                        'axis': 'Z',
-                    }),
-                    'y': ('y', y, {
-                        'standard_name': 'projection_y_coordinate',
-                        'units': 'm',
-                        'axis': 'Y',
-                    }),
-                    'x': ('x', x, {
-                        'standard_name': 'projection_x_coordinate',
-                        'units': 'm',
-                        'axis': 'X',
-                    }),
-                }
+            # The data and metadata describing the coordinates.
+            coords = {
+                'NAM218': ([], 0, CF_PROJ),
+                'lat': (('y', 'x'), lats, {
+                    'standard_name': 'latitude',
+                    'long_name': 'latitude',
+                    'units': 'degrees_north',
+                }),
+                'lon': (('y', 'x'), lons, {
+                    'standard_name': 'longitude',
+                    'long_name': 'longitude',
+                    'units': 'degrees_east',
+                }),
+                'reftime': ('reftime', [ref_time], {
+                    'standard_name': 'forecast_reference_time',
+                    'long_name': 'reference time',
+                    # # units and calendar are handled automatically by xarray
+                    # 'units': 'seconds since 1970-01-01 0:0:0',
+                    # 'calendar': 'standard',
+                }),
+                'forecast': ('forecast', [forecast], {
+                    'standard_name': 'forecast_period',
+                    'long_name': 'forecast period',
+                    'axis': 'T',
+                    # # units and calendar are handled automatically by xarray
+                    # 'units': 'seconds',
+                }),
+                layer_type: (layer_type, [g.level], {
+                    'units': g.unitsOfFirstFixedSurface,
+                    'axis': 'Z',
+                }),
+                'y': ('y', y, {
+                    'standard_name': 'projection_y_coordinate',
+                    'units': 'm',
+                    'axis': 'Y',
+                }),
+                'x': ('x', x, {
+                    'standard_name': 'projection_x_coordinate',
+                    'units': 'm',
+                    'axis': 'X',
+                }),
+            }
 
-                arr = xr.DataArray(name=name, data=values, dims=dims, coords=coords, attrs=attrs)
-                variables.append(arr)
+            arr = xr.DataArray(name=name, data=values, dims=dims, coords=coords, attrs=attrs)
+            variables.append(arr)
 
         return variables
 
-    def repack(self, variables):
-        '''Packs a list of `DataArray` features into a `Dataset`.
-
-        Variables of the same name are concatenated along the z- and time-axes.
-        If a feature has the attribute `layer_type`, then its value becomes the
-        new name of the z-axis. This allows features with different kinds of
-        z-axes to live in the same dataset.
-
-        Args:
-            variables (list):
-                The features to recombine.
+    def read_gribs(self):
+        '''Read and preprocess all grib files for this release.
 
         Returns:
-            The reconstructed `Dataset`.
+            A `Dataset` describing this release.
         '''
+        variables = []
+        for path in self.local_gribs:
+            vs = self.read_grib(path)
+            variables.extend(vs)
+
         def key(v):
             name = v.name
             layer_type = v.attrs['layer_type']
@@ -656,62 +653,47 @@ class NAMLoader:
         dataset = xr.merge(variables, join='inner')
         return dataset
 
-    def latlon_subset(self, center=(32.8, -83.6), apo=50):
-        '''Build a slice to subset NAM data around some center.
-
-        Defaults to a square centered on Macon, GA that encompases all of
-        Georgia, Alabama, and South Carolina.
-
-        Example:
-            Subset projected data given the lats and lons:
-            ```
-            data = ...
-            subset = loader.latlon_subset()
-            data[subset]
-            ```
-
-        Args:
-            center (float, float):
-                The center of the subset as a `(latitude, longitude)` pair.
-            apo (int):
-                The apothem of the subset in grid units.
-                I.e. the number of cells from the center to the edge.
+    def latlon_subset(self):
+        '''Get the geographic slice of the raw data for this dataset.
 
         Returns (slice, slice):
             A pair of slices characterizing the subset.
         '''
-        # Get lats and lons from the first variable of the first grib.
-        paths = tuple(self.local_gribs)
-        first_file = str(paths[0])
-        grbs = pygrib.open(first_file)
-        g = grbs[1]  # indices start at 1
-        lats, lons = g.latlons()
-        return latlon_subset(lats, lons, center=center, apo=apo)
-
-    def proj_coords(self, lats, lons):
-        unproj = ccrs.PlateCarree()
-        coords = PROJ.transform_points(unproj, lons, lats)
-        x, y = coords[:,:,0], coords[:,:,1]
-        x, y = x[0,:], y[:,0]
-        x, y = np.copy(x), np.copy(y)
-        return y, x
+        if not self._geo:
+            # Get lats and lons from the first variable of the first grib.
+            paths = tuple(self.local_gribs)
+            first_file = str(paths[0])
+            grbs = pygrib.open(first_file)
+            g = grbs[1]  # indices start at 1
+            lats, lons = g.latlons()
+            self._geo = latlon_subset(lats, lons, center=self.center, apo=self.apo)
+        return self._geo
 
     @property
     def remote_gribs(self):
         '''An iterator over the URLs for the GRIB files in this dataset.'''
         for i in FORECAST_PERIOD:
-            yield self.url_fmt.format(ref=self.ref_time, forecast=i)
+            url = self.url_fmt.format(
+                forecast=i,
+                ref=self.ref_time,
+                extension=self.grib_extension)
+            yield url
 
     @property
     def local_gribs(self):
         '''An iterator over the paths to the local GRIB files in this dataset.'''
         for i in FORECAST_PERIOD:
-            yield self.data_dir / Path(self.local_grib_fmt.format(ref=self.ref_time, forecast=i))
+            p = self.local_grib_fmt.format(
+                forecast=i,
+                ref=self.ref_time,
+                extension=self.grib_extension)
+            yield self.data_dir / Path(p)
 
     @property
     def local_cdf(self):
         '''The path to the local netCDF file for this dataset.'''
-        return self.data_dir / Path(self.local_cdf_fmt.format(ref=self.ref_time))
+        p = self.local_cdf_fmt.format(ref=self.ref_time)
+        return self.data_dir / Path(p)
 
 
 if __name__ == '__main__':
@@ -746,6 +728,7 @@ if __name__ == '__main__':
     while start <= stop:
         try:
             load(start, data_dir=data_dir)
-        except IOError:
-            logger.warn('Could not load dataset from {}'.format(start))
+        except Exception as e:
+            logger.error(e)
+            logger.error('Could not load data from {}'.format(start))
         start += delta
