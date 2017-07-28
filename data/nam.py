@@ -565,7 +565,7 @@ class NAMLoader:
             try:
                 layer_units = g.unitsOfFirstFixedSurface
             except:
-                layer_units = g.pressureUnits
+                layer_units = 'unknown'
 
             # Get the value of the z-axis
             level = g.level
@@ -661,23 +661,23 @@ class NAMLoader:
             layer_type = v.attrs['layer_type']
             forecast = v.forecast.data[0]
             z = v[layer_type].data[0]
-            return (name, layer_type, forecast, z)
+            return (name, layer_type, z, forecast)
 
         logger.info('Sorting variables')
         variables = sorted(variables, key=key)
 
-        logger.info('Reconstructing the z dimensions')
+        logger.info('Reconstructing the forecast dimension')
         tmp = []
         for k, g in groupby(variables, lambda v: key(v)[:3]):
-            dim = k[1]
-            v = xr.concat(g, dim=dim)
+            v = xr.concat(g, dim='forecast')
             tmp.append(v)
         variables = tmp
 
-        logger.info('Reconstructing the forecast dimension')
+        logger.info('Reconstructing the z dimensions')
         tmp = []
         for k, g in groupby(variables, lambda v: key(v)[:2]):
-            v = xr.concat(g, dim='forecast')
+            dim = k[1]
+            v = xr.concat(g, dim=dim)
             tmp.append(v)
         variables = tmp
 
