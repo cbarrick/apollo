@@ -1,9 +1,0 @@
-[submodule "xgboost"]
-	path = xgboost
-	url = https://github.com/dmlc/xgboost
-[submodule "pygrib"]
-	path = pygrib
-	url = https://github.com/jswhit/pygrib
-[submodule "basemap"]
-	path = basemap
-	url = https://github.com/matplotlib/basemap
