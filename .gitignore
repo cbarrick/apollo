@@ -2,6 +2,7 @@ __pycache__
 *.pyc
 
 /dev.py
-/gaemn15_data
-/gaemn15.zip
 /notes.md
+
+/gaemn/gaemn15_data
+/gaemn/gaemn15.zip
