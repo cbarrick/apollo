@@ -259,7 +259,7 @@ class NAMLoader:
         self.features = features
         self.center = center
         self.apo = apo
-        self.forecast_period = forecast_period
+        self.forecast_period = tuple(forecast_period)
         self.data_dir = Path(data_dir)
         self.url_fmt = url_fmt or self.automatic_url_fmt(self.ref_time)
         self.local_grib_fmt = local_grib_fmt
@@ -766,6 +766,7 @@ if __name__ == '__main__':
     parser.add_argument('--fail-fast', action='store_true', help='Do not retry downloads')
     parser.add_argument('--keep-gribs', action='store_true', help='Do not delete grib files')
     parser.add_argument('-n', type=int, help='The number of most recent releases to process.')
+    parser.add_argument('-f', '--forecast', type=int, metavar='N', default=len(FORECAST_PERIOD), help='Only process the first N forecasts')
     parser.add_argument('dir', nargs='?', type=str, help='Base directory for downloads')
     args = parser.parse_args()
 
@@ -786,10 +787,11 @@ if __name__ == '__main__':
 
     fail_fast = args.fail_fast
     keep_gribs = args.keep_gribs
+    forecast_period = FORECAST_PERIOD[:args.forecast]
 
     while start <= stop:
         try:
-            load(start, data_dir=data_dir, fail_fast=fail_fast, keep_gribs=keep_gribs)
+            load(start, data_dir=data_dir, fail_fast=fail_fast, keep_gribs=keep_gribs, forecast_period=forecast_period)
         except Exception as e:
             logger.error(e)
             logger.error('Could not load data from {}'.format(start))
