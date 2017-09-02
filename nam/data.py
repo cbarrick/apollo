@@ -358,7 +358,7 @@ class NAMLoader:
 
         if save_netcdf:
             logger.info('Saving as {}'.format(self.local_cdf))
-            data.to_netcdf(str(self.local_cdf))
+            dataset.to_netcdf(str(self.local_cdf))
 
         if not keep_gribs:
             logger.info('Deleting local gribs')
