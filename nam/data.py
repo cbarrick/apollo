@@ -619,13 +619,6 @@ class NAMLoader:
         p = self.local_cdf_fmt.format(ref=self.ref_time)
         return self.data_dir / Path(p)
 
-    @property
-    def data(self):
-        '''The `xr.DataSet` for this data.'''
-        if not self._data:
-            self._data = self.load()
-        return self._data
-
 
 def load(*args, **kwargs):
     '''Load a NAM-NMM dataset for the given reference time.
