@@ -279,6 +279,8 @@ class NAMLoader:
         preprocessed into an xarray Dataset. The dataset is then saved as a
         netCDF file, the GRIBs are deleted, and the dataset is returned.
         '''
+        logger.info('loading dataset for {}'.format(self.ref_time))
+
         if not self.force_download and self.local_cdf.exists():
             return self.read_cdf()
 
@@ -296,6 +298,7 @@ class NAMLoader:
             An `xr.Dataset` describing this release.
         '''
         # TODO: verify and extract only the requested feature/geo subsets.
+        logger.info('loading netCDF data')
         data = xr.open_dataset(str(self.local_cdf))
         return data
 
@@ -317,6 +320,8 @@ class NAMLoader:
         Returns:
             An `xr.Dataset` describing this release.
         '''
+        logger.info('loading grib data')
+
         # Ensure the files exist.
         self.download(force_download, fail_fast)
 
