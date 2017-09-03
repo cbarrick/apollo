@@ -244,16 +244,24 @@ class NAMLoader:
                 The name format for local netCDF files.
             save_netcdf (bool):
                 If true, save the dataset to a netCDF file.
-                This argument is ignored if loading from netCDF.
+                This argument defines the behavior of the `load` method,
+                and is ignored when calling `load_from_grib` directly.
             keep_gribs (bool):
                 If true, the GRIB files are not deleted.
-                This argument is ignored if loading from netCDF.
+                This argument defines the behavior of the `load` method,
+                and is ignored when calling `load_from_grib` directly.
             force_download (bool):
                 Force the download and processing of grib files,
                 ignoring any existing grib or netCDF datasets.
+                This argument defines the behavior of the `load` method,
+                and is ignored when calling `download` or `load_from_grib`
+                directly.
             fail_fast (bool):
                 If true, the download errors are treated as fatal.
                 Otherwise downloads are retried with exponential backoff.
+                This argument defines the behavior of the `load` method,
+                and is ignored when calling `download` or `load_from_grib`
+                directly.
         '''
         self.ref_time = self.prepare_ref_time(ref_time or datetime.now())
         self.features = features
@@ -282,16 +290,16 @@ class NAMLoader:
         logger.info('loading dataset for {}'.format(self.ref_time))
 
         if not self.force_download and self.local_cdf.exists():
-            return self.read_cdf()
+            return self.load_from_cdf()
 
         else:
-            return self.read_gribs(
+            return self.load_from_grib(
                 save_netcdf=self.save_netcdf,
                 keep_gribs=self.keep_gribs,
                 force_download=self.force_download,
                 fail_fast=self.fail_fast)
 
-    def read_cdf(self):
+    def load_from_cdf(self):
         '''Load the dataset from the netCDF file for this release.
 
         Returns:
@@ -302,8 +310,14 @@ class NAMLoader:
         data = xr.open_dataset(str(self.local_cdf))
         return data
 
-    def read_gribs(self, save_netcdf=False, keep_gribs=True, force_download=False, fail_fast=True):
+    def load_from_grib(self,
+            save_netcdf=False,
+            keep_gribs=True,
+            force_download=False,
+            fail_fast=True):
         '''Load the dataset from the GRIB files for this release.
+
+        If the files do not exist locally, they will be downloaded.
 
         Args:
             save_netcdf (bool):
@@ -495,23 +509,34 @@ class NAMLoader:
 
         return variables
 
-    def download(self, force=False, fail_fast=False):
-        '''Download the GRIB files for this dataset.'''
+    def download(self, force_download=False, fail_fast=True, max_tries=8, timeout=10):
+        '''Download the GRIB files for this dataset.
+
+        Args:
+            force_download (bool):
+                Download grib files even if they already exist.
+            fail_fast (bool):
+                Raise an `IOError` after the first failed download.
+                Overrides the `max_tries` argument.
+            max_tries (int):
+                The maximum number of failed downloads for a single file
+                before raising an `IOError`.
+            timeout (int):
+                The network timeout in seconds.
+                Note that the government servers can be kinda slow.
+        '''
+        if fail_fast:
+            max_tries = 1
 
         for path, url in zip(self.local_gribs, self.remote_gribs):
-
             # Ensure that we have a destination to download into.
             path.parent.mkdir(exist_ok=True)
 
-            # Skip existing files unless `force`.
-            if path.exists() and not force:
+            # Skip existing files unless `force_download`.
+            if not force_download and path.exists():
                 continue
 
-            max_tries = 8  # Number of download attempts. Increases worst case exponentially.
-            timeout = 10   # Timeout in seconds. The servers are kinda slow.
-
             for i in range(max_tries):
-
                 # Perform a streaming download because the files are big.
                 try:
                     with path.open('wb') as fd:
@@ -527,13 +552,14 @@ class NAMLoader:
                 except IOError as err:
                     logger.warn(err)
                     path.unlink()
-                    if i != max_tries - 1 and not fail_fast:
+                    if i+1 == max_tries:
+                        logger.error('Download failed, giving up')
+                        raise err
+                    else:
                         delay = 2**i
                         logger.warn('Download failed, retrying in {}s'.format(delay))
                         sleep(delay)
-                    else:
-                        logger.error('Download failed, giving up')
-                        raise err
+                        continue
 
                 # Delete partial file in case of keyboard interupt etc.
                 except (Exception, SystemExit, KeyboardInterrupt) as err:
