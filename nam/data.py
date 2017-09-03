@@ -398,9 +398,6 @@ class NAMLoader:
         grbs = pygrib.open(str(path))
         grbs = grbs.select(shortName=self.features)
 
-        # The geographic area to extract.
-        geo = self.latlon_subset()
-
         variables = []
         for g in grbs:
 
@@ -436,14 +433,14 @@ class NAMLoader:
 
             # Get the lats, lons
             # and x, y coordinates
-            lats, lons = g.latlons()                   # lats and lons are in (y, x) order
-            lats, lons = lats[geo], lons[geo]          # subset applies to (y, x) order
-            lats, lons = np.copy(lats), np.copy(lons)  # release reference to the grib
-            y, x = proj_coords(lats, lons)             # convert to projected coordinates
+            lats, lons = g.latlons()                     # lats and lons are in (y, x) order
+            lats, lons = lats[self.geo], lons[self.geo]  # subset geographic region
+            lats, lons = np.copy(lats), np.copy(lons)    # release reference to the grib
+            y, x = proj_coords(lats, lons)               # convert to projected coordinates
 
             # Get the data values
             values = g.values                   # values are in (y, x) order
-            values = values[geo]                # subset applies to (y, x) order
+            values = values[self.geo]           # subset geographic region
             values = np.copy(values)            # release reference to the grib
             values = np.expand_dims(values, 0)  # (z, y, x)
             values = np.expand_dims(values, 0)  # (forecast, z, y, x)
@@ -614,14 +611,16 @@ class NAMLoader:
             url_fmt = PROD_URL
         return url_fmt
 
-    def latlon_subset(self):
-        '''Get the geographic slice of the raw data for this dataset.
+    @property
+    def geo(self):
+        '''The geographic subset to extract from the grib files.
+
+        Note that the 0-hour GRIB file MUST exist locally.
 
         Returns (slice, slice):
             A pair of slices characterizing the subset.
         '''
         if not hasattr(self, '_geo'):
-            # Get lats and lons from the first variable of the first grib.
             paths = tuple(self.local_gribs)
             first_file = str(paths[0])
             grbs = pygrib.open(first_file)
