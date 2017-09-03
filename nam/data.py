@@ -575,7 +575,7 @@ class NAMLoader:
         '''
         # Convert strings
         if isinstance(ref_time, str):
-            ref_time = datetime.strptime(ref_time, '%Y%m%d %H%M')
+            ref_time = datetime.strptime(ref_time, '%Y-%m-%dT%H00')
             ref_time = ref_time.replace(tzinfo=timezone.utc)
 
         # Convert to UTC
