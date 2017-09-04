@@ -620,7 +620,7 @@ def normalize_ref_time(ref_time=None):
     '''
     # Default to most recent reference time
     if not ref_time:
-        ref_time = datetime.now()
+        ref_time = datetime.now(timezone.utc)
 
     # Convert strings
     if isinstance(ref_time, str):
@@ -809,7 +809,7 @@ if __name__ == '__main__':
         logger.error('Count must be greater than 0, got {}'.format(args.count))
         sys.exit(1)
 
-    ref_time = args.time
+    ref_time = args.time or datetime.now(timezone.utc)
     forecast_period = FORECAST_PERIOD[:args.forecast+1]
     for i in range(args.count):
         try:
@@ -820,5 +820,5 @@ if __name__ == '__main__':
                 forecast_period=forecast_period)
         except Exception as e:
             logger.error(e)
-            logger.error('Could not load data from {}'.format(start))
+            logger.error('Could not load data from {}'.format(ref_time))
         ref_time -= timedelta(hours=6)
