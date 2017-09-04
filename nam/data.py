@@ -222,8 +222,8 @@ class NAMLoader:
             ref_time (datetime):
                 The default reference time of the data set. It is rounded down
                 to the previous model run. It may be given as a string with the
-                format '%Y%m%d %H%M'. The default is the most recent release.
-            forecast_period (list of ints):
+                format '%Y%m%dT%H%M'. The default is the most recent release.
+            forecast_period (iter of ints):
                 The forecast hours to load.
             features (list of str):
                 Filter the dataset to only include these features.
@@ -263,13 +263,13 @@ class NAMLoader:
                 and is ignored when calling `download` or `load_from_grib`
                 directly.
         '''
-        self.ref_time = self.prepare_ref_time(ref_time or datetime.now())
+        self.ref_time = normalize_ref_time(ref_time)
         self.features = features
         self.center = center
         self.apo = apo
         self.forecast_period = tuple(forecast_period)
         self.data_dir = Path(data_dir)
-        self.url_fmt = url_fmt or self.automatic_url_fmt(self.ref_time)
+        self.url_fmt = url_fmt or automatic_url_fmt(self.ref_time)
         self.local_grib_fmt = local_grib_fmt
         self.local_cdf_fmt = local_cdf_fmt
         self.save_netcdf = save_netcdf
@@ -563,55 +563,6 @@ class NAMLoader:
                     path.unlink()
                     raise err
 
-    def prepare_ref_time(self, ref_time):
-        '''Convert an arbitrary reference time to a valid one.
-
-        Args:
-            ref_time (datetime or string):
-                The reference time to prepare.
-
-        Returns (datetime):
-            A valid reference time.
-        '''
-        # Convert strings
-        if isinstance(ref_time, str):
-            ref_time = datetime.strptime(ref_time, '%Y-%m-%dT%H00')
-            ref_time = ref_time.replace(tzinfo=timezone.utc)
-
-        # Convert to UTC
-        ref_time = ref_time.astimezone(timezone.utc)
-
-        # Round to the previous 0h, 6h, 12h, or 18h
-        hour = (ref_time.hour // 6) * 6
-        ref_time = ref_time.replace(hour=hour, minute=0, second=0, microsecond=0)
-
-        return ref_time
-
-    def automatic_url_fmt(self, ref_time):
-        '''Derive the url for data at a given reference time.
-
-        Note that the appropriate URL depends on the current time and therefore
-        is not stable. Do not depend on this output for an extended period.
-
-        Args:
-            ref_time (datetime):
-                A valid reference time. To convert an arbitrary datetime to a
-                valid one, use `NAMLoader.prepare_ref_time`.
-
-        Returns (str):
-            Either `PROD_URL`, `ARCHIVE_URL_1`, or `ARCHIVE_URL_2`.
-        '''
-        now = datetime.now(timezone.utc)
-        days_delta = (now - ref_time).days
-        if days_delta > 7:
-            if ref_time < datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
-                url_fmt = ARCHIVE_URL_1
-            else:
-                url_fmt = ARCHIVE_URL_2
-        else:
-            url_fmt = PROD_URL
-        return url_fmt
-
     @property
     def geo(self):
         '''The geographic subset to extract from the grib files.
@@ -651,13 +602,64 @@ class NAMLoader:
         return self.data_dir / Path(p)
 
 
-def load(*args, **kwargs):
-    '''Load a NAM-NMM dataset for the given reference time.
+def normalize_ref_time(ref_time=None):
+    '''Normalize an arbitrary reference time to a valid one.
 
-    See `NAMLoader` for a description of accepted arguments.
+    Times may be strings, datetime objects, or `None` for the current reference
+    time. Refrence times are converted to UTC and rounded to the previous 0h,
+    6h, 12h or 18h mark. Strings take the format '%Y%m%dT%H%M'and are assumed
+    to be UTC.
+
+    Args:
+        ref_time (datetime or string):
+            The reference time to prepare.
+            Defaults to the most recent reference time.
+
+    Returns (datetime):
+        A valid reference time.
     '''
-    loader = NAMLoader(*args, **kwargs)
-    return loader.load()
+    # Default to most recent reference time
+    if not ref_time:
+        ref_time = datetime.now()
+
+    # Convert strings
+    if isinstance(ref_time, str):
+        ref_time = datetime.strptime(ref_time, '%Y%m%dT%H%M')
+        ref_time = ref_time.replace(tzinfo=timezone.utc)
+
+    # Convert to UTC
+    ref_time = ref_time.astimezone(timezone.utc)
+
+    # Round to the previous 0h, 6h, 12h, or 18h
+    hour = (ref_time.hour // 6) * 6
+    ref_time = ref_time.replace(hour=hour, minute=0, second=0, microsecond=0)
+
+    return ref_time
+
+def automatic_url_fmt(ref_time):
+    '''Derive the url for data at a given reference time.
+
+    Note that the appropriate URL depends on the current time and therefore
+    is not stable. Do not depend on this output for an extended period.
+
+    Args:
+        ref_time (datetime):
+            The reference time of the data set.
+
+    Returns (str):
+        Either `PROD_URL`, `ARCHIVE_URL_1`, or `ARCHIVE_URL_2`.
+    '''
+    ref_time = normalize_ref_time(ref_time)
+    now = datetime.now(timezone.utc)
+    days_delta = (now - ref_time).days
+    if days_delta > 7:
+        if ref_time < datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
+            url_fmt = ARCHIVE_URL_1
+        else:
+            url_fmt = ARCHIVE_URL_2
+    else:
+        url_fmt = PROD_URL
+    return url_fmt
 
 
 def reftime(ds, tz=None):
@@ -777,46 +779,46 @@ def show(data):
     plt.show(block=False)
 
 
+def load(*args, **kwargs):
+    '''Load a NAM-NMM dataset for the given reference time.
+
+    See `NAMLoader` for a description of accepted arguments.
+    '''
+    loader = NAMLoader(*args, **kwargs)
+    return loader.load()
+
+
 if __name__ == '__main__':
     import argparse
     import logging
-
-    now = datetime.now(timezone.utc)
+    import sys
 
     parser = argparse.ArgumentParser(description='Download and preprocess the NAM-NMM dataset.')
-    parser.add_argument('--log', type=str, help='Set the log level')
-    parser.add_argument('--stop', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The last reference time')
-    parser.add_argument('--start', type=lambda x: datetime.strptime(x, '%Y-%m-%dT%H00'), help='The first reference time')
-    parser.add_argument('--fail-fast', action='store_true', help='Do not retry downloads')
-    parser.add_argument('--keep-gribs', action='store_true', help='Do not delete grib files')
-    parser.add_argument('-n', type=int, help='The number of most recent releases to process.')
-    parser.add_argument('-f', '--forecast', type=int, metavar='N', default=len(FORECAST_PERIOD)-1, help='Only process the first N forecasts')
-    parser.add_argument('dir', nargs='?', type=str, help='Base directory for downloads')
+    parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
+    parser.add_argument('-t', '--time', type=normalize_ref_time, help='The reference time to download.')
+    parser.add_argument('-n', '--count', type=int, default=1, metavar='N', help='Load N datasets, ending at the reference time.')
+    parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
+    parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
+    parser.add_argument('-f', '--forecast', type=int, metavar='N', default=52, help='Only process the first N+1 forecasts per reference time.')
+    parser.add_argument('dir', type=str, nargs='?', default='.', help='Base directory for downloads')
     args = parser.parse_args()
 
-    log_level = args.log or 'INFO'
-    logging.basicConfig(level=log_level, format='[{asctime}] {levelname}: {message}', style='{')
+    logging.basicConfig(level=args.log, format='[{asctime}] {levelname}: {message}', style='{')
 
-    data_dir = args.dir or '.'
+    if args.count < 1:
+        logger.error('Count must be greater than 0, got {}'.format(args.count))
+        sys.exit(1)
 
-    stop = args.stop.replace(tzinfo=timezone.utc) if args.stop else now
-    delta = timedelta(hours=6)
-
-    if args.start:
-        start = args.start.replace(tzinfo=timezone.utc)
-    elif args.n:
-        start = stop - args.n * delta
-    else:
-        start = stop
-
-    fail_fast = args.fail_fast
-    keep_gribs = args.keep_gribs
+    ref_time = args.time
     forecast_period = FORECAST_PERIOD[:args.forecast+1]
-
-    while start <= stop:
+    for i in range(args.count):
         try:
-            load(start, data_dir=data_dir, fail_fast=fail_fast, keep_gribs=keep_gribs, forecast_period=forecast_period)
+            load(ref_time,
+                data_dir=args.dir,
+                fail_fast=args.fail_fast,
+                keep_gribs=args.keep_gribs,
+                forecast_period=forecast_period)
         except Exception as e:
             logger.error(e)
             logger.error('Could not load data from {}'.format(start))
-        start += delta
+        ref_time -= timedelta(hours=6)
