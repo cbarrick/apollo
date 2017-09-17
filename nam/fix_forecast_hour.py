@@ -25,20 +25,20 @@ def xrange(start, stop, step):
         start += step
 
 
-def reftime(reftime):
+def reftime(t):
     # Convert strings
-    if isinstance(reftime, str):
-        reftime = datetime.strptime(reftime, '%Y%m%dT%H%M')
-        reftime = reftime.replace(tzinfo=timezone.utc)
+    if isinstance(t, str):
+        t = datetime.strptime(t, '%Y%m%dT%H%M')
+        t = t.replace(tzinfo=timezone.utc)
 
     # Convert to UTC
-    reftime = reftime.astimezone(timezone.utc)
+    t = t.astimezone(timezone.utc)
 
     # Round to the previous 0h, 6h, 12h, or 18h
-    hour = (reftime.hour // 6) * 6
-    reftime = reftime.replace(hour=hour, minute=0, second=0, microsecond=0)
+    hour = (t.hour // 6) * 6
+    t = t.replace(hour=hour, minute=0, second=0, microsecond=0)
 
-    return reftime
+    return t
 
 
 def datasets(start, stop, basepath='.'):
