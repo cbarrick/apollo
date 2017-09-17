@@ -481,7 +481,7 @@ class NAMLoader:
         return self.data_dir / Path(p)
 
 
-def preprocess_grib(self, path, features=DEFAULT_FEATURES, geo=GEO_SUBSET, forecast=None):
+def preprocess_grib(path, features=DEFAULT_FEATURES, geo=GEO_SUBSET, forecast=None):
     '''Processes a GRIB file into a list of `xr.Variable`s.
 
     Args:
