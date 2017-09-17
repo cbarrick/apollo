@@ -25,13 +25,32 @@ def xrange(start, stop, step):
         start += step
 
 
-def datasets(start, stop, step=timedelta(hours=6), basepath='.'):
-    path = Path(basepath)
+def reftime(reftime):
+    # Convert strings
+    if isinstance(reftime, str):
+        reftime = datetime.strptime(reftime, '%Y%m%dT%H%M')
+        reftime = reftime.replace(tzinfo=timezone.utc)
+
+    # Convert to UTC
+    reftime = reftime.astimezone(timezone.utc)
+
+    # Round to the previous 0h, 6h, 12h, or 18h
+    hour = (reftime.hour // 6) * 6
+    reftime = reftime.replace(hour=hour, minute=0, second=0, microsecond=0)
+
+    return reftime
+
+
+def datasets(start, stop, basepath='.'):
+    start = reftime(start)
+    stop = reftime(stop)
+    step = timedelta(hours=6)
+    basepath = Path(basepath)
     for i, t in enumerate(xrange(start, stop, step)):
         filename = f'nam.{t.year}{t.month:02}{t.day:02}/nam.t{t.hour:02}z.awphys.tm00.nc'
-        p = path / filename
-        if p.exists():
-            yield p
+        path = basepath / filename
+        if path.exists():
+            yield path
 
 
 def is_broken(ds):
@@ -66,8 +85,9 @@ def move_to_backup(path):
     return backup
 
 
-def main(*args, **kwargs):
-    for path in datasets(*args, **kwargs):
+def main(start='20160901T0000', stop='20170420T0000', basepath='.'):
+    for path in datasets(start, stop, basepath):
+        print(f'Checking {path}')
         ds = xr.open_dataset(str(path))
         if is_broken(ds):
             print(f'Fixing {path}', end='...', flush=True)
@@ -79,30 +99,10 @@ def main(*args, **kwargs):
             print('DONE')
 
 
-def parse_reftime(reftime):
-    # Convert strings
-    if isinstance(reftime, str):
-        reftime = datetime.strptime(reftime, '%Y%m%dT%H%M')
-        reftime = reftime.replace(tzinfo=timezone.utc)
-
-    # Convert to UTC
-    reftime = reftime.astimezone(timezone.utc)
-
-    # Round to the previous 0h, 6h, 12h, or 18h
-    hour = (reftime.hour // 6) * 6
-    reftime = reftime.replace(hour=hour, minute=0, second=0, microsecond=0)
-
-    return reftime
-
-
-START = parse_reftime('20160901T0000')
-STOP = parse_reftime('20170901T0000')
-
-
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Fix forecast axis in broken datasets.')
-    parser.add_argument('start', type=parse_reftime, nargs='?', default=START, help='Start of the range (%Y%m%dT%H%M).')
-    parser.add_argument('stop',  type=parse_reftime, nargs='?', default=STOP, help='End of the range (%Y%m%dT%H%M).')
+    parser.add_argument('start', type=reftime, nargs='?', help='Start of the range (%Y%m%dT%H%M).')
+    parser.add_argument('stop',  type=reftime, nargs='?', help='End of the range (%Y%m%dT%H%M).')
     args = parser.parse_args()
-    main(args.start, args.stop)
+    main(**vars(args))
