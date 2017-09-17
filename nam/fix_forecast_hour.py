@@ -85,7 +85,10 @@ def move_to_backup(path):
     return backup
 
 
-def main(start='20160901T0000', stop='20170420T0000', basepath='.'):
+def main(start=None, stop=None, basepath=None):
+    start = start or '20160901T0000'
+    stop = stop or '20170420T0000'
+    basepath = basepath or '.'
     for path in datasets(start, stop, basepath):
         print(f'Checking {path}')
         ds = xr.open_dataset(str(path))
