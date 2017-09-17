@@ -470,7 +470,7 @@ class NAMLoader:
         return self.data_dir / Path(p)
 
 
-def preprocess_grib(self, path, features=DEFAULT_FEATURES, geo=GEO_SUBSET):
+def preprocess_grib(self, path, features=DEFAULT_FEATURES, geo=GEO_SUBSET, forecast=None):
     '''Processes a GRIB file into a list of `xr.Variable`s.
 
     Args:
@@ -480,6 +480,9 @@ def preprocess_grib(self, path, features=DEFAULT_FEATURES, geo=GEO_SUBSET):
             The features to extract.
         geo (pair of slice):
             The subset of the grid to extract.
+        forecast (int):
+            The forecast hour of this grib.
+            If None, it is read from the file.
 
     Returns (list of xr.Variable):
         A list of variables extracted from the GRIB file.
@@ -490,9 +493,16 @@ def preprocess_grib(self, path, features=DEFAULT_FEATURES, geo=GEO_SUBSET):
     grbs = pygrib.open(str(path))
     grbs = grbs.select(shortName=features)
 
+    # Convert the forecast hour to a numpy timedelta
+    if forecast is not None:
+        forecast = np.timedelta64(forecast, 'h')
+    elif 'forecastTime' in grbs[1].keys():
+        forecast = np.timedelta64(grbs[1].forecastTime, 'h')
+    else:
+        raise RuntimeError('Cannot determine forecast hour')
+
     variables = []
     for g in grbs:
-
         # Try to get a good layer name
         layer_type = g.typeOfLevel
         if layer_type == 'unknown':
@@ -507,12 +517,6 @@ def preprocess_grib(self, path, features=DEFAULT_FEATURES, geo=GEO_SUBSET):
         # Get the official reference time
         ref_time = datetime(g.year, g.month, g.day, g.hour, g.minute, g.second)
         ref_time = np.datetime64(ref_time)
-
-        # Get the forecast time as an offset from the reference time.
-        try:
-            forecast = np.timedelta64(g.forecastTime, 'h')
-        except:
-            forecast = np.timedelta64(g.dataTime, 'h')
 
         # Get the units of the layer
         try:
