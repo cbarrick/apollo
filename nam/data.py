@@ -829,11 +829,13 @@ if __name__ == '__main__':
     forecast_period = FORECAST_PERIOD[:args.forecast+1]
     for i in range(args.count):
         try:
-            load(ref_time,
+            load(
                 data_dir=args.dir,
+                ref_time=ref_time,
                 fail_fast=args.fail_fast,
                 keep_gribs=args.keep_gribs,
-                forecast_period=forecast_period)
+                forecast_period=forecast_period,
+            )
         except Exception as e:
             logger.error(e)
             logger.error('Could not load data from {}'.format(ref_time))
