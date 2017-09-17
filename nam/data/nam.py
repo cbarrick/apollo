@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''A NAM dataset loader.
+'''A NAM dataset downloader and DAO.
 
 > The North American Mesoscale Forecast System (NAM) is one of the
 > major weather models run by the National Centers for Environmental
@@ -12,7 +12,7 @@
 > model at its core. This version of the NAM is also known as the NAM
 > Non-hydrostatic Mesoscale Model (NAM-NMM).
 
-Most users will be interested in the `load` function which loads
+Most users will be interested in the `load_nam` function which loads
 the data for a single NAM-NMM run at a particular reference time,
 downloading and preprocessing GRIB files if needed. The actual data
 loading logic is encapsulated in the `NAMLoader` class which can be
@@ -25,10 +25,10 @@ The data loading logic works like this:
    without any preprocessing.
 2. Otherwise any GRIB files required for building the dataset are
    downloaded if they do not already exist.
-3. The data is then extracted from the GRIBs. The raw data is subsetted
-   to an area encompasing Georgia, and only a subset of the features
-   are extracted. The level and time axes are reconstructed from
-   multiple GRIB features.
+3. The data is then extracted from the GRIBs. By default, the raw data
+   is subsetted to an area encompasing Georgia, and only a subset of
+   the features are extracted. The z and time axes are reconstructed
+   from multiple GRIB features.
 4. The dataset is then saved to a netCDF file, and the GRIB files are
    removed.
 
@@ -44,6 +44,9 @@ temperature at the isobaric layers.
 
 This module exposes several globals containing general metadata about
 the NAM dataset.
+
+In addition to being a DAO library for Python, this file can also be
+used as a download script for cron jobs.
 '''
 
 from datetime import datetime, timedelta, timezone
@@ -215,7 +218,7 @@ class NAMLoader:
 
     def __init__(self,
             data_dir='.',
-            ref_time=None,
+            reftime=None,
             forecast_period=FORECAST_PERIOD,
             url_fmt=None,
             local_grib_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib',
@@ -227,7 +230,7 @@ class NAMLoader:
         '''Creates a loader for NAM data.
 
         Args:
-            ref_time (datetime):
+            reftime (datetime):
                 The default reference time of the data set. It is rounded down
                 to the previous model run. It may be given as a string with the
                 format '%Y%m%dT%H%M'. The default is the most recent release.
@@ -261,10 +264,10 @@ class NAMLoader:
                 This argument defines the behavior of the `load` method, and
                 is ignored when calling `download` or `load_grib` directly.
         '''
-        self.ref_time = normalize_ref_time(ref_time)
+        self.reftime = normalize_reftime(reftime)
         self.forecast_period = tuple(forecast_period)
         self.data_dir = Path(data_dir)
-        self.url_fmt = url_fmt or automatic_url_fmt(self.ref_time)
+        self.url_fmt = url_fmt or automatic_url_fmt(self.reftime)
         self.local_grib_fmt = local_grib_fmt
         self.local_cdf_fmt = local_cdf_fmt
         self.save_netcdf = save_netcdf
@@ -282,7 +285,7 @@ class NAMLoader:
         preprocessed into an xarray Dataset. The dataset is then saved as a
         netCDF file, the GRIBs are deleted, and the dataset is returned.
         '''
-        logger.info('loading dataset for {}'.format(self.ref_time))
+        logger.info('loading dataset for {}'.format(self.reftime))
 
         if not self.force_download and self.local_cdf.exists():
             return self.load_cdf()
@@ -458,20 +461,20 @@ class NAMLoader:
     def remote_gribs(self):
         '''An iterator over the URLs of GRIB files for some reference time and forecast period.'''
         for i in self.forecast_period:
-            url = self.url_fmt.format(forecast=i, ref=self.ref_time)
+            url = self.url_fmt.format(forecast=i, ref=self.reftime)
             yield url
 
     @property
     def local_gribs(self):
         '''An iterator over paths to local GRIB files for some reference time and forecast period.'''
         for i in self.forecast_period:
-            p = self.local_grib_fmt.format(forecast=i, ref=self.ref_time)
+            p = self.local_grib_fmt.format(forecast=i, ref=self.reftime)
             yield self.data_dir / Path(p)
 
     @property
     def local_cdf(self):
         '''The path to a local netCDF file for some reference time.'''
-        p = self.local_cdf_fmt.format(ref=self.ref_time)
+        p = self.local_cdf_fmt.format(ref=self.reftime)
         return self.data_dir / Path(p)
 
 
@@ -523,8 +526,8 @@ def preprocess_grib(path, features=DEFAULT_FEATURES, geo=GEO_SUBSET, forecast=No
         name = '_'.join([g.shortName, layer_type])
 
         # Get the official reference time
-        ref_time = datetime(g.year, g.month, g.day, g.hour, g.minute, g.second)
-        ref_time = np.datetime64(ref_time)
+        reftime = datetime(g.year, g.month, g.day, g.hour, g.minute, g.second)
+        reftime = np.datetime64(reftime)
 
         # Get the units of the layer
         try:
@@ -575,7 +578,7 @@ def preprocess_grib(path, features=DEFAULT_FEATURES, geo=GEO_SUBSET, forecast=No
                 'long_name': 'longitude',
                 'units': 'degrees_east',
             }),
-            'reftime': ('reftime', [ref_time], {
+            'reftime': ('reftime', [reftime], {
                 'standard_name': 'forecast_reference_time',
                 'long_name': 'reference time',
                 # # units and calendar are handled automatically by xarray
@@ -611,59 +614,24 @@ def preprocess_grib(path, features=DEFAULT_FEATURES, geo=GEO_SUBSET, forecast=No
     return variables
 
 
-def normalize_ref_time(ref_time=None):
-    '''Normalize an arbitrary reference time to a valid one.
-
-    Times may be strings, datetime objects, or `None` for the current reference
-    time. Refrence times are converted to UTC and rounded to the previous 0h,
-    6h, 12h or 18h mark. Strings take the format '%Y%m%dT%H%M'and are assumed
-    to be UTC.
-
-    Args:
-        ref_time (datetime or string):
-            The reference time to prepare.
-            Defaults to the most recent reference time.
-
-    Returns (datetime):
-        A valid reference time.
-    '''
-    # Default to most recent reference time
-    if not ref_time:
-        ref_time = datetime.now(timezone.utc)
-
-    # Convert strings
-    if isinstance(ref_time, str):
-        ref_time = datetime.strptime(ref_time, '%Y%m%dT%H%M')
-        ref_time = ref_time.replace(tzinfo=timezone.utc)
-
-    # Convert to UTC
-    ref_time = ref_time.astimezone(timezone.utc)
-
-    # Round to the previous 0h, 6h, 12h, or 18h
-    hour = (ref_time.hour // 6) * 6
-    ref_time = ref_time.replace(hour=hour, minute=0, second=0, microsecond=0)
-
-    return ref_time
-
-
-def automatic_url_fmt(ref_time):
+def automatic_url_fmt(reftime):
     '''Derive the url for data at a given reference time.
 
     Note that the appropriate URL depends on the current time and therefore
     is not stable. Do not depend on this output for an extended period.
 
     Args:
-        ref_time (datetime):
+        reftime (datetime):
             The reference time of the data set.
 
     Returns (str):
         Either `PROD_URL`, `ARCHIVE_URL_1`, or `ARCHIVE_URL_2`.
     '''
-    ref_time = normalize_ref_time(ref_time)
+    reftime = normalize_reftime(reftime)
     now = datetime.now(timezone.utc)
-    days_delta = (now - ref_time).days
+    days_delta = (now - reftime).days
     if days_delta > 7:
-        if ref_time < datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
+        if reftime < datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
             url_fmt = ARCHIVE_URL_1
         else:
             url_fmt = ARCHIVE_URL_2
@@ -672,13 +640,51 @@ def automatic_url_fmt(ref_time):
     return url_fmt
 
 
-def reftime(ds, tz=None):
-    '''Returns the first value along the reftime dimension as a native datetime.
+def normalize_reftime(reftime=None):
+    '''Normalize an arbitrary reference time to a valid one.
+
+    Times may be strings, datetime objects, or `None` for the current reference
+    time. Refrence times are converted to UTC and rounded to the previous 0h,
+    6h, 12h or 18h mark. Strings take the format '%Y%m%dT%H%M'and are assumed
+    to be UTC.
+
+    Args:
+        reftime (datetime or string):
+            The reference time to prepare.
+            Defaults to the most recent reference time.
+
+    Returns (datetime):
+        A valid reference time.
+    '''
+    # Default to most recent reference time
+    if not reftime:
+        reftime = datetime.now(timezone.utc)
+
+    # Convert strings
+    if isinstance(reftime, str):
+        reftime = datetime.strptime(reftime, '%Y%m%dT%H%M')
+        reftime = reftime.replace(tzinfo=timezone.utc)
+
+    # Convert to UTC
+    reftime = reftime.astimezone(timezone.utc)
+
+    # Round to the previous 0h, 6h, 12h, or 18h
+    hour = (reftime.hour // 6) * 6
+    reftime = reftime.replace(hour=hour, minute=0, second=0, microsecond=0)
+
+    return reftime
+
+
+def native_reftime(ds, tz=None):
+    '''Get the reftime of a dataset as a native datetime.
+
+    This method extracts the first value along the reftime axis.
+    By default, a NAM dataset only has one reftime.
 
     Example:
         Get the third value along the reftime dimension
         ```
-        nam.reftime(ds.isel(reftime=2))
+        nam.native_reftime(ds.isel(reftime=2))
         ```
 
     Args:
@@ -686,7 +692,7 @@ def reftime(ds, tz=None):
             A NAM dataset.
         tz (timezone):
             The data is converted to this timezone.
-            The default is eastern standard time.
+            The default is eastern standard time, the timezone of the data.
     '''
     if not tz:
         tz = timezone(timedelta(hours=-5), name='US/Eastern')
@@ -694,7 +700,7 @@ def reftime(ds, tz=None):
     reftime = (ds.reftime.data[0]
         .astype('datetime64[ms]')     # truncate from ns to ms (lossless for NAM data)
         .astype('O')                  # convert to native datetime
-        .replace(tzinfo=timezone.utc) # set timezone
+        .replace(tzinfo=timezone.utc) # mark the timezone as UTC
         .astimezone(tz))              # convert to given timezone
 
     return reftime
@@ -771,14 +777,22 @@ def proj_coords(lats, lons):
     return y, x
 
 
-def show(data):
-    '''A helper to plot NAM data.
+def plot_geo(data, show=True, block=False):
+    '''A helper to plot geographic data.
+
+    Args:
+        data (xr.DataArray):
+            The data to plot.
+        shot (bool):
+            If True, show the plot immediately.
+        block (bool):
+            The blocking behavior when showing the plot.
 
     Example:
         Plot the 0-hour forecast of surface temperature:
         ```
-        ds = nam.load()
-        nam.show(ds.t_surface.isel(reftime=0, forecast=0))
+        ds = nam.load_nam()
+        nam.plot_geo(ds.t_surface.isel(reftime=0, forecast=0))
         ```
     '''
     state_boarders = cf.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines', '50m', facecolor='none')
@@ -786,10 +800,11 @@ def show(data):
     ax.add_feature(state_boarders, edgecolor='black')
     ax.add_feature(cf.COASTLINE)
     data.plot(ax=ax)
-    plt.show(block=False)
+    if show:
+        plt.show(block=block)
 
 
-def load(*args, **kwargs):
+def load_nam(*args, **kwargs):
     '''Load a NAM-NMM dataset for the given reference time.
 
     See `NAMLoader` for a description of accepted arguments.
@@ -798,6 +813,8 @@ def load(*args, **kwargs):
     return loader.load()
 
 
+# This file can be invoked as a program, acting as a downloader and preprocessor.
+# This is the target for the cron job that scrapes NOAA's servers.
 if __name__ == '__main__':
     import argparse
     import logging
@@ -805,7 +822,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Download and preprocess the NAM-NMM dataset.')
     parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
-    parser.add_argument('-t', '--time', type=normalize_ref_time, help='The reference time to download.')
+    parser.add_argument('-t', '--time', type=normalize_reftime, help='The reference time to download.')
     parser.add_argument('-n', '--count', type=int, default=1, metavar='N', help='Load N datasets, ending at the reference time.')
     parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
     parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
@@ -819,18 +836,18 @@ if __name__ == '__main__':
         logger.error('Count must be greater than 0, got {}'.format(args.count))
         sys.exit(1)
 
-    ref_time = args.time or datetime.now(timezone.utc)
+    reftime = args.time or datetime.now(timezone.utc)
     forecast_period = FORECAST_PERIOD[:args.forecast+1]
     for i in range(args.count):
         try:
-            load(
+            load_nam(
                 data_dir=args.dir,
-                ref_time=ref_time,
+                reftime=reftime,
                 fail_fast=args.fail_fast,
                 keep_gribs=args.keep_gribs,
                 forecast_period=forecast_period,
             )
         except Exception as e:
             logger.error(e)
-            logger.error('Could not load data from {}'.format(ref_time))
-        ref_time -= timedelta(hours=6)
+            logger.error('Could not load data from {}'.format(reftime))
+        reftime -= timedelta(hours=6)
