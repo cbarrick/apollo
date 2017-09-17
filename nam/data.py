@@ -51,6 +51,7 @@ from itertools import groupby
 from logging import getLogger
 from pathlib import Path
 from time import sleep
+import re
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
@@ -74,6 +75,10 @@ logger = getLogger(__name__)
 PROD_URL = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/nam/prod/nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2'
 ARCHIVE_URL_1 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb'
 ARCHIVE_URL_2 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb2'
+
+
+# Pattern to extract the forecast hour from a GRIB path
+FORECAST_PATTERN = re.compile('t([0-9][0-9])z')
 
 
 # The standard forecast period of the NAM-NMM dataset.
@@ -215,6 +220,7 @@ class NAMLoader:
             url_fmt=None,
             local_grib_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib',
             local_cdf_fmt='nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys.tm00.nc',
+            forecast_pattern=FORECAST_PATTERN,
             save_netcdf=True,
             keep_gribs=False,
             force_download=False,
@@ -237,6 +243,10 @@ class NAMLoader:
                 The name format for local grib files.
             local_cdf_fmt (string):
                 The name format for local netCDF files.
+            forecast_pattern (string):
+                A regular expression for extracting the forecast hour from a
+                GRIB file name. This is only used if the forecast hour is not
+                embedded in the file. The first capture must be the hour.
             save_netcdf (bool):
                 If true, save the dataset to a netCDF file.
                 This argument defines the behavior of the `load` method, and
@@ -262,6 +272,7 @@ class NAMLoader:
         self.url_fmt = url_fmt or automatic_url_fmt(self.ref_time)
         self.local_grib_fmt = local_grib_fmt
         self.local_cdf_fmt = local_cdf_fmt
+        self.forecast_pattern = forecast_pattern
         self.save_netcdf = save_netcdf
         self.keep_gribs = keep_gribs
         self.force_download = force_download
@@ -494,10 +505,13 @@ def preprocess_grib(self, path, features=DEFAULT_FEATURES, geo=GEO_SUBSET, forec
     grbs = grbs.select(shortName=features)
 
     # Convert the forecast hour to a numpy timedelta
+    match = self.forecast_pattern.search(str(path))
     if forecast is not None:
         forecast = np.timedelta64(forecast, 'h')
     elif 'forecastTime' in grbs[1].keys():
         forecast = np.timedelta64(grbs[1].forecastTime, 'h')
+    elif match:
+        forecast = np.timedelta64(int(match[1]), 'h')
     else:
         raise RuntimeError('Cannot determine forecast hour')
 
