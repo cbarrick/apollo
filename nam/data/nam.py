@@ -45,8 +45,7 @@ temperature at the isobaric layers.
 This module exposes several globals containing general metadata about
 the NAM dataset.
 
-In addition to being a DAO library for Python, this file can also be
-used as a download script for cron jobs.
+This module also exposes a CLI to manage downloads.
 '''
 
 from datetime import datetime, timedelta, timezone
@@ -813,8 +812,6 @@ def load_nam(*args, **kwargs):
     return loader.load()
 
 
-# This file can be invoked as a program, acting as a downloader and preprocessor.
-# This is the target for the cron job that scrapes NOAA's servers.
 if __name__ == '__main__':
     import argparse
     import logging
