@@ -4,9 +4,15 @@
 
 
 # Datasets
-gaemn15.zip
 /NAM-NMM
+/GA-POWER
 /GAEMN15
+/gaemn15.zip
+
+
+# Logs
+/cron.log
+/download.log
 
 
 # Python stuff
