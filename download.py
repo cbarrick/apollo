@@ -4,7 +4,7 @@ from uga_solar.nam import data
 import argparse
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 
 def reftime(t):
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
     parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
     parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
-    parser.add_argument('time', type=reftime, help='The reference time to download.')
+    parser.add_argument('time', nargs='?', type=reftime, help='The reference time to download.')
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                 fail_fast=args.fail_fast,
                 save_gribs=args.keep_gribs)
         except Exception as e:
-            logger.error(e)
-            logger.error('Could not load data from {}'.format(reftime))
+            logging.error(e)
+            logging.error('Could not load data from {}'.format(reftime))
 
         reftime -= timedelta(hours=6)
