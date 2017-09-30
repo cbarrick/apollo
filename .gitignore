@@ -1,8 +1,14 @@
-__pycache__
-*.pyc
-
+# Working files
 /dev.py
 /notes.md
 
-/gaemn/gaemn15_data
-/gaemn/gaemn15.zip
+
+# Datasets
+gaemn15.zip
+/NAM-NMM
+/GAEMN15
+
+
+# Python stuff
+__pycache__
+*.pyc
