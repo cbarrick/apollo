@@ -7,10 +7,9 @@ time (the time bein predicted) to the validity time (the time the forecast was
 made). This was only a problem for older grib files that did not include the
 'forecastTime' key.
 
-This script sets the identifies this bug and resets the forecast coordinate to
-the official forecast cycle.
+This script identifies this bug in forecasts and resets the forecast
+coordinate to the canonical forecast cycle.
 '''
-
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import itertools

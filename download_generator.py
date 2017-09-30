@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-'''Generates a script to download missing forecasts to the cache.'''
+'''Generates a script to download missing forecasts to the cache.
 
+This script enumerates all missing NAM forecasts between two times.
+It prints a script that calls into `download.py` separately for each
+missing forecast. This is more flexible than using `download.py`
+directly when managing many downloads or a spotty cache.
+'''
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -45,7 +50,7 @@ def main(start=None, stop=None, log='missing.log', basepath=None):
     basepath = basepath or '.'
     for i, t in enumerate(missing_datasets(start, stop, basepath)):
         spec = f'{t.year}{t.month:02}{t.day:02}T{t.hour:02}00'
-        print('./download.py', '-t', spec, '-f', 36, '-x', '2>&1 | tee -a', log)
+        print('./download.py', '-x', spec, '2>&1 | tee -a', log)
 
 
 if __name__ == '__main__':
