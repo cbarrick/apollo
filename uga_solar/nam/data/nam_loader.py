@@ -346,7 +346,7 @@ def plot_geo(data, show=True, block=False):
     Args:
         data (xr.DataArray):
             The data to plot.
-        shot (bool):
+        show (bool):
             If True, show the plot immediately.
         block (bool):
             The blocking behavior when showing the plot.
@@ -354,8 +354,8 @@ def plot_geo(data, show=True, block=False):
     Example:
         Plot the 0-hour forecast of surface temperature:
         ```
-        ds = nam.load_nam()
-        nam.plot_geo(ds.t_surface.isel(reftime=0, forecast=0))
+        ds = load_nam()
+        plot_geo(ds['t_surface'].isel(reftime=0, forecast=0))
         ```
     '''
     state_boarders = cf.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines', '50m', facecolor='none')
@@ -381,7 +381,7 @@ def read_grib(path, features=FEATURE_SUBSET, geo=GEO_SUBSET):
     Returns (list of xr.Variable):
         A list of variables extracted from the GRIB file.
     '''
-    logger.info('processing {}'.format(path))
+    logger.info(f'processing {path}')
 
     # Open grib and select the variable subset.
     try:
@@ -390,7 +390,7 @@ def read_grib(path, features=FEATURE_SUBSET, geo=GEO_SUBSET):
     except Exception as e:
         # read_grib gets called in parallel, so when it dies
         # we need to log somthing to identify which one died
-        logger.warning('failed to read {}: {}'.format(path, e))
+        logger.warning(f'failed to read {path}: {e}')
         raise e
 
     # Infer the forecast hour.
@@ -567,6 +567,40 @@ def read_gribs(paths, features=FEATURE_SUBSET, geo=GEO_SUBSET):
         return xr.merge(variables, join='inner')
 
 
+def clean(ds):
+    '''Clean up some oddities that varry between forecasts.
+    '''
+    reftime = ds['reftime'].values[0]
+
+    # Only use the first 36 hours of forecast (plus the 0 hour).
+    # Some datasets contain the full 84 hours of forecast.
+    ds = ds.isel(forecast=slice(37))
+
+    # # Drop spatial coordinates.
+    # # Due to rounding error, some datasets might not align exactly
+    # # along these coordinates, causing xarray to freak out.
+    ds = ds.drop('lat')
+    ds = ds.drop('lon')
+    ds = ds.drop('x')
+    ds = ds.drop('y')
+
+    # Drop cloud-top visibility
+    # It is inconsistently avaliable.
+    if 'cloudTop' in ds:
+        ds = ds.drop('cloudTop')
+        ds = ds.drop('vis_cloudTop')
+
+    # Rename the 'z200' dimension to 'entireAtmosphere'.
+    # After 2017-04-01, the grib files report this layer as 'unknown',
+    # so the name is generated from the numeric layer indicator, 200.
+    # TODO: Perhaps I can cleanup the old data and preprocessing code
+    if 'z200' in ds:
+        ds = ds.rename({'z200': 'entireAtmosphere'})
+        ds = ds.rename({'tcc_z200': 'tcc_entireAtmosphere'})
+
+    return ds
+
+
 class NAMLoader:
     '''A class to download, subsets, and cache NAM forecasts.
 
@@ -580,6 +614,8 @@ class NAMLoader:
     TODO:
         - describe the data format
     '''
+    class CacheMiss(Exception):
+        pass
 
     def __init__(self,
             cache_dir='./NAM-NMM',
@@ -672,138 +708,9 @@ class NAMLoader:
             A path to a netCDF file under the `cache_dir`.
         '''
         reftime = normalize_reftime(reftime)
-        prefix = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'.format(ref=reftime)
-        filename = 'nam.t{ref.hour:02d}z.awphys.tm00.nc'.format(ref=reftime)
+        prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
+        filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
         return self.cache_dir / prefix / filename
-
-    def load(self, reftime=None):
-        '''Load the dataset, downloading and preprocessing GRIBs as necessary.
-
-        If the dataset exists as a local netCDF file, it is loaded and
-        returned. Otherwise, any missing GRIB files are downloaded and
-        preprocessed into an xarray Dataset. The dataset is then saved as a
-        netCDF file, the GRIBs are deleted, and the dataset is returned.
-
-        Args:
-            reftime (datetime):
-                The reference time to load. It is rounded down to the previous
-                model run (hour 0, 6, 12, or 18). It may be given as a string
-                in the format '%Y%m%dT%H%M'. The default is the current time.
-        '''
-        reftime = normalize_reftime(reftime)
-
-        logger.info('loading dataset for {}'.format(reftime))
-
-        # `force_download` means we must load from grib files.
-        if self.force_download:
-            return self.load_from_grib(reftime)
-
-        # Otherwise, try loading a netCDF from the cache first.
-        try:
-            return self.load_from_cache(reftime)
-        except Exception as e:
-            logger.debug('cache miss: {}'.format(e))
-            return self.load_from_grib(reftime)
-
-    def load_range(self, start='20160901T0000', stop=None):
-        '''Load forecasts for a range of reference times as a single Dataset.
-
-        NOTE: Currently, this method only loads data from the cache.
-        This is generally what you want any way.
-
-        WARNING: This function is very picky about messy data. Even the
-        slightest discrepency will break it. Our data is not clean enough
-        to load it's entirety as a single dataset.
-
-        TODO: Fix the above warning.
-
-        Args:
-            start (datetime):
-                The first time in the range.
-                The default is 2016-09-01 00:00
-            stop (datetime):
-                The last time in the range.
-                The default is the current time.
-
-        Returns:
-            A single dataset describing the range.
-        '''
-        start = normalize_reftime(start)
-        stop = normalize_reftime(stop)
-
-        def valid_paths():
-            delta = timedelta(hours=6)
-            reftime = start
-            while reftime <= stop:
-                path = self.local_cdf(reftime)
-                if path.exists():
-                    yield str(path)
-                reftime += delta
-
-        def preprocess(ds):
-            reftime = ds['reftime'].values[0]
-            logger.info('merging {}'.format(reftime))
-            ds = ds.isel(forecast=slice(37))
-            ds = ds.drop('lat')
-            ds = ds.drop('lon')
-            ds = ds.drop('x')
-            ds = ds.drop('y')
-            return ds
-
-        return xr.open_mfdataset(
-            paths=list(valid_paths()),
-            chunks={},
-            concat_dim='reftime',
-            preprocess=preprocess)
-
-    def load_from_cache(self, reftime=None):
-        '''Load the forecast for this reference time from the cache.
-
-        Args:
-            reftime (datetime):
-                The reference time to load.
-
-        Returns:
-            An `xr.Dataset` describing this forecast.
-        '''
-        reftime = normalize_reftime(reftime)
-        logger.info('checking the cache for reftime {}'.format(reftime))
-        path = self.local_cdf(reftime)
-        return xr.open_dataset(
-            str(path),
-            chunks={},
-            autoclose=True,
-        )
-
-    def load_from_grib(self, reftime=None):
-        '''Load the dataset for this forecast from the GRIB files.
-
-        If the files are not cached, they will be downloaded.
-
-        Args:
-            reftime (datetime):
-                The reference time to load.
-
-        Returns:
-            An `xr.Dataset` describing this forecast.
-        '''
-        reftime = normalize_reftime(reftime)
-        logger.info('loading gribs for {}'.format(reftime))
-
-        self.download(reftime) # ensure the files exist.
-        dataset = read_gribs(self.local_gribs(reftime))
-
-        if self.save_netcdf:
-            cdf_path = self.local_cdf(reftime)
-            logger.info('saving as {}'.format(cdf_path))
-            dataset.to_netcdf(str(cdf_path))
-
-        if not self.save_gribs:
-            logger.info('deleting local gribs')
-            for grib_path in self.local_gribs(reftime):
-                grib_path.unlink()
-
-        return dataset
 
     def download(self, reftime=None, max_tries=8, timeout=10):
         '''Download the GRIB files for this dataset.
@@ -838,7 +745,7 @@ class NAMLoader:
                 # Perform a streaming download because the files are big.
                 try:
                     with path.open('wb') as fd:
-                        logger.info('downloading {}'.format(url))
+                        logger.info(f'downloading {url}')
                         r = requests.get(url, timeout=timeout, stream=True)
                         r.raise_for_status()
                         for chunk in r.iter_content(chunk_size=128):
@@ -851,11 +758,11 @@ class NAMLoader:
                     logger.warning(err)
                     path.unlink()
                     if i + 1 == max_tries:
-                        logger.error('Download failed, giving up')
+                        logger.error('download failed, giving up')
                         raise err
                     else:
                         delay = 2**i
-                        logger.warning('Download failed, retrying in {}s'.format(delay))
+                        logger.warning(f'download failed, retrying in {delay}s')
                         sleep(delay)
                         continue
 
@@ -864,76 +771,193 @@ class NAMLoader:
                     path.unlink()
                     raise err
 
+    def load_from_cache(self, reftime=None):
+        '''Load the forecast for this reference time from the cache.
+
+        Args:
+            reftime (datetime):
+                The reference time to load.
+
+        Returns:
+            An `xr.Dataset` describing this forecast.
+        '''
+        reftime = normalize_reftime(reftime)
+        path = self.local_cdf(reftime)
+
+        if path.exists():
+            logger.debug(f'loading forecast {reftime} from cache')
+            ds = xr.open_dataset(str(path), autoclose=True, chunks={})
+            return ds
+        else:
+            raise NAMLoader.CacheMiss(reftime)
+
+    def load_from_grib(self, reftime=None):
+        '''Load the dataset for this forecast from the GRIB files.
+
+        If the files are not cached, they will be downloaded.
+
+        Args:
+            reftime (datetime):
+                The reference time to load.
+
+        Returns:
+            An `xr.Dataset` describing this forecast.
+        '''
+        reftime = normalize_reftime(reftime)
+        logger.debug(f'loading forecast {reftime} from gribs')
+
+        self.download(reftime) # ensure the files exist.
+        dataset = read_gribs(self.local_gribs(reftime))
+
+        if self.save_netcdf:
+            cdf_path = self.local_cdf(reftime)
+            logger.info(f'writing {cdf_path}')
+            dataset.to_netcdf(str(cdf_path))
+
+        if not self.save_gribs:
+            logger.info('deleting local gribs')
+            for grib_path in self.local_gribs(reftime):
+                grib_path.unlink()
+
+        return dataset
+
+    def load_one(self, reftime=None):
+        '''Load a forecast for some reference time,
+        downloading and preprocessing GRIBs as necessary.
+
+        If the dataset exists as a local netCDF file, it is loaded and
+        returned. Otherwise, any missing GRIB files are downloaded and
+        preprocessed into an xarray Dataset. The dataset is then saved as a
+        netCDF file, the GRIBs are deleted, and the dataset is returned.
+
+        Args:
+            reftime (datetime):
+                The reference time to load. It is rounded down to the
+                previous 6 hour mark. It may be given as a string in the
+                format '%Y%m%dT%H%M'. The default is the current time.
+
+        Returns (xr.Dataset):
+            A dataset for the forecast at the given reference time.
+        '''
+        reftime = normalize_reftime(reftime)
+
+        logger.debug(f'loading forecast at {reftime}')
+
+        # `force_download` means we must load from grib files.
+        if self.force_download:
+            return self.load_from_grib(reftime)
+
+        # Otherwise, try loading from the cache first.
+        try:
+            return self.load_from_cache(reftime)
+
+        except NAMLoader.CacheMiss as e:
+            logger.debug(f'cache miss: {e}')
+            return self.load_from_grib(reftime)
+
+    def load(self, *reftimes):
+        '''Load and combine forecasts for some reference times,
+        downloading and preprocessing GRIBs as necessary.
+
+        If the dataset exists as a local netCDF file, it is loaded and
+        returned. Otherwise, any missing GRIB files are downloaded and
+        preprocessed into an xarray Dataset. The dataset is then saved as a
+        netCDF file, the GRIBs are deleted, and the dataset is returned.
+
+        Args:
+            reftimes (datetime):
+                The reference times to load. They are rounded down to the
+                previous 6 hour mark. They may be given as a string in the
+                format '%Y%m%dT%H%M'. The default is to load only the most
+                recent forecast.
+
+        Returns (xr.Dataset):
+            Returns a single dataset containing all forecasts at the given
+            reference times. Some data may be dropped when combining forecasts.
+        '''
+        if not reftimes:
+            return self.load_one()
+        else:
+            datasets = (self.load_one(r) for r in reftimes)
+            datasets = (clean(ds) for ds in datasets)
+            return xr.concat(datasets, dim='reftime')
+
+    def load_range(self, start='20160901T0000', stop=None):
+        '''Load  and combine forecasts for a range of reference times.
+
+        NOTE: This method only loads data from the cache.
+
+        Args:
+            start (datetime):
+                The first time in the range.
+                The default is 2016-09-01 00:00
+            stop (datetime):
+                The last time in the range.
+                The default is the current time.
+
+        Returns (xr.Dataset):
+            Returns a single dataset containing all forecasts at the given
+            reference times. Some data may be dropped when combining forecasts.
+        '''
+        start = normalize_reftime(start)
+        stop = normalize_reftime(stop)
+        logger.info(f'loading forecasts from {start} to {stop}')
+
+        datasets = []
+        delta = timedelta(hours=6)
+        while start <= stop:
+            try:
+                ds = self.load_from_cache(start)
+                ds = clean(ds)
+                datasets.append(ds)
+            except NAMLoader.CacheMiss:
+                pass
+            start += delta
+
+        logger.info('joining forecasts')
+        return xr.concat(datasets, dim='reftime')
+
 
 def load_range(start='20160901T0000', stop=None, **kwargs):
-    '''Load a range of data from the NAM cache.
+    '''Load  and combine forecasts for a range of reference times.
+
+    NOTE: This method only loads data from the cache.
 
     Args:
-        **kwargs:
-            Passed along to the `NAMLoader` constructor.
+        start (datetime):
+            The first time in the range.
+            The default is 2016-09-01 00:00
+        stop (datetime):
+            The last time in the range.
+            The default is the current time.
 
-    Returns:
-        An `xr.Dataset` streamed from disk.
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
     '''
     loader = NAMLoader(**kwargs)
     return loader.load_range(start, stop)
 
 
 def load_nam(*reftimes, **kwargs):
-    '''Load a NAM-NMM dataset for the given reference time.
+    '''Load and combine forecasts for some reference times,
+    downloading and preprocessing GRIBs as necessary.
+
+    If the dataset exists as a local netCDF file, it is loaded and
+    returned. Otherwise, any missing GRIB files are downloaded and
+    preprocessed into an xarray Dataset. The dataset is then saved as a
+    netCDF file, the GRIBs are deleted, and the dataset is returned.
 
     Args:
-        reftime (datetime):
-            The reference times to load.
-            If not given, the current time is used.
-        **kwargs:
-            Passed along to the `NAMLoader` constructor.
+        reftimes (datetime):
+            The reference times to load. They are rounded down to the
+            previous 6 hour mark. They may be given as a string in the
+            format '%Y%m%dT%H%M'. The default is to load only the most
+            recent forecast.
 
-    Returns:
-        An `xr.Dataset` describing the forecast(s).
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
     '''
     loader = NAMLoader(**kwargs)
-    if not reftimes:
-        return loader.load()
-    else:
-        datasets = [loader.load(r) for r in reftimes]
-        return xr.concat(datasets, dim='reftime')
-
-
-if __name__ == '__main__':
-    import argparse
-    import sys
-
-    parser = argparse.ArgumentParser(description='Populate the cache with NAM forecasts.')
-    parser.add_argument('-t', '--time', type=normalize_reftime, help='The reference time to download.')
-    parser.add_argument('-n', '--count', type=int, default=1, metavar='N', help='Download a sequence of N datasets, ending at the reference time.')
-    parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
-    parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
-    parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
-    parser.add_argument('dir', type=str, nargs='?', default='.', help='Path to the cache.')
-    args = parser.parse_args()
-
-    logging.basicConfig(level=args.log, format='[{asctime}] {levelname:>7}: {message}', style='{')
-
-    if args.count < 1:
-        logger.error('Count must be greater than 0, got {}'.format(args.count))
-        sys.exit(1)
-
-    reftime = args.time or datetime.now(timezone.utc)
-    for i in range(args.count):
-        try:
-            load_nam(
-                reftime,
-                cache_dir=args.dir,
-                fail_fast=args.fail_fast,
-                save_gribs=args.keep_gribs,
-            )
-        except Exception as e:
-            logger.error(e)
-            logger.error('Could not load data from {}'.format(reftime))
-        reftime -= timedelta(hours=6)
-
-
-if __name__ == '__ipy__':
-    logging.basicConfig(level='DEBUG')
-    loader = NAMLoader(fail_fast=True, save_gribs=True)
+    return loader.load(*reftimes)

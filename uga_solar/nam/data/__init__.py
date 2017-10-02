@@ -1,4 +1,6 @@
 from . import target_loader
+from .target_loader import TargetLoader
+from .target_loader import load_targets
 
 from . import nam_loader
 from .nam_loader import NAMLoader
