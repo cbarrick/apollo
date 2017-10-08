@@ -12,7 +12,7 @@ We run the following script as a cron job to keep the cache updated:
     date >> cron.log
     ./download.py -n 4 2>&1| tee -a ./download.log
 '''
-from uga_solar.nam import data
+from uga_solar.data import nam
 
 import argparse
 import logging
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     for i in range(args.count):
         try:
-            data.load_nam(
+            nam.load(
                 reftime,
                 cache_dir=args.cache_dir,
                 fail_fast=args.fail_fast,
