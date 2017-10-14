@@ -42,14 +42,11 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--count', type=int, default=1, metavar='N', help='Download N datasets, ending at the reference time.')
     parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
     parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
-    parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
     parser.add_argument('time', nargs='?', type=reftime, help='The reference time to download.')
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=args.log,
-        style='{',
-        format='[{asctime}] {levelname}: {message}')
+    logging.basicConfig(format='[{asctime}] {levelname}: {message}', style='{')
+    nam.logger.setLevel('DEBUG')
 
     if args.count < 1:
         logging.error('Count must be greater than 0, got {}'.format(args.count))
@@ -63,7 +60,7 @@ if __name__ == '__main__':
                 reftime,
                 cache_dir=args.cache_dir,
                 fail_fast=args.fail_fast,
-                save_gribs=args.keep_gribs)
+                keep_gribs=args.keep_gribs)
         except Exception as e:
             logging.error(e)
             logging.error('Could not load data from {}'.format(reftime))
