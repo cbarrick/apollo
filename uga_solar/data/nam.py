@@ -35,19 +35,15 @@ the isobaric layers.
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-from itertools import groupby, repeat
 from pathlib import Path
 from time import sleep
 import logging
-import re
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import scipy.spatial.distance
-import pygrib
 import requests
 import xarray as xr
 
@@ -314,11 +310,11 @@ class NAMLoader:
                 logger.warning(err)
                 path.unlink()
                 if i + 1 == max_tries:
-                    logger.error('download failed, giving up')
+                    logger.error('download of {path.name} failed, giving up')
                     raise err
                 else:
                     delay = 2**i
-                    logger.warning(f'download failed, retrying in {delay}s')
+                    logger.warning(f'download of {path.name} failed, retrying in {delay}s')
                     sleep(delay)
                     continue
 
