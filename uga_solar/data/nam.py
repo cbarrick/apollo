@@ -211,7 +211,8 @@ class NAMLoader:
             cache_dir='./NAM-NMM',
             fail_fast=False,
             save_nc=True,
-            keep_gribs=False):
+            keep_gribs=False,
+            parallel=False):
         '''Creates a loader for NAM data.
 
         Args:
@@ -226,13 +227,24 @@ class NAMLoader:
                 Convert the dataset to netCDF on disk.
             keep_gribs (bool):
                 Keep the GRIB files after converting to netCDF.
+            parallel (bool):
+                Perform download and preprocess operations in parallel.
+                Note that this will speed up the I/O operations, but the
+                preprocessing may be slower because of the GIL.
         '''
         self.cache_dir = Path(cache_dir)
-        self.fail_fast = fail_fast
-        self.save_nc = save_nc
-        self.keep_gribs = keep_gribs
+        self.fail_fast = bool(fail_fast)
+        self.save_nc = bool(save_nc)
+        self.keep_gribs = bool(keep_gribs)
+        self.parallel = bool(parallel)
 
         self.cache_dir.mkdir(exist_ok=True)
+
+        if self.parallel:
+            logger.info('Parallel loading enabled')
+            self._mapper = ThreadPoolExecutor().map
+        else:
+            self._mapper = map
 
     def grib_url(self, reftime, forecast):
         '''The URL for a specific forecast.
@@ -310,7 +322,7 @@ class NAMLoader:
                 logger.warning(err)
                 path.unlink()
                 if i + 1 == max_tries:
-                    logger.error('download of {path.name} failed, giving up')
+                    logger.error(f'download of {path.name} failed, giving up')
                     raise err
                 else:
                     delay = 2**i
@@ -544,8 +556,7 @@ class NAMLoader:
         Returns:
             An `xr.Dataset` describing this forecast.
         '''
-        pool = ThreadPoolExecutor()
-        datasets = pool.map(lambda f: self.load_grib(reftime, f), FORECAST_PERIOD)
+        datasets = self._mapper(lambda f: self.load_grib(reftime, f), FORECAST_PERIOD)
         ds = xr.concat(datasets, dim='forecast')
 
         if self.save_nc:
