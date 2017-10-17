@@ -617,6 +617,26 @@ class NAMLoader:
             ds = self.load_gribs(reftime)
         return ds
 
+    def _combine(self, datasets):
+        '''Combine a list of datasets.
+
+        This is non-trivial because the old-format and the new-format are not
+        perfectly aligned; the x and y coordinates are offset by up to 4 km.
+
+        We force all to align to the final dataset's spatial coordinates.
+        '''
+        coords = {
+            'x':   datasets[-1].x,
+            'y':   datasets[-1].y,
+            'lat': datasets[-1].lat,
+            'lon': datasets[-1].lon,
+        }
+        datasets = [ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets]
+        logger.debug('merging datasets')
+        ds = xr.concat(datasets, dim='reftime')
+        ds = ds.assign_coords(**coords)
+        return ds
+
     def load(self, *reftimes):
         '''Load and combine forecasts for some reference times,
         downloading and preprocessing GRIBs as necessary.
@@ -637,25 +657,8 @@ class NAMLoader:
             Returns a single dataset containing all forecasts at the given
             reference times. Some data may be dropped when combining forecasts.
         '''
-        if not reftimes:
-            return self.load_one()
-
-        else:
-            # The old-format and the new-format are not perfectly aligned.
-            # The x and y coordinates are offset by up to 4 km.
-            # When loading multiple files, we use the most recent spatial coordinates.
-            datasets = [self.load_one(r) for r in reftimes]
-            coords = {
-                'x':   datasets[-1].x,
-                'y':   datasets[-1].y,
-                'lat': datasets[-1].lat,
-                'lon': datasets[-1].lon,
-            }
-            datasets = [ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets]
-            ds = xr.concat(datasets, dim='reftime')
-            ds = ds.assign_coords(**coords)
-            logger.debug('merging datasets')
-            return ds
+        datasets = [self.load_one(r) for r in reftimes]
+        return self._combine(datasets)
 
     def load_range(self, start='20160901T0000', stop=None):
         '''Load and combine forecasts for a range of reference times.
@@ -684,13 +687,14 @@ class NAMLoader:
             try:
                 ds = self.load_nc(start)
                 datasets.append(ds)
+            except OSError as e:
+                logger.warn(f'error loading forecast {start}')
+                logger.warn(e)
             except NAMLoader.CacheMiss:
                 pass
             start += delta
 
-        # TODO: the actual loading logic should be shared with `load`
-        logger.debug('joining forecasts')
-        return xr.concat(datasets, dim='reftime')
+        return self._combine(datasets)
 
 
 def load_gribs(reftime=None, **kwargs):
