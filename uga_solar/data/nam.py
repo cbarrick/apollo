@@ -34,7 +34,6 @@ the isobaric layers.
 '''
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from time import sleep
 import logging
@@ -80,39 +79,27 @@ NAM218_PROJ = ccrs.LambertConformal(
 )
 
 
-def normalize_reftime(reftime=None):
+def normalize_reftime(reftime='now'):
     '''Normalize an arbitrary reference time to a valid one.
 
-    Times may be strings, datetime objects, or `None` for the current reference
-    time. Refrence times are converted to UTC and rounded to the previous 0h,
-    6h, 12h or 18h mark. Strings take the format '%Y%m%dT%H%M'and are assumed
-    to be UTC.
+    This routine casts `reftime` to a numpy datetime64 and truncates it to the
+    previous 6h mark to be a valid NAM reference time. The reftime may be a
+    string in ISO 8601 extended format, i.e. {YYYY}-{MM}-{DD}T{hh}:{mm}:{ss}.
+
+    The strings 'now' and 'today' have special meaning as the current time and
+    the beginning of the current day respectivly.
+
+    See https://docs.scipy.org/doc/numpy/reference/arrays.datetime.html
 
     Args:
-        reftime (datetime or string):
+        reftime (datetime64 or datetime64 or string):
             The reference time to prepare.
             Defaults to the most recent reference time.
 
-    Returns (datetime):
+    Returns (datetime64):
         A valid reference time.
     '''
-    # Default to most recent reference time
-    if not reftime:
-        reftime = datetime.now(timezone.utc)
-
-    # Convert strings
-    if isinstance(reftime, str):
-        reftime = datetime.strptime(reftime, '%Y%m%dT%H%M')
-        reftime = reftime.replace(tzinfo=timezone.utc)
-
-    # Convert to UTC
-    reftime = reftime.astimezone(timezone.utc)
-
-    # Round to the previous 0h, 6h, 12h, or 18h
-    hour = (reftime.hour // 6) * 6
-    reftime = reftime.replace(hour=hour, minute=0, second=0, microsecond=0)
-
-    return reftime
+    return np.datetime64(reftime, '6h')
 
 
 def nearest_index(data, *points, **kwargs):
@@ -250,31 +237,31 @@ class NAMLoader:
         '''The URL for a specific forecast.
         '''
         reftime = normalize_reftime(reftime)
-        now = datetime.now(timezone.utc)
+        now = np.datetime64('now')
         delta = now - reftime
-        if delta.days > 7:
-            if reftime < datetime(year=2017, month=4, day=1, tzinfo=timezone.utc):
+        if delta > np.timedelta64(7, 'D'):
+            if reftime < np.datetime64('2017-04-01'):
                 url_fmt = ARCHIVE_URL_1
             else:
                 url_fmt = ARCHIVE_URL_2
         else:
             url_fmt = PROD_URL
-        return url_fmt.format(ref=reftime, forecast=forecast)
+        return url_fmt.format(ref=reftime.astype(object), forecast=forecast)
 
     def grib_path(self, reftime, forecast):
         '''The path for a forecast GRIB.
         '''
-        reftime = normalize_reftime(reftime)
+        reftime = normalize_reftime(reftime).astype(object)
         prefix_fmt = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'
         filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
         prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
         filename = filename_fmt.format(forecast=forecast, ref=reftime)
         return self.cache_dir / prefix / filename
 
-    def nc_path(self, reftime=None):
+    def nc_path(self, reftime):
         '''The path to the netCDF cache for a reference time.
         '''
-        reftime = normalize_reftime(reftime)
+        reftime = normalize_reftime(reftime).astype(object)
         prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
         filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
         return self.cache_dir / prefix / filename
@@ -283,7 +270,7 @@ class NAMLoader:
         '''Download the GRIB files for this dataset.
 
         Args:
-            reftime (datetime):
+            reftime (datetime64):
                 The reference time to download.
             forecast (int):
                 The forecast hour to download
@@ -447,7 +434,7 @@ class NAMLoader:
         # Create reftime and forecast dimensions.
         # Both are stored as integers with appropriate units.
         ds = ds.assign_coords(
-            reftime=np.datetime64(reftime, 'h').astype('int'),
+            reftime=reftime.astype('datetime64[h]').astype('int'),
             forecast=forecast,
         )
         for v in ds.data_vars:
@@ -540,17 +527,17 @@ class NAMLoader:
             ds[v] = ds[v].assign_attrs(metadata[v])
         ds = ds.assign_attrs(
             title='NAM-UGA, a subset of NAM-NMM for solar forecasting research in Georgia',
-            history=f'{datetime.utcnow()}Z Initial conversion from GRIB files released by NCEP',
+            history=f'{datetime64.utcnow()}Z Initial conversion from GRIB files released by NCEP',
         )
 
         ds = xr.decode_cf(ds)
         return ds
 
-    def load_gribs(self, reftime=None):
+    def load_gribs(self, reftime='now'):
         '''Load the forecasts from GRIB, downlading if they do not exist.
 
         Args:
-            reftime (datetime):
+            reftime (datetime64):
                 The reference time to load.
 
         Returns:
@@ -571,11 +558,11 @@ class NAMLoader:
 
         return ds
 
-    def load_nc(self, reftime=None):
+    def load_nc(self, reftime='now'):
         '''Load the forecasts from a netCDF in the cache.
 
         Args:
-            reftime (datetime):
+            reftime (datetime64):
                 The reference time to load.
 
         Returns:
@@ -593,7 +580,7 @@ class NAMLoader:
         else:
             raise NAMLoader.CacheMiss(reftime)
 
-    def load_one(self, reftime=None):
+    def load_one(self, reftime='now'):
         '''Load a forecast for some reference time,
         downloading and preprocessing GRIBs as necessary.
 
@@ -603,10 +590,8 @@ class NAMLoader:
         netCDF file, the GRIBs are deleted, and the dataset is returned.
 
         Args:
-            reftime (datetime):
-                The reference time to load. It is rounded down to the
-                previous 6 hour mark. It may be given as a string in the
-                format '%Y%m%dT%H%M'. The default is the current time.
+            reftime (datetime64):
+                The reference time to load.
 
         Returns (xr.Dataset):
             A dataset for the forecast at the given reference time.
@@ -631,7 +616,7 @@ class NAMLoader:
             'lat': datasets[-1].lat,
             'lon': datasets[-1].lon,
         }
-        datasets = [ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets]
+        datasets = (ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets)
         logger.debug('merging datasets')
         ds = xr.concat(datasets, dim='reftime')
         ds = ds.assign_coords(**coords)
@@ -647,31 +632,31 @@ class NAMLoader:
         netCDF file, the GRIBs are deleted, and the dataset is returned.
 
         Args:
-            reftimes (datetime):
-                The reference times to load. They are rounded down to the
-                previous 6 hour mark. They may be given as a string in the
-                format '%Y%m%dT%H%M'. The default is to load only the most
-                recent forecast.
+            reftimes (datetime64):
+                The reference times to load.
 
         Returns (xr.Dataset):
             Returns a single dataset containing all forecasts at the given
             reference times. Some data may be dropped when combining forecasts.
         '''
-        datasets = [self.load_one(r) for r in reftimes]
-        return self._combine(datasets)
+        if not reftime:
+            return self.load_one('now')
+        else:
+            datasets = (self.load_one(r) for r in reftimes)
+            return self._combine(datasets)
 
-    def load_range(self, start='20160901T0000', stop=None):
+    def load_range(self, start='2017-01-01', stop='today'):
         '''Load and combine forecasts for a range of reference times.
 
         NOTE: This method only loads data from the cache.
 
         Args:
-            start (datetime):
+            start (datetime64):
                 The first time in the range.
-                The default is 2016-09-01 00:00
-            stop (datetime):
+                The default is 2017-01-01T00:00
+            stop (datetime64):
                 The last time in the range.
-                The default is the current time.
+                The default is the start of the current day.
 
         Returns (xr.Dataset):
             Returns a single dataset containing all forecasts at the given
@@ -682,8 +667,8 @@ class NAMLoader:
         logger.debug(f'loading forecasts from {start} to {stop}')
 
         datasets = []
-        delta = timedelta(hours=6)
-        while start <= stop:
+        delta = np.timedelta64(6, 'h')
+        while start < stop:
             try:
                 ds = self.load_nc(start)
                 datasets.append(ds)
@@ -697,11 +682,11 @@ class NAMLoader:
         return self._combine(datasets)
 
 
-def load_gribs(reftime=None, **kwargs):
+def load_gribs(reftime='now', **kwargs):
     '''Load the forecasts from GRIB, downlading if they do not exist.
 
     Args:
-        reftime (datetime):
+        reftime (datetime64):
             The reference time to load.
 
     Returns:
@@ -711,11 +696,11 @@ def load_gribs(reftime=None, **kwargs):
     return loader.load_gribs(reftime)
 
 
-def load_nc(reftime=None, **kwargs):
+def load_nc(reftime='now', **kwargs):
     '''Load the forecasts from a netCDF in the cache.
 
     Args:
-        reftime (datetime):
+        reftime (datetime64):
             The reference time to load.
 
     Returns:
@@ -735,11 +720,8 @@ def load(*reftimes, **kwargs):
     netCDF file, the GRIBs are deleted, and the dataset is returned.
 
     Args:
-        reftimes (datetime):
-            The reference times to load. They are rounded down to the
-            previous 6 hour mark. They may be given as a string in the
-            format '%Y%m%dT%H%M'. The default is to load only the most
-            recent forecast.
+        reftimes (datetime64):
+            The reference times to load.
 
     Returns (xr.Dataset):
         Returns a single dataset containing all forecasts at the given
@@ -749,18 +731,18 @@ def load(*reftimes, **kwargs):
     return loader.load(*reftimes)
 
 
-def load_range(start='20160901T0000', stop=None, **kwargs):
+def load_range(start='2017-01-01', stop='today', **kwargs):
     '''Load and combine forecasts for a range of reference times.
 
     NOTE: This method only loads data from the cache.
 
     Args:
-        start (datetime):
+        start (datetime64):
             The first time in the range.
-            The default is 2016-09-01 00:00
-        stop (datetime):
+            The default is 2017-01-01T00:00
+        stop (datetime64):
             The last time in the range.
-            The default is the current time.
+            The default is the start of the current day.
 
     Returns (xr.Dataset):
         Returns a single dataset containing all forecasts at the given
@@ -774,6 +756,6 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(level='DEBUG', format='[{asctime}] {levelname:>7}: {message}', style='{')
     loader = NAMLoader(keep_gribs=True)
-    old = loader.load_gribs('20161111T0000')
-    new = loader.load_gribs('20171009T0000')
-    ds = loader.load('20161111T0000', '20171009T0000')
+    old = loader.load_gribs('2016-11-11T00:00')
+    new = loader.load_gribs('2017-10-09T00:00')
+    ds = loader.load('2016-11-11T00:00', '2017-10-09T00:00')
