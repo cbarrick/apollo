@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''A NAM dataset downloader and DAO.
+'''Provides access to a subset of the NAM-NMM dataset.
 
 > The North American Mesoscale Forecast System (NAM) is one of the
 > major weather models run by the National Centers for Environmental
@@ -12,25 +12,28 @@
 > model at its core. This version of the NAM is also known as the NAM
 > Non-hydrostatic Mesoscale Model (NAM-NMM).
 
-Most users will be interested in the `load` function which loads
-the data for a single NAM-NMM run at a particular reference time.
-The actual data loading logic is encapsulated in the `NAMLoader` class.
+Most users will be interested in the `select` and `select_range`
+functions which selects forecasts by reference time. The actual data
+loading logic is encapsulated in the `NamDatabase` class.
 
-The data loading logic works like this:
+The dataset live remotely. A live feed is provided by NCEP and an 11
+month archive is provided by NCDC (both are divisions of NOAA). This
+module caches the data locally, allowing us to build larger archives.
+The remote dataset is provided in GRIB format, while this module uses
+the netCDF format in its internal cache.
 
-1. If the forecast exists in the cache, load it without validation.
-2. Otherwise download and preprocess the GRIBs for the forecast.
-4. Cache the forecast as a netCDF and delete the GRIBs.
+This module provides access to only a subset of the NAM-NMM dataset.
+The geographic region is reduced and centered around Georgia, and only
+as subset of the variables are provided.
 
-The dataset is returned as an `xarray.Dataset`, and each variable has
+Queries return an instance of `xarray.Dataset` where each variable has
 exactly five dimensions: reftime, forecast, z, y, and x. The z-axis for
 each variable has a different name depending on the type of index
-measuring the axis, e.g. `heightAboveGround` for height above the
-surface in meters or `isobaricInhPa` for isobaric layers. The names of
-the variables follow the pattern `FEATURE_LAYER` where `FEATURE` is a
-short identifier for the feature being measured and `LAYER` is the type
-of z-axis used by the variable, e.g. `TMP_ISBL` for the temperature at
-the isobaric layers.
+measuring the axis, e.g. `z_ISBL`.
+
+This module registers a few extensions to the `xr.DataArray` and
+`xr.DataSet` classes to provide things like geographic plotting and
+PyTorch prefetching.
 '''
 
 from concurrent.futures import ThreadPoolExecutor
@@ -40,11 +43,16 @@ import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 import requests
+import torch
+import torch.utils.data
 import xarray as xr
+
+from uga_solar.data import ga_power
 
 
 # Module level logger
@@ -151,42 +159,80 @@ def proj_coords(lats, lons):
     return x, y
 
 
-def plot_geo(da, scale='110m', ax=None, show=True, block=False):
-    '''A helper to plot geographic data.
+def select_gribs(reftime='now', **kwargs):
+    '''Load the forecasts from GRIB, downlading if they do not exist.
 
     Args:
-        da (xr.DataArray):
-            The data array to plot.
-        scale (str):
-            The resolution of the coastlines and state/country borders.
-            Must be one of '10m' (highest resolution), '50m', or '110m'.
-        show (bool):
-            If True, show the plot immediately.
-        block (bool):
-            The blocking behavior when showing the plot.
+        reftime (datetime64):
+            The reference time to select.
 
-    Example:
-        Plot the 0-hour forecast of surface temperature:
-        >>> plot_geo(ds.isel(reftime=0, forecast=0).TMP_SFC)
+    Returns:
+        An `xr.Dataset` describing this forecast.
     '''
-    while da.ndim > 2:
-        da = da[0]
-    params = {'scale':scale, 'facecolor':'none', 'edgecolor':'black'}
-    if not ax:
-        ax = plt.axes(projection=NAM218_PROJ)
-    ax.add_feature(cf.NaturalEarthFeature('physical', 'coastline', **params))
-    ax.add_feature(cf.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land', **params))
-    ax.add_feature(cf.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines', **params))
-    da.plot(ax=ax, transform=NAM218_PROJ)
-    if show:
-        plt.show(block=block)
-    return ax
+    db = NamDatabase(**kwargs)
+    return db.select_gribs(reftime)
 
 
-class NAMLoader:
+def select_nc(reftime='now', **kwargs):
+    '''Load the forecasts from a netCDF in the cache.
+
+    Args:
+        reftime (datetime64):
+            The reference time to select.
+
+    Returns:
+        An `xr.Dataset` describing this forecast.
+    '''
+    db = NamDatabase(**kwargs)
+    return db.select_nc(reftime)
+
+
+def select(*reftimes, **kwargs):
+    '''Load and combine forecasts for some reference times,
+    downloading and preprocessing GRIBs as necessary.
+
+    If the dataset exists as a local netCDF file, it is loaded and
+    returned. Otherwise, any missing GRIB files are downloaded and
+    preprocessed into an xarray Dataset. The dataset is then saved as a
+    netCDF file, the GRIBs are deleted, and the dataset is returned.
+
+    Args:
+        reftimes (datetime64):
+            The reference times to select.
+
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
+    '''
+    db = NamDatabase(**kwargs)
+    return db.select(*reftimes)
+
+
+def select_range(start='2017-01-01', stop='today', **kwargs):
+    '''Load and combine forecasts for a range of reference times.
+
+    NOTE: This method only loads data from the cache.
+
+    Args:
+        start (datetime64):
+            The first time in the range.
+            The default is 2017-01-01T00:00
+        stop (datetime64):
+            The last time in the range.
+            The default is the start of the current day.
+
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
+    '''
+    db = NamDatabase(**kwargs)
+    return db.select_range(start, stop)
+
+
+class NamDatabase:
     '''A class to download, subsets, and cache NAM forecasts.
 
-    A `NAMLoader` downloads NAM-NMM forecasts from NOAA, subsets their features
+    A `NamDatabase` downloads NAM-NMM forecasts from NOAA, subsets their features
     and geographic scope, converts the data to netCDF, and caches the result.
 
     TODO:
@@ -200,7 +246,7 @@ class NAMLoader:
             save_nc=True,
             keep_gribs=False,
             parallel=False):
-        '''Creates a loader for NAM data.
+        '''Creates a db for NAM data.
 
         Args:
             cache_dir (Path or str):
@@ -277,7 +323,7 @@ class NAMLoader:
             max_tries (int):
                 The maximum number of failed downloads for a single file
                 before raising an `IOError`. This option is ignored if
-                `fail_fast` is set on the NAMLoader.
+                `fail_fast` is set on the NamDatabase.
             timeout (int):
                 The network timeout in seconds.
                 Note that the government servers can be kinda slow.
@@ -295,7 +341,7 @@ class NAMLoader:
         for i in range(max_tries):
             try:
                 # Perform a streaming download because the files are big.
-                logger.debug(f'downloading {url}')
+                logger.info(f'downloading {url}')
                 with path.open('wb') as fd:
                     r = requests.get(url, timeout=timeout, stream=True)
                     r.raise_for_status()
@@ -330,7 +376,7 @@ class NAMLoader:
 
         reftime = normalize_reftime(reftime)
         path = self.grib_path(reftime, forecast)
-        logger.debug(f'loading {path}')
+        logger.info(f'loading {path}')
 
         ds = xr.open_dataset(path, engine='pynio')
 
@@ -533,12 +579,12 @@ class NAMLoader:
         ds = xr.decode_cf(ds)
         return ds
 
-    def load_gribs(self, reftime='now'):
+    def select_gribs(self, reftime='now'):
         '''Load the forecasts from GRIB, downlading if they do not exist.
 
         Args:
             reftime (datetime64):
-                The reference time to load.
+                The reference time to select.
 
         Returns:
             An `xr.Dataset` describing this forecast.
@@ -548,29 +594,29 @@ class NAMLoader:
 
         if self.save_nc:
             path = self.nc_path(reftime)
-            logger.debug(f'writing {path}')
+            logger.info(f'writing {path}')
             ds.to_netcdf(str(path)) # can't be a Path, should be fixed in xarray
             if not self.keep_gribs:
-                logger.debug('deleting local gribs')
+                logger.info('deleting local gribs')
                 for forecast in FORECAST_PERIOD:
                     path = self.grib_path(reftime, forecast)
                     path.unlink()
 
         return ds
 
-    def load_nc(self, reftime='now'):
+    def select_nc(self, reftime='now'):
         '''Load the forecasts from a netCDF in the cache.
 
         Args:
             reftime (datetime64):
-                The reference time to load.
+                The reference time to select.
 
         Returns:
             An `xr.Dataset` describing this forecast.
         '''
         path = self.nc_path(reftime)
         if path.exists():
-            logger.debug(f'loading {path}')
+            logger.info(f'loading {path}')
             ds = xr.open_dataset(
                 path,
                 autoclose=True,
@@ -578,9 +624,9 @@ class NAMLoader:
             )
             return ds
         else:
-            raise NAMLoader.CacheMiss(reftime)
+            raise NamDatabase.CacheMiss(reftime)
 
-    def load_one(self, reftime='now'):
+    def select_one(self, reftime='now'):
         '''Load a forecast for some reference time,
         downloading and preprocessing GRIBs as necessary.
 
@@ -591,18 +637,18 @@ class NAMLoader:
 
         Args:
             reftime (datetime64):
-                The reference time to load.
+                The reference time to select.
 
         Returns (xr.Dataset):
             A dataset for the forecast at the given reference time.
         '''
         try:
-            ds = self.load_nc(reftime)
-        except NAMLoader.CacheMiss as e:
-            ds = self.load_gribs(reftime)
+            ds = self.select_nc(reftime)
+        except NamDatabase.CacheMiss as e:
+            ds = self.select_gribs(reftime)
         return ds
 
-    def _combine(self, datasets):
+    def join(self, datasets):
         '''Combine a list of datasets.
 
         This is non-trivial because the old-format and the new-format are not
@@ -617,12 +663,12 @@ class NAMLoader:
             'lon': datasets[-1].lon,
         }
         datasets = (ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets)
-        logger.debug('merging datasets')
+        logger.info('joining datasets')
         ds = xr.concat(datasets, dim='reftime')
         ds = ds.assign_coords(**coords)
         return ds
 
-    def load(self, *reftimes):
+    def select(self, *reftimes):
         '''Load and combine forecasts for some reference times,
         downloading and preprocessing GRIBs as necessary.
 
@@ -633,19 +679,19 @@ class NAMLoader:
 
         Args:
             reftimes (datetime64):
-                The reference times to load.
+                The reference times to select.
 
         Returns (xr.Dataset):
             Returns a single dataset containing all forecasts at the given
             reference times. Some data may be dropped when combining forecasts.
         '''
         if not reftime:
-            return self.load_one('now')
+            return self.select_one('now')
         else:
-            datasets = (self.load_one(r) for r in reftimes)
-            return self._combine(datasets)
+            datasets = (self.select_one(r) for r in reftimes)
+            return self.join(datasets)
 
-    def load_range(self, start='2017-01-01', stop='today'):
+    def select_range(self, start='2017-01-01', stop='today'):
         '''Load and combine forecasts for a range of reference times.
 
         NOTE: This method only loads data from the cache.
@@ -664,98 +710,111 @@ class NAMLoader:
         '''
         start = normalize_reftime(start)
         stop = normalize_reftime(stop)
-        logger.debug(f'loading forecasts from {start} to {stop}')
+        logger.info(f'loading forecasts from {start} to {stop}')
 
         datasets = []
         delta = np.timedelta64(6, 'h')
         while start < stop:
             try:
-                ds = self.load_nc(start)
+                ds = self.select_nc(start)
                 datasets.append(ds)
             except OSError as e:
                 logger.warn(f'error loading forecast {start}')
                 logger.warn(e)
-            except NAMLoader.CacheMiss:
+            except NamDatabase.CacheMiss:
                 pass
             start += delta
 
-        return self._combine(datasets)
+        return self.join(datasets)
 
 
-def load_gribs(reftime='now', **kwargs):
-    '''Load the forecasts from GRIB, downlading if they do not exist.
-
-    Args:
-        reftime (datetime64):
-            The reference time to load.
-
-    Returns:
-        An `xr.Dataset` describing this forecast.
+@xr.register_dataarray_accessor('geo')
+class GeoExtension:
+    '''Extends `xr.DataArray` with geographic specific features.
     '''
-    loader = NAMLoader(**kwargs)
-    return loader.load_gribs(reftime)
+    def __init__(self, xr_dataarray):
+        self._da = xr_dataarray
+
+    def plot(self, scale='10m', show=True, block=False):
+        '''A helper to plot geographic data.
+
+        Args:
+            scale (str):
+                The resolution of the coastlines and state/country borders.
+                Must be one of '10m' (highest resolution), '50m', or '110m'.
+            show (bool):
+                If True, show the plot immediately.
+            block (bool):
+                The blocking behavior when showing the plot.
+
+        Example:
+            Plot the 0-hour forecast of surface temperature:
+            >>> plot_geo(ds.isel(reftime=0, forecast=0).TMP_SFC)
+        '''
+        vmin = self._da.min()
+        vmax = self._da.max()
+
+        da = self._da
+        while da.ndim > 2:
+            da = da[0]
+
+        feature_kws = {'scale':scale, 'facecolor':'none', 'edgecolor':'black'}
+        coast = cf.NaturalEarthFeature('physical', 'coastline', **feature_kws)
+        countries = cf.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land', **feature_kws)
+        states = cf.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines', **feature_kws)
+
+        fig = plt.figure()
+        ax = plt.axes(projection=NAM218_PROJ)
+        ax.add_feature(coast)
+        ax.add_feature(countries)
+        ax.add_feature(states)
+        im = ax.pcolormesh(da.x, da.y, da.data, vmin=vmin, vmax=vmax)
+
+        if show:
+            plt.show(block=block)
+        return ax
 
 
-def load_nc(reftime='now', **kwargs):
-    '''Load the forecasts from a netCDF in the cache.
-
-    Args:
-        reftime (datetime64):
-            The reference time to load.
-
-    Returns:
-        An `xr.Dataset` describing this forecast.
+@xr.register_dataset_accessor('ga_power')
+class GaPowerExtension(torch.utils.data.Dataset):
+    '''A torch dataset mapping forecasts to Georgia Power readings.
     '''
-    loader = NAMLoader(**kwargs)
-    return loader.load_nc(reftime)
+    def __init__(self, xr_dataset):
+        print('created ga_power')
+        self._ds = xr_dataset
+        self.setup()
 
+    def setup(self, feature='DSWRF_SFC', module=7, column=5):
+        self._feature = feature
+        self._targets = ga_power.select_aggregate(module)
+        self._target_column = column
 
-def load(*reftimes, **kwargs):
-    '''Load and combine forecasts for some reference times,
-    downloading and preprocessing GRIBs as necessary.
+    def __len__(self):
+        return len(self._ds.reftime) * len(self._ds.forecast)
 
-    If the dataset exists as a local netCDF file, it is loaded and
-    returned. Otherwise, any missing GRIB files are downloaded and
-    preprocessed into an xarray Dataset. The dataset is then saved as a
-    netCDF file, the GRIBs are deleted, and the dataset is returned.
+    def __getitem__(self, index):
+        i = index // len(self._ds.reftime)
+        j = index % len(self._ds.forecast)
+        x = self._ds.isel(reftime=i, forecast=j)
+        x = x[self._feature]
+        y = (x.reftime + x.forecast).values
+        y = self._targets.loc[y, self._target_column]
+        return x.values.ravel(), y
 
-    Args:
-        reftimes (datetime64):
-            The reference times to load.
+    def load(self, *args, **kwargs):
+        loader = torch.utils.data.DataLoader(self, *args, **kwargs)
+        return loader
 
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
-    '''
-    loader = NAMLoader(**kwargs)
-    return loader.load(*reftimes)
+    def sizes(self):
+        x, y = self[0]
+        return x.size, y.size
 
-
-def load_range(start='2017-01-01', stop='today', **kwargs):
-    '''Load and combine forecasts for a range of reference times.
-
-    NOTE: This method only loads data from the cache.
-
-    Args:
-        start (datetime64):
-            The first time in the range.
-            The default is 2017-01-01T00:00
-        stop (datetime64):
-            The last time in the range.
-            The default is the start of the current day.
-
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
-    '''
-    loader = NAMLoader(**kwargs)
-    return loader.load_range(start, stop)
 
 
 if __name__ == '__main__':
     import logging
     logging.basicConfig(level='DEBUG', format='[{asctime}] {levelname:>7}: {message}', style='{')
-    loader = NAMLoader(keep_gribs=True)
-    old = loader.load_gribs('2016-11-11T00:00')
-    new = loader.load_gribs('2017-10-09T00:00')
-    ds = loader.load('2016-11-11T00:00', '2017-10-09T00:00')
+    db = NamDatabase(keep_gribs=True)
+    old = db.select_gribs('2016-11-11T00:00')
+    new = db.select_gribs('2017-10-09T00:00')
+    ds = db.select('2016-11-11T00:00', '2017-10-09T00:00')

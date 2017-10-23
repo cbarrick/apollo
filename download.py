@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     for i in range(args.count):
         try:
-            nam.load(
+            nam.select(
                 reftime,
                 cache_dir=args.cache_dir,
                 fail_fast=args.fail_fast,

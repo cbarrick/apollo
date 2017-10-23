@@ -7,14 +7,25 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def pool(df, **kwargs):
-    '''Aggregates a DataFrame by time.
+def select_aggregate(module, **kwargs):
+    db = GaPowerDatabase(**kwargs)
+    return db.select_aggregate(module)
 
-    This function takes in a mapping from a time unit to a multiple. Each row
-    of the dataframe is grouped by rounding that time unit to the previous
-    multiple, e.g. `minute=15` groups the data into 15 minute blocks.
 
-    The average is then taken for each group.
+def round_down(num, divisor):
+    return num - (num % divisor)
+
+
+def interval(**kwargs):
+    '''Group a timeseries DataFrame by interval.
+
+    Example:
+        Group a DataFrame into 15 minute blocks:
+        >>> df.groupby(interval(minute=15))
+
+    Gotchas:
+        Getting the right arguments for the interval you want is subtle.
+        Read the code to see exactly how this works.
 
     Args:
         year (int): Group by rounding the year.
@@ -24,7 +35,8 @@ def pool(df, **kwargs):
         minute (int): Group by rounding the minute.
 
     Returns:
-        The average values for each group.
+        A function that maps arbitrary datetimes to reference datetimes by
+        rounding interval properties like `second` and `minute`.
     '''
     kwargs.setdefault('year', 1)
     kwargs.setdefault('month', 1)
@@ -32,10 +44,7 @@ def pool(df, **kwargs):
     kwargs.setdefault('hour', 1)
     kwargs.setdefault('minute', 1)
 
-    def round_down(num, divisor):
-        return num - (num % divisor)
-
-    def time(t):
+    def grouper(t):
         year = round_down(t.year, kwargs['year'])
         month = round_down(t.month, kwargs['month'])
         day = round_down(t.day, kwargs['day'])
@@ -43,23 +52,23 @@ def pool(df, **kwargs):
         minute = round_down(t.minute, kwargs['minute'])
         return datetime(year, month, day, hour, minute, tzinfo=t.tzinfo)
 
-    return df.groupby(time).mean()
+    return grouper
 
 
-class GaPowerLoader:
-    '''A data loader for the GA Power target data.
+class GaPowerDatabase:
+    '''A database of the GA Power target data.
 
     The data should live together in some directory with names matching the
     pattern: `**/mb-{module:03}.*.log.gz' where `module` is an integer index.
 
-    The loader will compute agregate statistics for 15 minute windows and
+    The database will compute agregate statistics for 1 hour windows and
     cache the results in the same directory.
     '''
 
     def __init__(self,
             data_dir='./GA-POWER',
             data_fmt='mb-{module:03}-targets.csv'):
-        '''Create a new GaPowerLoader.
+        '''Create a new GaPowerDatabase.
 
         Args:
             data_dir (Path or str):
@@ -70,7 +79,7 @@ class GaPowerLoader:
         self.data_dir = Path(data_dir)
         self.data_fmt = data_fmt
 
-    def load_raw_targets(self, module):
+    def select(self, module):
         read_options = {
             'header': None,
             'index_col': [0],
@@ -81,7 +90,7 @@ class GaPowerLoader:
         def parts():
             for path in self.data_dir.glob(f'**/mb-{int(module):03}.*.log.gz'):
                 try:
-                    logger.debug(f'Reading {path}')
+                    logger.info(f'Reading {path}')
                     df = pd.read_csv(str(path), **read_options)
                     df = df.tz_localize('UTC')
                     yield df
@@ -101,22 +110,10 @@ class GaPowerLoader:
                     logger.error(e)
                     logger.error('skipping file')
 
-        logger.info(f'Loading module {int(module)}')
+        logger.info(f'loading raw module {module}')
         return pd.concat(parts())
 
-    def rebuild(self, module, **kwargs):
-        write_options = {
-            'header': False,
-        }
-
-        df = self.load_raw_targets(module)
-        df = df.sort_index()
-        df = pool(df, minute=15)
-        dest = self.data_dir / self.data_fmt.format(module=module)
-        logger.info(f'Writing {dest}')
-        df.to_csv(str(dest), **write_options)
-
-    def load(self, module):
+    def select_aggregate(self, module):
         read_options = {
             'header': None,
             'index_col': [0],
@@ -124,13 +121,20 @@ class GaPowerLoader:
             'infer_datetime_format': True,
         }
 
+        write_options = {
+            'header': False,
+        }
+
         path = self.data_dir / self.data_fmt.format(module=module)
         if not path.exists():
-            self.rebuild(module)
+            df = self.select(module)
+            logger.info(f'computing aggregate')
+            df = df.sort_index()
+            df = df.groupby(interval(minute=60)).mean()
+            logger.info(f'writing to cache {path}')
+            df.to_csv(str(path), **write_options)
+        else:
+            logger.info(f'loading aggregate module {module} from cache')
+            df = pd.read_csv(str(path), **read_options)
 
-        return pd.read_csv(str(path), **read_options)
-
-
-def load(module, **kwargs):
-    loader = GaPowerLoader(**kwargs)
-    return loader.load(module)
+        return df
