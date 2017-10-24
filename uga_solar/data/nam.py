@@ -685,7 +685,7 @@ class NamDatabase:
             Returns a single dataset containing all forecasts at the given
             reference times. Some data may be dropped when combining forecasts.
         '''
-        if not reftime:
+        if len(reftimes) == 0:
             return self.select_one('now')
         else:
             datasets = (self.select_one(r) for r in reftimes)
