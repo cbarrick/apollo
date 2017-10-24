@@ -28,7 +28,7 @@ if __name__ == '__main__':
         h = linear.forward(x)
         l = loss(h, y)
         if i % 10 == 0:
-            print(f'{i} : {l.data:.4f}')
+            print(f'{i} : {l.data[0]}')
             state = linear.state_dict()
             torch.save(state, f'linear_{i}.pt')
         l.backward()
