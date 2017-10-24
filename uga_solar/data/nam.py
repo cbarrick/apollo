@@ -573,7 +573,7 @@ class NamDatabase:
             ds[v] = ds[v].assign_attrs(metadata[v])
         ds = ds.assign_attrs(
             title='NAM-UGA, a subset of NAM-NMM for solar forecasting research in Georgia',
-            history=f'{datetime64.utcnow()}Z Initial conversion from GRIB files released by NCEP',
+            history=f'{np.datetime64("now")}Z Initial conversion from GRIB files released by NCEP',
         )
 
         ds = xr.decode_cf(ds)
