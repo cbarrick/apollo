@@ -376,7 +376,7 @@ class NamDatabase:
 
         reftime = normalize_reftime(reftime)
         path = self.grib_path(reftime, forecast)
-        logger.info(f'loading {path}')
+        logger.info(f'reading {path}')
 
         ds = xr.open_dataset(path, engine='pynio')
 
@@ -616,7 +616,7 @@ class NamDatabase:
         '''
         path = self.nc_path(reftime)
         if path.exists():
-            logger.info(f'loading {path}')
+            logger.info(f'reading {path}')
             ds = xr.open_dataset(
                 path,
                 autoclose=True,
@@ -710,7 +710,6 @@ class NamDatabase:
         '''
         start = normalize_reftime(start)
         stop = normalize_reftime(stop)
-        logger.info(f'loading forecasts from {start} to {stop}')
 
         datasets = []
         delta = np.timedelta64(6, 'h')
@@ -719,7 +718,7 @@ class NamDatabase:
                 ds = self.select_nc(start)
                 datasets.append(ds)
             except OSError as e:
-                logger.warn(f'error loading forecast {start}')
+                logger.warn(f'error reading forecast for {start}')
                 logger.warn(e)
             except NamDatabase.CacheMiss:
                 pass
