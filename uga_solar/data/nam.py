@@ -789,15 +789,11 @@ class GaPowerExtension(torch.utils.data.Dataset):
         self._target_column = column
 
     def __len__(self):
-        return len(self._ds.reftime) * len(self._ds.forecast)
+        return len(self._ds.reftime)
 
     def __getitem__(self, index):
-        i = index // len(self._ds.reftime)
-        j = index % len(self._ds.forecast)
-        x = self._ds.isel(reftime=i, forecast=j)
-        x = x[self._feature]
-        y = (x.reftime + x.forecast).values
-        y = self._targets.loc[y, self._target_column]
+        x = self._ds.isel(reftime=index, forecast=0)[self._feature]
+        y = self._targets.loc[x.reftime.values, self._target_column]
         return x.values.ravel(), y
 
     def load(self, *args, **kwargs):
