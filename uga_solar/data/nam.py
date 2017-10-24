@@ -688,7 +688,7 @@ class NamDatabase:
         if len(reftimes) == 0:
             return self.select_one('now')
         else:
-            datasets = (self.select_one(r) for r in reftimes)
+            datasets = [self.select_one(r) for r in reftimes]
             return self.join(datasets)
 
     def select_range(self, start='2017-01-01', stop='today'):
