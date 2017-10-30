@@ -820,12 +820,3 @@ class TorchExtension(torch.utils.data.Dataset):
 
     def batch_by(self, key):
         return TorchExtension(_ds, _joins, self._load_kws, key)
-
-
-if __name__ == '__main__':
-    import logging
-    logging.basicConfig(level='DEBUG', format='[{asctime}] {levelname:>7}: {message}', style='{')
-    loader = NamLoader(keep_gribs=True)
-    old = loader.open_gribs('2016-11-11T00:00')
-    new = loader.open_gribs('2017-10-09T00:00')
-    ds = loader.open('2016-11-11T00:00', '2017-10-09T00:00')

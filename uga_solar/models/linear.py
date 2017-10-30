@@ -18,7 +18,7 @@ if __name__ == '__main__':
     logging.basicConfig(level='DEBUG', format='[{asctime}] {levelname:>7}: {message}', style='{')
 
     train = nam.open_range('2016-12-01', '2017-10-01')
-    targets = ga_power.open_aggregate(7)[17]
+    targets = ga_power.open_aggregate(7)[17].dropna()
     target_shape = targets.shape[1:]
     target_size = int(np.prod(target_shape))
 
@@ -45,8 +45,10 @@ if __name__ == '__main__':
         return loss(h, y)
 
     i = 0
-    optimizer = torch.optim.Adam(sfc_linear.parameters())
+    params = sfc_linear.parameters()
+    optimizer = torch.optim.Adam(params)
     for epoch in range(100):
+        print(f'epoch {epoch} ')
         mean_loss = 0
         n = 0
         for x_sfc, y in train_set:
@@ -61,4 +63,4 @@ if __name__ == '__main__':
             mean_loss += delta * len(y) / n
         state = sfc_linear.state_dict()
         torch.save(state, f'linear_{epoch}.pt')
-        print(f'{epoch} : {mean_loss:.3e}')
+        print(f'DONE (mse = {mean_loss:.3e})')
