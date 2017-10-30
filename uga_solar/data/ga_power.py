@@ -7,9 +7,9 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def select_aggregate(module, **kwargs):
-    db = GaPowerDatabase(**kwargs)
-    return db.select_aggregate(module)
+def open_aggregate(module, **kwargs):
+    loader = GaPowerLoader(**kwargs)
+    return loader.open_aggregate(module)
 
 
 def round_down(num, divisor):
@@ -55,7 +55,7 @@ def interval(**kwargs):
     return grouper
 
 
-class GaPowerDatabase:
+class GaPowerLoader:
     '''A database of the GA Power target data.
 
     The data should live together in some directory with names matching the
@@ -68,7 +68,7 @@ class GaPowerDatabase:
     def __init__(self,
             data_dir='./GA-POWER',
             data_fmt='mb-{module:03}-targets.csv'):
-        '''Create a new GaPowerDatabase.
+        '''Create a new GaPowerLoader.
 
         Args:
             data_dir (Path or str):
@@ -113,7 +113,7 @@ class GaPowerDatabase:
         logger.info(f'loading raw module {module}')
         return pd.concat(parts())
 
-    def select_aggregate(self, module):
+    def open_aggregate(self, module):
         read_options = {
             'header': None,
             'index_col': [0],

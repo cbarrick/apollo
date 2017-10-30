@@ -12,9 +12,9 @@
 > model at its core. This version of the NAM is also known as the NAM
 > Non-hydrostatic Mesoscale Model (NAM-NMM).
 
-Most users will be interested in the `select` and `select_range`
+Most users will be interested in the `open` and `open_range`
 functions which selects forecasts by reference time. The actual data
-loading logic is encapsulated in the `NamDatabase` class.
+loading logic is encapsulated in the `NamLoader` class.
 
 The dataset live remotely. A live feed is provided by NCEP and an 11
 month archive is provided by NCDC (both are divisions of NOAA). This
@@ -36,7 +36,9 @@ This module registers a few extensions to the `xr.DataArray` and
 PyTorch prefetching.
 '''
 
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from copy import copy
 from pathlib import Path
 from time import sleep
 import logging
@@ -88,29 +90,10 @@ NAM218_PROJ = ccrs.LambertConformal(
 
 
 def normalize_reftime(reftime='now'):
-    '''Normalize an arbitrary reference time to a valid one.
-
-    This routine casts `reftime` to a numpy datetime64 and truncates it to the
-    previous 6h mark to be a valid NAM reference time. The reftime may be a
-    string in ISO 8601 extended format, i.e. {YYYY}-{MM}-{DD}T{hh}:{mm}:{ss}.
-
-    The strings 'now' and 'today' have special meaning as the current time and
-    the beginning of the current day respectivly.
-
-    See https://docs.scipy.org/doc/numpy/reference/arrays.datetime.html
-
-    Args:
-        reftime (datetime64 or datetime64 or string):
-            The reference time to prepare.
-            Defaults to the most recent reference time.
-
-    Returns (datetime64):
-        A valid reference time.
-    '''
     return np.datetime64(reftime, '6h')
 
 
-def nearest_index(data, *points, **kwargs):
+def find_nearest(data, *points, **kwargs):
     '''Find the indices of `data` nearest to `points`.
 
     Returns:
@@ -133,7 +116,7 @@ def diagonal_slice(data, a, b, **kwargs):
         A list of slices to select the cube where each slices the
         corresponding axis in `data`.
     '''
-    a, b = nearest_index(data, a, b, **kwargs)
+    a, b = find_nearest(data, a, b, **kwargs)
     return [slice(i, j) for i, j in zip(a,b)]
 
 
@@ -159,80 +142,10 @@ def proj_coords(lats, lons):
     return x, y
 
 
-def select_gribs(reftime='now', **kwargs):
-    '''Load the forecasts from GRIB, downlading if they do not exist.
-
-    Args:
-        reftime (datetime64):
-            The reference time to select.
-
-    Returns:
-        An `xr.Dataset` describing this forecast.
-    '''
-    db = NamDatabase(**kwargs)
-    return db.select_gribs(reftime)
-
-
-def select_nc(reftime='now', **kwargs):
-    '''Load the forecasts from a netCDF in the cache.
-
-    Args:
-        reftime (datetime64):
-            The reference time to select.
-
-    Returns:
-        An `xr.Dataset` describing this forecast.
-    '''
-    db = NamDatabase(**kwargs)
-    return db.select_nc(reftime)
-
-
-def select(*reftimes, **kwargs):
-    '''Load and combine forecasts for some reference times,
-    downloading and preprocessing GRIBs as necessary.
-
-    If the dataset exists as a local netCDF file, it is loaded and
-    returned. Otherwise, any missing GRIB files are downloaded and
-    preprocessed into an xarray Dataset. The dataset is then saved as a
-    netCDF file, the GRIBs are deleted, and the dataset is returned.
-
-    Args:
-        reftimes (datetime64):
-            The reference times to select.
-
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
-    '''
-    db = NamDatabase(**kwargs)
-    return db.select(*reftimes)
-
-
-def select_range(start='2017-01-01', stop='today', **kwargs):
-    '''Load and combine forecasts for a range of reference times.
-
-    NOTE: This method only loads data from the cache.
-
-    Args:
-        start (datetime64):
-            The first time in the range.
-            The default is 2017-01-01T00:00
-        stop (datetime64):
-            The last time in the range.
-            The default is the start of the current day.
-
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
-    '''
-    db = NamDatabase(**kwargs)
-    return db.select_range(start, stop)
-
-
-class NamDatabase:
+class NamLoader:
     '''A class to download, subsets, and cache NAM forecasts.
 
-    A `NamDatabase` downloads NAM-NMM forecasts from NOAA, subsets their features
+    A `NamLoader` downloads NAM-NMM forecasts from NOAA, subsets their features
     and geographic scope, converts the data to netCDF, and caches the result.
 
     TODO:
@@ -246,7 +159,7 @@ class NamDatabase:
             save_nc=True,
             keep_gribs=False,
             parallel=False):
-        '''Creates a db for NAM data.
+        '''Creates a loader for NAM data.
 
         Args:
             cache_dir (Path or str):
@@ -323,7 +236,7 @@ class NamDatabase:
             max_tries (int):
                 The maximum number of failed downloads for a single file
                 before raising an `IOError`. This option is ignored if
-                `fail_fast` is set on the NamDatabase.
+                `fail_fast` is set on the NamLoader.
             timeout (int):
                 The network timeout in seconds.
                 Note that the government servers can be kinda slow.
@@ -579,76 +492,7 @@ class NamDatabase:
         ds = xr.decode_cf(ds)
         return ds
 
-    def select_gribs(self, reftime='now'):
-        '''Load the forecasts from GRIB, downlading if they do not exist.
-
-        Args:
-            reftime (datetime64):
-                The reference time to select.
-
-        Returns:
-            An `xr.Dataset` describing this forecast.
-        '''
-        datasets = self._mapper(lambda f: self.load_grib(reftime, f), FORECAST_PERIOD)
-        ds = xr.concat(datasets, dim='forecast')
-
-        if self.save_nc:
-            path = self.nc_path(reftime)
-            logger.info(f'writing {path}')
-            ds.to_netcdf(str(path)) # can't be a Path, should be fixed in xarray
-            if not self.keep_gribs:
-                logger.info('deleting local gribs')
-                for forecast in FORECAST_PERIOD:
-                    path = self.grib_path(reftime, forecast)
-                    path.unlink()
-
-        return ds
-
-    def select_nc(self, reftime='now'):
-        '''Load the forecasts from a netCDF in the cache.
-
-        Args:
-            reftime (datetime64):
-                The reference time to select.
-
-        Returns:
-            An `xr.Dataset` describing this forecast.
-        '''
-        path = self.nc_path(reftime)
-        if path.exists():
-            logger.info(f'reading {path}')
-            ds = xr.open_dataset(
-                path,
-                autoclose=True,
-                chunks={},
-            )
-            return ds
-        else:
-            raise NamDatabase.CacheMiss(reftime)
-
-    def select_one(self, reftime='now'):
-        '''Load a forecast for some reference time,
-        downloading and preprocessing GRIBs as necessary.
-
-        If the dataset exists as a local netCDF file, it is loaded and
-        returned. Otherwise, any missing GRIB files are downloaded and
-        preprocessed into an xarray Dataset. The dataset is then saved as a
-        netCDF file, the GRIBs are deleted, and the dataset is returned.
-
-        Args:
-            reftime (datetime64):
-                The reference time to select.
-
-        Returns (xr.Dataset):
-            A dataset for the forecast at the given reference time.
-        '''
-        try:
-            ds = self.select_nc(reftime)
-        except NamDatabase.CacheMiss as e:
-            ds = self.select_gribs(reftime)
-        return ds
-
-    def join(self, datasets):
+    def _combine(self, datasets):
         '''Combine a list of datasets.
 
         This is non-trivial because the old-format and the new-format are not
@@ -668,7 +512,54 @@ class NamDatabase:
         ds = ds.assign_coords(**coords)
         return ds
 
-    def select(self, *reftimes):
+    def open_gribs(self, reftime='now'):
+        '''Load the forecasts from GRIB, downlading if they do not exist.
+
+        Args:
+            reftime (datetime64):
+                The reference time to open.
+
+        Returns:
+            An `xr.Dataset` describing this forecast.
+        '''
+        datasets = self._mapper(lambda f: self.load_grib(reftime, f), FORECAST_PERIOD)
+        ds = xr.concat(datasets, dim='forecast')
+
+        if self.save_nc:
+            path = self.nc_path(reftime)
+            logger.info(f'writing {path}')
+            ds.to_netcdf(str(path)) # must be str, can't be Path, should fix in xarray
+            if not self.keep_gribs:
+                logger.info('deleting local gribs')
+                for forecast in FORECAST_PERIOD:
+                    path = self.grib_path(reftime, forecast)
+                    path.unlink()
+
+        return ds
+
+    def open_nc(self, reftime='now'):
+        '''Load the forecasts from a netCDF in the cache.
+
+        Args:
+            reftime (datetime64):
+                The reference time to open.
+
+        Returns:
+            An `xr.Dataset` describing this forecast.
+        '''
+        path = self.nc_path(reftime)
+        if path.exists():
+            logger.info(f'reading {path}')
+            ds = xr.open_dataset(
+                path,
+                autoclose=True,
+                chunks={},
+            )
+            return ds
+        else:
+            raise NamLoader.CacheMiss(reftime)
+
+    def open(self, *reftimes):
         '''Load and combine forecasts for some reference times,
         downloading and preprocessing GRIBs as necessary.
 
@@ -679,19 +570,26 @@ class NamDatabase:
 
         Args:
             reftimes (datetime64):
-                The reference times to select.
+                The reference times to open.
 
         Returns (xr.Dataset):
             Returns a single dataset containing all forecasts at the given
             reference times. Some data may be dropped when combining forecasts.
         '''
-        if len(reftimes) == 0:
-            return self.select_one('now')
-        else:
-            datasets = [self.select_one(r) for r in reftimes]
-            return self.join(datasets)
+        def _open(reftime):
+            try:
+                ds = self.open_nc(reftime)
+            except NamLoader.CacheMiss as e:
+                ds = self.open_gribs(reftime)
+            return ds
 
-    def select_range(self, start='2017-01-01', stop='today'):
+        if len(reftimes) == 0:
+            return _open('now')
+        else:
+            datasets = [_open(r) for r in reftimes]
+            return self._combine(datasets)
+
+    def open_range(self, start='2017-01-01', stop='today'):
         '''Load and combine forecasts for a range of reference times.
 
         NOTE: This method only loads data from the cache.
@@ -715,16 +613,86 @@ class NamDatabase:
         delta = np.timedelta64(6, 'h')
         while start < stop:
             try:
-                ds = self.select_nc(start)
+                ds = self.open_nc(start)
                 datasets.append(ds)
             except OSError as e:
                 logger.warn(f'error reading forecast for {start}')
                 logger.warn(e)
-            except NamDatabase.CacheMiss:
+            except NamLoader.CacheMiss:
                 pass
             start += delta
 
-        return self.join(datasets)
+        return self._combine(datasets)
+
+
+def open_gribs(reftime='now', **kwargs):
+    '''Load the forecasts from GRIB, downlading if they do not exist.
+
+    Args:
+        reftime (datetime64):
+            The reference time to open.
+
+    Returns:
+        An `xr.Dataset` describing this forecast.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open_gribs(reftime)
+
+
+def open_nc(reftime='now', **kwargs):
+    '''Load the forecasts from a netCDF in the cache.
+
+    Args:
+        reftime (datetime64):
+            The reference time to open.
+
+    Returns:
+        An `xr.Dataset` describing this forecast.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open_nc(reftime)
+
+
+def open(*reftimes, **kwargs):
+    '''Load and combine forecasts for some reference times,
+    downloading and preprocessing GRIBs as necessary.
+
+    If the dataset exists as a local netCDF file, it is loaded and
+    returned. Otherwise, any missing GRIB files are downloaded and
+    preprocessed into an xarray Dataset. The dataset is then saved as a
+    netCDF file, the GRIBs are deleted, and the dataset is returned.
+
+    Args:
+        reftimes (datetime64):
+            The reference times to open.
+
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open(*reftimes)
+
+
+def open_range(start='2017-01-01', stop='today', **kwargs):
+    '''Load and combine forecasts for a range of reference times.
+
+    NOTE: This method only loads data from the cache.
+
+    Args:
+        start (datetime64):
+            The first time in the range.
+            The default is 2017-01-01T00:00
+        stop (datetime64):
+            The last time in the range.
+            The default is the start of the current day.
+
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open_range(start, stop)
 
 
 @xr.register_dataarray_accessor('geo')
@@ -774,42 +742,90 @@ class GeoExtension:
         return ax
 
 
-@xr.register_dataset_accessor('ga_power')
-class GaPowerExtension(torch.utils.data.Dataset):
-    '''A torch dataset mapping forecasts to Georgia Power readings.
+@xr.register_dataset_accessor('torch')
+class TorchExtension(torch.utils.data.Dataset):
+    '''A torch DataLoader for NAM forecasts.
     '''
-    def __init__(self, xr_dataset):
-        print('created ga_power')
-        self._ds = xr_dataset
-        self.setup()
+    def __init__(self, ds, _joins=None, _load_kws=None, _batch_key=None):
+        if _load_kws is None:
+            _load_kws = {
+                'batch_size': 16,
+                'num_workers': 0, # TODO: non-0 workers doesn't work 2017-10-29
+                'pin_memory': torch.cuda.is_available(),
+                'drop_last': False,
+            }
 
-    def setup(self, feature='DSWRF_SFC', module=7, column=5):
-        self._feature = feature
-        self._targets = ga_power.select_aggregate(module)
-        self._target_column = column
+        if _joins is None:
+            _joins = defaultdict(lambda: [])
+
+        if _batch_key is None:
+            _batch_key = 'reftime'
+
+        self._ds = ds
+        self._joins = _joins
+        self._load_kws = _load_kws
+        self._batch_key = _batch_key
 
     def __len__(self):
-        return len(self._ds.reftime)
+        return self._ds[self._batch_key].size
 
     def __getitem__(self, index):
-        x = self._ds.isel(reftime=index, forecast=0)[self._feature]
-        y = self._targets.loc[x.reftime.values, self._target_column]
-        return x.values.ravel(), y
+        ds = self._ds[{self._batch_key: index}]
 
-    def load(self, *args, **kwargs):
-        loader = torch.utils.data.DataLoader(self, *args, **kwargs)
-        return loader
+        layers = defaultdict(lambda: [])
+        for name in sorted(ds.data_vars):
+            da = ds[name]
+            layers[da.dims].append(da.data)
 
-    def sizes(self):
-        x, y = self[0]
-        return x.size, y.size
+        ret = []
+        for name in sorted(layers):
+            array = np.stack(layers[name])
+            ret.append(array)
 
+        for on in sorted(self._joins):
+            idx = ds[on].values
+            for df in self._joins[on]:
+                ret.append(df.loc[idx])
+
+        return ret
+
+    def __iter__(self):
+        return torch.utils.data.DataLoader(self, **self._load_kws).__iter__()
+
+    def set(self, **kwargs):
+        _load_kws = copy(self._load_kws)
+        _load_kws.update(**kwargs)
+        return TorchExtension(self._ds, self._joins, _load_kws, self._batch_key)
+
+    def select(self, *features):
+        _ds = self._ds[list(features)]
+        return TorchExtension(_ds, self._joins, self._load_kws, self._batch_key)
+
+    def where(self, **kwargs):
+        _ds = self._ds.sel(**kwargs)
+        return TorchExtension(_ds, self._joins, self._load_kws, self._batch_key)
+
+    def iwhere(self, **kwargs):
+        _ds = self._ds.isel(**kwargs)
+        return TorchExtension(_ds, self._joins, self._load_kws, self._batch_key)
+
+    def join(self, df, on='reftime'):
+        _ds = self._ds
+        for i in _ds[on].data:
+            if i not in df.index:
+                _ds = _ds.drop(i, on)
+        _joins = copy(self._joins)
+        _joins[on].append(df)
+        return TorchExtension(_ds, _joins, self._load_kws, self._batch_key)
+
+    def batch_by(self, key):
+        return TorchExtension(_ds, _joins, self._load_kws, key)
 
 
 if __name__ == '__main__':
     import logging
     logging.basicConfig(level='DEBUG', format='[{asctime}] {levelname:>7}: {message}', style='{')
-    db = NamDatabase(keep_gribs=True)
-    old = db.select_gribs('2016-11-11T00:00')
-    new = db.select_gribs('2017-10-09T00:00')
-    ds = db.select('2016-11-11T00:00', '2017-10-09T00:00')
+    loader = NamLoader(keep_gribs=True)
+    old = loader.open_gribs('2016-11-11T00:00')
+    new = loader.open_gribs('2017-10-09T00:00')
+    ds = loader.open('2016-11-11T00:00', '2017-10-09T00:00')
