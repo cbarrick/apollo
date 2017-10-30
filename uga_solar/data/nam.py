@@ -45,10 +45,12 @@ import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
+import dask.array as da
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
+import scipy.spatial
 import requests
 import torch
 import torch.utils.data
@@ -700,7 +702,7 @@ class GeoExtension:
     '''Extends `xr.DataArray` with geographic specific features.
     '''
     def __init__(self, xr_dataarray):
-        self._da = xr_dataarray
+        self.x = xr_dataarray
 
     def plot(self, scale='10m', show=True, block=False):
         '''A helper to plot geographic data.
@@ -718,12 +720,12 @@ class GeoExtension:
             Plot the 0-hour forecast of surface temperature:
             >>> plot_geo(ds.isel(reftime=0, forecast=0).TMP_SFC)
         '''
-        vmin = self._da.min()
-        vmax = self._da.max()
+        vmin = self.x.min()
+        vmax = self.x.max()
 
-        da = self._da
-        while da.ndim > 2:
-            da = da[0]
+        x = self.x
+        while x.ndim > 2:
+            x = x[0]
 
         feature_kws = {'scale':scale, 'facecolor':'none', 'edgecolor':'black'}
         coast = cf.NaturalEarthFeature('physical', 'coastline', **feature_kws)
@@ -735,7 +737,7 @@ class GeoExtension:
         ax.add_feature(coast)
         ax.add_feature(countries)
         ax.add_feature(states)
-        im = ax.pcolormesh(da.x, da.y, da.data, vmin=vmin, vmax=vmax)
+        im = ax.pcolormesh(x.x, x.y, x.data, vmin=vmin, vmax=vmax)
 
         if show:
             plt.show(block=block)
@@ -774,8 +776,8 @@ class TorchExtension(torch.utils.data.Dataset):
 
         layers = defaultdict(lambda: [])
         for name in sorted(ds.data_vars):
-            da = ds[name]
-            layers[da.dims].append(da.data)
+            x = ds[name]
+            layers[x.dims].append(x.data)
 
         ret = []
         for name in sorted(layers):
