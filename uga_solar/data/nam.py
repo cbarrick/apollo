@@ -748,31 +748,29 @@ class GeoExtension:
 class TorchExtension(torch.utils.data.Dataset):
     '''A torch DataLoader for NAM forecasts.
     '''
-    def __init__(self, ds, _joins=None, _load_kws=None, _batch_key=None):
-        if _load_kws is None:
-            _load_kws = {
-                'batch_size': 16,
-                'num_workers': 0, # TODO: non-0 workers doesn't work 2017-10-29
-                'pin_memory': torch.cuda.is_available(),
-                'drop_last': False,
-            }
+    def __init__(self, ds, _joins=None, _kws=None, _key=None):
+        _kws = _kws or {}
+        _kws.setdefault('batch_size', 16)
+        _kws.setdefault('num_workers', 0) # TODO: non-0 workers doesn't work 2017-10-29
+        _kws.setdefault('pin_memory', torch.cuda.is_available())
+        _kws.setdefault('drop_last', False)
 
         if _joins is None:
             _joins = defaultdict(lambda: [])
 
-        if _batch_key is None:
-            _batch_key = 'reftime'
+        if _key is None:
+            _key = 'reftime'
 
-        self._ds = ds
+        self.ds = ds
         self._joins = _joins
-        self._load_kws = _load_kws
-        self._batch_key = _batch_key
+        self._kws = _kws
+        self._key = _key
 
     def __len__(self):
-        return self._ds[self._batch_key].size
+        return self.ds[self._key].size
 
     def __getitem__(self, index):
-        ds = self._ds[{self._batch_key: index}]
+        ds = self.ds[{self._key: index}]
 
         layers = defaultdict(lambda: [])
         for name in sorted(ds.data_vars):
@@ -792,33 +790,35 @@ class TorchExtension(torch.utils.data.Dataset):
         return ret
 
     def __iter__(self):
-        return torch.utils.data.DataLoader(self, **self._load_kws).__iter__()
+        return torch.utils.data.DataLoader(self, **self._kws).__iter__()
 
     def set(self, **kwargs):
-        _load_kws = copy(self._load_kws)
-        _load_kws.update(**kwargs)
-        return TorchExtension(self._ds, self._joins, _load_kws, self._batch_key)
+        _kws = copy(self._kws)
+        _kws.update(**kwargs)
+        return TorchExtension(self.ds, self._joins, _kws, self._key)
 
     def select(self, *features):
-        _ds = self._ds[list(features)]
-        return TorchExtension(_ds, self._joins, self._load_kws, self._batch_key)
+        ds = self.ds[list(features)]
+        return TorchExtension(ds, self._joins, self._kws, self._key)
 
     def where(self, **kwargs):
-        _ds = self._ds.sel(**kwargs)
-        return TorchExtension(_ds, self._joins, self._load_kws, self._batch_key)
+        ds = self.ds.sel(**kwargs)
+        return TorchExtension(ds, self._joins, self._kws, self._key)
 
     def iwhere(self, **kwargs):
-        _ds = self._ds.isel(**kwargs)
-        return TorchExtension(_ds, self._joins, self._load_kws, self._batch_key)
+        ds = self.ds.isel(**kwargs)
+        return TorchExtension(ds, self._joins, self._kws, self._key)
 
-    def join(self, df, on='reftime'):
-        _ds = self._ds
-        for i in _ds[on].data:
+    def join(self, df):
+        ds = self.ds
+        on = self._key
+        for i in ds[on].data:
             if i not in df.index:
-                _ds = _ds.drop(i, on)
+                ds = ds.drop(i, on)
         _joins = copy(self._joins)
         _joins[on].append(df)
-        return TorchExtension(_ds, _joins, self._load_kws, self._batch_key)
+        return TorchExtension(ds, _joins, self._kws, self._key)
 
-    def batch_by(self, key):
-        return TorchExtension(_ds, _joins, self._load_kws, key)
+    def key(self, key):
+        assert key == self._key or len(self._joins) == 0, 'cannot change key after join'
+        return TorchExtension(self.ds, self._joins, self._kws, key)

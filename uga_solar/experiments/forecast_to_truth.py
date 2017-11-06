@@ -13,95 +13,125 @@ from uga_solar.data import ga_power
 logger = logging.getLogger(__name__)
 
 
-class FullLinear(torch.nn.Module):
-    '''A linear layer that opperates on the flattened input.
+class Flatten(torch.nn.Module):
+    def forward(self, x):
+        return x.view(len(x), -1)
 
-    This differs from `torch.nn.Linear` in that the latter only operates on
-    the rightmost dimension (effectivly making it a 1x1 convolution).
-    '''
-    def __init__(self, in_shape, out_shape):
+
+class SimpleNet(torch.nn.Module):
+    def __init__(self, in_shape):
         super().__init__()
-        self.in_shape = tuple(in_shape)
-        self.out_shape = tuple(out_shape)
-        self.in_size = int(np.prod(in_shape))
-        self.out_size = int(np.prod(out_shape))
-        self.linear = torch.nn.Linear(self.in_size, self.out_size)
+        n_features = int(np.prod(in_shape))
+
+        self._module = torch.nn.Sequential(
+            Flatten(),
+            torch.nn.Linear(n_features, 16),
+            torch.nn.ReLU(),
+            torch.nn.Linear(16, 1)
+        )
+
+        torch.nn.init.kaiming_uniform(self._module[1].weight)
+        torch.nn.init.kaiming_uniform(self._module[3].weight)
 
     def forward(self, x):
-        n = len(x)
-        x = x.view(n, self.in_size)
-        y = self.linear(x)
-        y = y.view(n, *self.out_shape)
+        x = x.permute(0, 4, 2, 3, 1)
+        x = x.squeeze()
+        y = self._module(x)
         return y
 
 
-class MultiLinear(torch.nn.Module):
-    def __init__(self, *shapes):
-        super().__init__()
-        self.in_shapes = shapes[:-1]
-        self.out_shape = shapes[-1]
-        self.mods = [FullLinear(shape, self.out_shape) for shape in self.in_shapes]
-        self.mods = torch.nn.ModuleList(self.mods)
+class ForecastToTruth:
+    def __init__(self,
+            criteria=torch.nn.MSELoss(),
+            dtype=None,
+        ):
 
-    def forward(self, *inputs):
-        n = len(inputs)
-        y = sum(mod(x) for mod, x in zip(self.mods, inputs))
-        return y
+        self.criteria = criteria
+        if dtype is None:
+            if torch.cuda.is_available():
+                self.dtype = torch.cuda.FloatTensor
+            else:
+                self.dtype = torch.FloatTensor
+        else:
+            self.dtype = dtype
+
+        self.module = None
+        self.optimizer = None
+
+    def predict(self, x):
+        # TODO: handle multiple x, garuntee the ordering of features
+        x = torch.autograd.Variable(x)
+        return self.module(x)
+
+    def score(self, x, y):
+        x = x.type(self.dtype)
+        y = y.type(self.dtype)
+        h = self.predict(x)
+        y = torch.autograd.Variable(y)
+        return self.criteria(h, y)
+
+    def fit_epoch(self, data_loader):
+        mean_loss = 0
+        n = 0
+
+        for x, y in data_loader:
+            # initialize the module
+            if self.module == None:
+                self.module = SimpleNet(x.shape[1:])
+                self.optimizer = torch.optim.Adam(self.module.parameters())
+
+            # train step
+            print('.', end='', flush=True)
+            self.optimizer.zero_grad()
+            self.module.train(True)
+            loss = self.score(x, y)
+            loss.backward()
+            self.optimizer.step()
+            loss = loss.data.numpy()[0]
+            delta = loss - mean_loss
+            n += len(y)
+            mean_loss += delta * len(y) / n
+
+        return mean_loss
+
+    def fit(self, data_loader):
+        best_loss = float('inf')
+        for epoch in range(100):
+            print(f'epoch {epoch}', end=' ', flush=True)
+            loss = self.fit_epoch(data_loader)
+            if loss < best_loss:
+                best_loss = loss
+                state = self.model.state_dict()
+                torch.save(state, f'forecast_to_truth_{epoch}.pt')
+            print(f'DONE (mse = {loss:.3e})')
+        return best_loss
 
 
 if __name__ == '__main__':
     logging.basicConfig(level='DEBUG', format='[{asctime}] {levelname:>7}: {message}', style='{')
 
-    train = nam.open_range('2016-12-01', '2017-10-01')
-    targets = ga_power.open_aggregate(7)[17].dropna()
-    target_shape = targets.shape[1:]
-    target_size = int(np.prod(target_shape))
-    neighborhood = 1
-    use_gpu = torch.cuda.is_available()
+    features = ('DSWRF_SFC', 'DLWRF_SFC')
+    start = '2016-12-01T00:00'
+    stop = '2017-10-01T00:00'
+    target_col = 17
+    center = (91,81)
+    window = 3
 
-    sfc_features = ['DSWRF_SFC', 'DLWRF_SFC']
-    sfc_shape = (len(sfc_features), train['z_SFC'].size, neighborhood*2, neighborhood*2)
+    forecasts = nam.open_range(start, stop)
+    irradiance = ga_power.open_aggregate(7)[target_col].dropna()
+    y_lo, y_hi = center[0] - window//2, center[0] + window//2 + 1
+    x_lo, x_hi = center[1] - window//2, center[1] + window//2 + 1
 
     train_set = (
-        train.torch
-            .select(*sfc_features)
+        forecasts.torch
+            .key('reftime')
+            .select(*features)
             .where(forecast=0)
-            .iwhere(x=slice(81-neighborhood, 81+neighborhood)) # location of the solar farm
-            .iwhere(y=slice(91-neighborhood, 91+neighborhood)) # location of the solar farm
-            .join(targets, on='reftime')
+            .iwhere(y=slice(y_lo, y_hi))
+            .iwhere(x=slice(x_lo, x_hi))
+            .join(irradiance)
     )
 
-    model = MultiLinear(sfc_shape, target_shape)
-    if use_gpu:
-        model.cuda()
-
-    def score(x, y):
-        x = torch.autograd.Variable(x).float()
-        y = torch.autograd.Variable(y).float()
-        if use_gpu:
-            x = x.cuda()
-            y = y.cuda()
-        h = model(x)
-        loss = torch.nn.MSELoss()
-        return loss(h, y)
-
-    i = 0
-    params = model.parameters()
-    optimizer = torch.optim.Adam(params)
-    for epoch in range(100):
-        print(f'epoch {epoch}', end=' ')
-        mean_loss = 0
-        n = 0
-        for x_sfc, y in train_set:
-            print('.', end='', flush=True)
-            optimizer.zero_grad()
-            loss = score(x_sfc, y)
-            loss.backward()
-            optimizer.step()
-            loss = loss.data.numpy()[0]
-            delta = loss - mean_loss
-            n += len(y)
-            mean_loss += delta * len(y) / n
-        state = model.state_dict()
-        torch.save(state, f'linear_{epoch}.pt')
-        print(f'DONE (mse = {mean_loss:.3e})')
+    model = ForecastToTruth()
+    train_loss = model.fit(train_set)
+    print(f'Best MSE: {train_loss}')
