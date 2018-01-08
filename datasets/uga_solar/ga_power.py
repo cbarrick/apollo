@@ -66,7 +66,7 @@ class GaPowerLoader:
     '''
 
     def __init__(self,
-            data_dir='./GA-POWER',
+            data_dir='./data/GA-POWER',
             data_fmt='mb-{module:03}-targets.csv'):
         '''Create a new GaPowerLoader.
 

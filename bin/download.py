@@ -23,7 +23,7 @@ import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download missing NAM forecasts to the cache.')
-    parser.add_argument('-c', '--cache-dir', type=str, default='./NAM-NMM', help='Path to the cache.')
+    parser.add_argument('-c', '--cache-dir', type=str, default='./data/NAM-NMM', help='Path to the cache.')
     parser.add_argument('-n', '--count', type=int, default=1, metavar='N', help='Download N datasets, ending at the reference time.')
     parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
     parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')

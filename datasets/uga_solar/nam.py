@@ -157,7 +157,7 @@ class NamLoader:
     class CacheMiss(Exception): pass
 
     def __init__(self,
-            cache_dir='./NAM-NMM',
+            cache_dir='./data/NAM-NMM',
             fail_fast=False,
             save_nc=True,
             keep_gribs=False,
