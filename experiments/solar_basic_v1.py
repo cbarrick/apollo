@@ -5,8 +5,8 @@ import xarray as xr
 
 import torch
 
-from uga_solar.data import nam
-from uga_solar.data import ga_power
+from datasets.uga_solar import nam
+from datasets.uga_solar import ga_power
 
 
 # Module level logger

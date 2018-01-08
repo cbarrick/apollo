@@ -1,12 +1,12 @@
 # Data Loaders
 
 
-## `uga_solar.data.ga_power`
+## `datasets.uga_solar.ga_power`
 
 Use this module to access the data feed provided by GA Power. This data is not public.
 
 
-## `uga_solar.data.nam`
+## `datasets.uga_solar.nam`
 
 Use this module to access the NAM-NMM weather forecast released by the NCEP, a division of NOAA. This module can access the live feed forecast released by the NCEP as well as an archive that goes back roughly eleven months. This module caches data, so it can be used to build up a sizable dataset over time.
 

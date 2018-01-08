@@ -2,7 +2,7 @@
 '''Download missing NAM forecasts to the cache.
 
 This script is intended to be run as a cron job. Note that it imports
-from `uga_solar`, so you have to make sure the package is in your
+from `datasets.uga_solar`, so you have to make sure the package is in your
 PYTHONPATH. The easiest way is to `cd` into this repository.
 
 We run the following script as a cron job to keep the cache updated:
@@ -12,7 +12,7 @@ We run the following script as a cron job to keep the cache updated:
     date >> cron.log
     ./download.py -n 4 2>&1| tee -a ./download.log
 '''
-from uga_solar.data import nam
+from datasets.uga_solar import nam
 
 import argparse
 import logging

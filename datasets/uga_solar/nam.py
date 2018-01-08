@@ -56,7 +56,8 @@ import torch
 import torch.utils.data
 import xarray as xr
 
-from uga_solar.data import ga_power
+# TODO: separate this dependency
+from datasets.uga_solar import ga_power
 
 
 # Module level logger
