@@ -5,12 +5,12 @@ This script is intended to be run as a cron job. Note that it imports
 from `datasets.uga_solar`, so you have to make sure the package is in your
 PYTHONPATH. The easiest way is to `cd` into this repository.
 
-We run the following script as a cron job to keep the cache updated:
+We run a cron job similar to the following to keep the cache updated:
 
     #!/bin/sh
     cd /mnt/data6tb/chris/
     date >> cron.log
-    ./download.py -n 4 2>&1| tee -a ./download.log
+    python3 -m bin.download -n 4 2>&1| tee -a ./download.log
 '''
 from datasets.uga_solar import nam
 

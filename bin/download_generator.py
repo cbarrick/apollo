@@ -39,7 +39,7 @@ def main(start='2017-01-01', stop='today', log='missing.log', basepath=None):
     stop = reftime(stop)
     basepath = basepath or '.'
     for t in missing_datasets(start, stop, basepath):
-        print('./bin/download.py', '-x', t, '2>&1 | tee -a', log)
+        print('python3 -m bin.download', '-x', t, '2>&1 | tee -a', log)
 
 
 if __name__ == '__main__':
