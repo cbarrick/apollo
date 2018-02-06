@@ -92,6 +92,76 @@ NAM218_PROJ = ccrs.LambertConformal(
 )
 
 
+def open(*reftimes, **kwargs):
+    '''Load and combine forecasts for some reference times,
+    downloading and preprocessing GRIBs as necessary.
+
+    If the dataset exists as a local netCDF file, it is loaded and
+    returned. Otherwise, any missing GRIB files are downloaded and
+    preprocessed into an xarray Dataset. The dataset is then saved as a
+    netCDF file, the GRIBs are deleted, and the dataset is returned.
+
+    Args:
+        reftimes (datetime64):
+            The reference times to open.
+
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open(*reftimes)
+
+
+def open_range(start='2017-01-01', stop='today', **kwargs):
+    '''Load and combine forecasts for a range of reference times.
+
+    NOTE: This method only loads data from the cache.
+
+    Args:
+        start (datetime64):
+            The first time in the range.
+            The default is 2017-01-01T00:00
+        stop (datetime64):
+            The last time in the range.
+            The default is the start of the current day.
+
+    Returns (xr.Dataset):
+        Returns a single dataset containing all forecasts at the given
+        reference times. Some data may be dropped when combining forecasts.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open_range(start, stop)
+
+
+def open_gribs(reftime='now', **kwargs):
+    '''Load the forecasts from GRIB, downlading if they do not exist.
+
+    Args:
+        reftime (datetime64):
+            The reference time to open.
+
+    Returns:
+        An `xr.Dataset` describing this forecast.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open_gribs(reftime)
+
+
+def open_nc(reftime='now', **kwargs):
+    '''Load the forecasts from a netCDF in the cache.
+
+    Args:
+        reftime (datetime64):
+            The reference time to open.
+
+    Returns:
+        An `xr.Dataset` describing this forecast.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open_nc(reftime)
+
+
 def normalize_reftime(reftime='now'):
     return np.datetime64(reftime, '6h')
 
@@ -626,76 +696,6 @@ class NamLoader:
             start += delta
 
         return self._combine(datasets)
-
-
-def open_gribs(reftime='now', **kwargs):
-    '''Load the forecasts from GRIB, downlading if they do not exist.
-
-    Args:
-        reftime (datetime64):
-            The reference time to open.
-
-    Returns:
-        An `xr.Dataset` describing this forecast.
-    '''
-    loader = NamLoader(**kwargs)
-    return loader.open_gribs(reftime)
-
-
-def open_nc(reftime='now', **kwargs):
-    '''Load the forecasts from a netCDF in the cache.
-
-    Args:
-        reftime (datetime64):
-            The reference time to open.
-
-    Returns:
-        An `xr.Dataset` describing this forecast.
-    '''
-    loader = NamLoader(**kwargs)
-    return loader.open_nc(reftime)
-
-
-def open(*reftimes, **kwargs):
-    '''Load and combine forecasts for some reference times,
-    downloading and preprocessing GRIBs as necessary.
-
-    If the dataset exists as a local netCDF file, it is loaded and
-    returned. Otherwise, any missing GRIB files are downloaded and
-    preprocessed into an xarray Dataset. The dataset is then saved as a
-    netCDF file, the GRIBs are deleted, and the dataset is returned.
-
-    Args:
-        reftimes (datetime64):
-            The reference times to open.
-
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
-    '''
-    loader = NamLoader(**kwargs)
-    return loader.open(*reftimes)
-
-
-def open_range(start='2017-01-01', stop='today', **kwargs):
-    '''Load and combine forecasts for a range of reference times.
-
-    NOTE: This method only loads data from the cache.
-
-    Args:
-        start (datetime64):
-            The first time in the range.
-            The default is 2017-01-01T00:00
-        stop (datetime64):
-            The last time in the range.
-            The default is the start of the current day.
-
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
-    '''
-    loader = NamLoader(**kwargs)
-    return loader.open_range(start, stop)
 
 
 @xr.register_dataarray_accessor('geo')
