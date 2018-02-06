@@ -26,12 +26,24 @@ class Joined:
         ds = self.nam[{self.key: idx}]
         df = self.ga_power.iloc[idx]
 
+        # Extract arrays for variables with different shapes (e.g. different z-axis).
+        # Combine arrays for variables with same shape (e.g. surface and cloud variables).
         layers = defaultdict(lambda: [])
         for name in sorted(ds.data_vars):
             layer = ds[name]
             layers[layer.shape].append(layer.data)
+        layers = {k:np.stack(v) for k,v in layers.items()}
 
-        x = [np.stack(layers[name]) for name in sorted(layers)]
+        # Coalesce z-axis into independent features.
+        layers = layers.values()
+        layers = [v.transpose(0,2,1,3,4) for v in layers]
+        shapes = [v.shape for v in layers]
+        shape = shapes[0][2:]
+        for s in shapes: assert s[2:] == shape
+        layers = [v.reshape((-1, *shape)) for v in layers]
+
+        # Combine all features and get corresponding labels.
+        x = np.concatenate(layers)
         y = df.iloc[idx]
         return x, y
 
