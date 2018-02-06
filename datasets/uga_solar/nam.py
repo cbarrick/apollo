@@ -36,7 +36,6 @@ This module registers a few extensions to the `xr.DataArray` and
 PyTorch prefetching.
 '''
 
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from pathlib import Path
@@ -743,83 +742,3 @@ class GeoExtension:
         if show:
             plt.show(block=block)
         return ax
-
-
-@xr.register_dataset_accessor('torch')
-class TorchExtension(torch.utils.data.Dataset):
-    '''A torch DataLoader for NAM forecasts.
-    '''
-    def __init__(self, ds, _joins=None, _kws=None, _key=None):
-        _kws = _kws or {}
-        _kws.setdefault('batch_size', 16)
-        _kws.setdefault('num_workers', 0) # TODO: non-0 workers doesn't work 2017-10-29
-        _kws.setdefault('pin_memory', torch.cuda.is_available())
-        _kws.setdefault('drop_last', False)
-
-        if _joins is None:
-            _joins = defaultdict(lambda: [])
-
-        if _key is None:
-            _key = 'reftime'
-
-        self.ds = ds
-        self._joins = _joins
-        self._kws = _kws
-        self._key = _key
-
-    def __len__(self):
-        return self.ds[self._key].size
-
-    def __getitem__(self, index):
-        ds = self.ds[{self._key: index}]
-
-        layers = defaultdict(lambda: [])
-        for name in sorted(ds.data_vars):
-            x = ds[name]
-            layers[x.dims].append(x.data)
-
-        ret = []
-        for name in sorted(layers):
-            array = np.stack(layers[name])
-            ret.append(array)
-
-        for on in sorted(self._joins):
-            idx = ds[on].values
-            for df in self._joins[on]:
-                ret.append(df.loc[idx])
-
-        return ret
-
-    def __iter__(self):
-        return torch.utils.data.DataLoader(self, **self._kws).__iter__()
-
-    def set(self, **kwargs):
-        _kws = copy(self._kws)
-        _kws.update(**kwargs)
-        return TorchExtension(self.ds, self._joins, _kws, self._key)
-
-    def select(self, *features):
-        ds = self.ds[list(features)]
-        return TorchExtension(ds, self._joins, self._kws, self._key)
-
-    def where(self, **kwargs):
-        ds = self.ds.sel(**kwargs)
-        return TorchExtension(ds, self._joins, self._kws, self._key)
-
-    def iwhere(self, **kwargs):
-        ds = self.ds.isel(**kwargs)
-        return TorchExtension(ds, self._joins, self._kws, self._key)
-
-    def join(self, df):
-        ds = self.ds
-        on = self._key
-        for i in ds[on].data:
-            if i not in df.index:
-                ds = ds.drop(i, on)
-        _joins = copy(self._joins)
-        _joins[on].append(df)
-        return TorchExtension(ds, _joins, self._kws, self._key)
-
-    def key(self, key):
-        assert key == self._key or len(self._joins) == 0, 'cannot change key after join'
-        return TorchExtension(self.ds, self._joins, self._kws, key)
