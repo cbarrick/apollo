@@ -11,6 +11,10 @@ def open_range(module=7, start='2017-01-01', stop='today', nam_kwargs={}, ga_pow
     return Joined(nam_data, ga_power_data)
 
 
+def join(forecast, target, key='reftime'):
+    return Joined(forecast, target, key)
+
+
 class Joined:
     def __init__(self, nam_data, ga_power_data, key='reftime'):
         # Only the indexes which are common to both.
