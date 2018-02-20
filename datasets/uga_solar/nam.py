@@ -30,10 +30,6 @@ Queries return an instance of `xarray.Dataset` where each variable has
 exactly five dimensions: reftime, forecast, z, y, and x. The z-axis for
 each variable has a different name depending on the type of index
 measuring the axis, e.g. `z_ISBL`.
-
-This module registers a few extensions to the `xr.DataArray` and
-`xr.DataSet` classes to provide things like geographic plotting and
-PyTorch prefetching.
 '''
 
 from concurrent.futures import ThreadPoolExecutor

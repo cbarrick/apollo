@@ -21,7 +21,7 @@ class LstmConv4d(N.Module):
     def __init__(self, ndim=2):
         super().__init__()
 
-        # The convolution network is a 3D version of VGG11 with batch norm.
+        # The convolution network is a 3D version of VGG11.
         # It expects the input shape: N x 1 x 100 x 116 x 116,
         # in other words, don't pass in the sequence dimension.
         self.conv = N.Sequential(
@@ -29,7 +29,7 @@ class LstmConv4d(N.Module):
 
             ConvBlock3d(1, 8),
             N.MaxPool3d(kernel_size=2, stride=2),
-            # shape: N x8 x 50 x 58 x 58
+            # shape: N x 8 x 50 x 58 x 58
 
             ConvBlock3d(8, 16),
             N.MaxPool3d(kernel_size=2, stride=2),
