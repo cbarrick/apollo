@@ -5,133 +5,81 @@ import xarray as xr
 
 import torch
 
-from datasets.uga_solar import nam
-from datasets.uga_solar import ga_power
+import estimators as E
+import metrics as M
+import networks as N
+import optim as O
+from datasets import uga_solar
 
 
-# Module level logger
 logger = logging.getLogger(__name__)
 
 
-class Flatten(torch.nn.Module):
-    def forward(self, x):
-        return x.view(len(x), -1)
+class SqueezeTime:
+    '''A dataset transformation that squeezes the time axis into the feature axis.
+    '''
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, i):
+        (x, y) = self.dataset[i]
+        (c, t, h, w) = x.shape
+        x = x.reshape((c*t, h, w))
+        return (x, y)
 
 
-class SimpleNet(torch.nn.Module):
-    def __init__(self, in_shape):
-        super().__init__()
-        n_features = int(np.prod(in_shape))
-
-        self._module = torch.nn.Sequential(
-            Flatten(),
-            torch.nn.Linear(n_features, 16),
-            torch.nn.ReLU(),
-            torch.nn.Linear(16, 1)
-        )
-
-        torch.nn.init.kaiming_uniform(self._module[1].weight)
-        torch.nn.init.kaiming_uniform(self._module[3].weight)
-
-    def forward(self, x):
-        x = x.permute(0, 4, 2, 3, 1)
-        x = x.squeeze()
-        y = self._module(x)
-        return y
+def set_seed(n):
+    '''Seed the RNGs of stdlib, numpy, and torch.'''
+    import random
+    import numpy as np
+    import torch
+    random.seed(n)
+    np.random.seed(n)
+    torch.manual_seed(n)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(n)
 
 
-class ForecastToTruth:
-    def __init__(self,
-            criteria=torch.nn.MSELoss(),
-            dtype=None,
-        ):
-
-        self.criteria = criteria
-        if dtype is None:
-            if torch.cuda.is_available():
-                self.dtype = torch.cuda.FloatTensor
-            else:
-                self.dtype = torch.FloatTensor
-        else:
-            self.dtype = dtype
-
-        self.module = None
-        self.optimizer = None
-
-    def predict(self, x):
-        # TODO: handle multiple x, garuntee the ordering of features
-        x = torch.autograd.Variable(x)
-        return self.module(x)
-
-    def score(self, x, y):
-        x = x.type(self.dtype)
-        y = y.type(self.dtype)
-        h = self.predict(x)
-        y = torch.autograd.Variable(y)
-        return self.criteria(h, y)
-
-    def fit_epoch(self, data_loader):
-        mean_loss = 0
-        n = 0
-
-        for x, y in data_loader:
-            # initialize the module
-            if self.module == None:
-                self.module = SimpleNet(x.shape[1:])
-                self.optimizer = torch.optim.Adam(self.module.parameters())
-
-            # train step
-            print('.', end='', flush=True)
-            self.optimizer.zero_grad()
-            self.module.train(True)
-            loss = self.score(x, y)
-            loss.backward()
-            self.optimizer.step()
-            loss = loss.data.numpy()[0]
-            delta = loss - mean_loss
-            n += len(y)
-            mean_loss += delta * len(y) / n
-
-        return mean_loss
-
-    def fit(self, data_loader):
-        best_loss = float('inf')
-        for epoch in range(100):
-            print(f'epoch {epoch}', end=' ', flush=True)
-            loss = self.fit_epoch(data_loader)
-            if loss < best_loss:
-                best_loss = loss
-                state = self.model.state_dict()
-                torch.save(state, f'forecast_to_truth_{epoch}.pt')
-            print(f'DONE (mse = {loss:.3e})')
-        return best_loss
+def select(ds, *features):
+    data_vars = {f:ds[f] for f in features}
+    coords = ds.coords
+    return xr.Dataset(data_vars)
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level='DEBUG', format='[{asctime}] {levelname:>7}: {message}', style='{')
+def main(name=None, *, epochs=600, learning_rate=0.001, patience=None, batch_size=32,
+        start='2017-01-01T00:00', stop='2017-02-01T00:00', target_module=7,
+        seed=1337, dry_run=False, log_level='WARN'):
 
-    features = ('DSWRF_SFC', 'DLWRF_SFC')
-    start = '2016-12-01T00:00'
-    stop = '2017-10-01T00:00'
-    target_col = 17
-    center = (91,81)
-    window = 3
-
-    forecasts = nam.open_range(start, stop)
-    irradiance = ga_power.open_aggregate(7)[target_col].dropna()
-    y_lo, y_hi = center[0] - window//2, center[0] + window//2 + 1
-    x_lo, x_hi = center[1] - window//2, center[1] + window//2 + 1
-
-    train_set = (
-        forecasts.torch
-            .key('reftime')
-            .select(*features)
-            .where(forecast=0)
-            .iwhere(y=slice(y_lo, y_hi))
-            .iwhere(x=slice(x_lo, x_hi))
-            .join(irradiance)
+    logging.basicConfig(
+        level=log_level,
+        style='{',
+        format='[{levelname:.4}][{asctime}][{name}:{lineno}] {msg}',
     )
 
-    model = ForecastToTruth()
-    train_loss = model.fit(train_set)
-    print(f'Best MSE: {train_loss}')
+    set_seed(seed)
+
+    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+
+    # TODO: Accept features and region as args
+    features = ('DSWRF_SFC', 'DLWRF_SFC', 'TCC_EATM', 'TMP_SFC', 'VGRD_TOA', 'UGRD_TOA')
+    region = {'y':slice(59,124),'x':slice(49,114)}
+
+    forecast = uga_solar.nam.open_range(start, stop)
+    forecast = select(forecast, *features)
+    forecast = forecast.isel(**region)
+
+    targets = uga_solar.ga_power.open_aggregate(target_module)
+
+    train_set = uga_solar.join(forecast, targets, on='reftime')
+    train_set = SqueezeTime(train_set)
+
+    net = N.Vgg11(shape=(222, 64, 64), ndim=1)  # TODO: Don't hardcode shape
+    opt = O.Adam(net.parameters(), lr=learning_rate)
+    loss = N.SmoothL1Loss()
+    model = E.Classifier(net, opt, loss, name=name, dry_run=dry_run)
+    model.fit(train_set, num_workers=0, epochs=epochs, patience=patience, batch_size=batch_size)
+
+    return model

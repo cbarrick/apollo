@@ -28,10 +28,17 @@ class VggBlock2d(N.Module):
 class _VggBase(N.Module):
     def __init__(self, cnn, shape, ndim):
         super().__init__()
-        n = int(np.ceil(shape[1] / 2 ** len(cnn)))
-        m = int(np.ceil(shape[2] / 2 ** len(cnn)))
+        (c, y, x) = shape
+
+        # Adjust c, y, and x to their values after applying the CNN.
+        # Each CNN block reduces the resolution by half.
+        # The number of channels must be 512 at the output of the CNN.
+        c = 512
+        y = int(np.ceil(y / 2 ** len(cnn)))
+        x = int(np.ceil(x / 2 ** len(cnn)))
+
         self.cnn = cnn
-        self.frontend = N.MLP(512*n*m, 4096, 4096, ndim)
+        self.frontend = N.MLP(512*y*x, 4096, 4096, ndim)
         self.reset()
 
     def reset(self):
