@@ -50,8 +50,8 @@ def select(ds, *features):
 
 
 def main(name=None, *, epochs=600, learning_rate=0.001, patience=None, batch_size=32,
-        start='2017-01-01T00:00', stop='2017-02-01T00:00', target_module=7,
-        seed=1337, dry_run=False, log_level='WARN'):
+        start='2017-01-01T00:00', stop='2018-01-01T00:00', target_module=7,
+        seed=1337, dry_run=False, log_level='INFO'):
 
     logging.basicConfig(
         level=log_level,
@@ -75,6 +75,7 @@ def main(name=None, *, epochs=600, learning_rate=0.001, patience=None, batch_siz
 
     train_set = uga_solar.join(forecast, targets, on='reftime')
     train_set = SqueezeTime(train_set)
+    logger.info(f'train set size: {len(train_set)}')
 
     net = N.Vgg11(shape=(222, 64, 64), ndim=1)  # TODO: Don't hardcode shape
     opt = O.Adam(net.parameters(), lr=learning_rate)
