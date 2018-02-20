@@ -6,9 +6,9 @@ from datasets.uga_solar import nam, ga_power
 
 
 def open_range(module=7, start='2017-01-01', stop='today', nam_kwargs={}, ga_power_kwargs={}):
-    nam_data = nam.open_range(start, stop, **nam_kwargs)
-    ga_power_data = ga_power.open_aggregate(module, **ga_power_kwargs)
-    return Joined(nam_data, ga_power_data)
+    forecast = nam.open_range(start, stop, **nam_kwargs)
+    targets = ga_power.open_aggregate(module, **ga_power_kwargs)
+    return Joined(forecast, targets)
 
 
 def join(forecast, target, on='reftime'):
@@ -16,25 +16,28 @@ def join(forecast, target, on='reftime'):
 
 
 class Joined:
-    def __init__(self, nam_data, ga_power_data, on='reftime'):
+    def __init__(self, forecast, targets, on='reftime'):
         # Only the indexes which are common to both.
         # The inner loop should be smallest. Is it?
-        indexes = [t for t in nam_data[on].data if t in ga_power_data.index]
+        indexes = [t for t in forecast[on].data if t in targets.index]
 
-        self.nam = nam_data.loc[{on: indexes}]
-        self.ga_power = ga_power_data.loc[indexes]
+        self.forecast = forecast.loc[{on: indexes}]
+        self.targets = targets.loc[indexes]
         self.on = on
-        assert len(self.nam[on]) == len(self.ga_power)
+        assert len(self.forecast[on]) == len(self.targets)
+
+    def __len__(self):
+        return len(self.targets)
 
     def __getitem__(self, idx):
-        ds = self.nam[{self.on: idx}]
-        df = self.ga_power.iloc[idx]
+        x = self.forecast[{self.on: idx}]
+        y = self.targets.iloc[idx]
 
         # Extract arrays for variables with different shapes (e.g. different z-axis).
         # Combine arrays for variables with same shape (e.g. surface and cloud variables).
         layers = defaultdict(lambda: [])
-        for name in sorted(ds.data_vars):
-            layer = ds[name]
+        for name in sorted(x.data_vars):
+            layer = x[name]
             layers[layer.shape].append(layer.data)
         layers = {k:np.stack(v) for k,v in layers.items()}
 
@@ -46,10 +49,7 @@ class Joined:
         for s in shapes: assert s[2:] == shape
         layers = [v.reshape((-1, *shape)) for v in layers]
 
-        # Combine all features and get corresponding labels.
+        # Combine all features
         x = np.concatenate(layers)
-        y = df.iloc[idx]
+        y = y.values[17]
         return x, y
-
-    def __len__(self):
-        return len(self.ga_power)
