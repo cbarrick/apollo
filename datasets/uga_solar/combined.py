@@ -11,23 +11,23 @@ def open_range(module=7, start='2017-01-01', stop='today', nam_kwargs={}, ga_pow
     return Joined(nam_data, ga_power_data)
 
 
-def join(forecast, target, key='reftime'):
-    return Joined(forecast, target, key)
+def join(forecast, target, on='reftime'):
+    return Joined(forecast, target, on)
 
 
 class Joined:
-    def __init__(self, nam_data, ga_power_data, key='reftime'):
+    def __init__(self, nam_data, ga_power_data, on='reftime'):
         # Only the indexes which are common to both.
         # The inner loop should be smallest. Is it?
-        indexes = [t for t in nam_data[key].data if t in ga_power_data.index]
+        indexes = [t for t in nam_data[on].data if t in ga_power_data.index]
 
-        self.nam = nam_data.loc[{key: indexes}]
+        self.nam = nam_data.loc[{on: indexes}]
         self.ga_power = ga_power_data.loc[indexes]
-        self.key = key
-        assert len(self.nam[key]) == len(self.ga_power)
+        self.on = on
+        assert len(self.nam[on]) == len(self.ga_power)
 
     def __getitem__(self, idx):
-        ds = self.nam[{self.key: idx}]
+        ds = self.nam[{self.on: idx}]
         df = self.ga_power.iloc[idx]
 
         # Extract arrays for variables with different shapes (e.g. different z-axis).
