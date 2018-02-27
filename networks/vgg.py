@@ -10,14 +10,21 @@ logger = logging.getLogger(__name__)
 
 
 class VggBlock2d(N.Module):
-    def __init__(self, *chans):
+    def __init__(self, in_chans, *chans):
         super().__init__()
         layers = []
-        n = len(chans)
-        for i in range(n-1):
-            conv = N.Conv2d(chans[i], chans[i+1], kernel_size=3, stride=1, padding=1)
+
+        # TODO: I should use input normalization
+        # instead of batch norm on an input layer.
+        bn = N.BatchNorm2d(in_chans)
+        layers += [bn]
+
+        for c in chans:
+            conv = N.Conv2d(in_chans, c, kernel_size=3, stride=1, padding=1)
+            bn = N.BatchNorm2d(c)
             relu = N.ReLU(inplace=True)
-            layers += [conv, relu]
+            layers += [conv, bn, relu]
+            in_chans = c
         layers += [N.MaxPool2d(kernel_size=2, stride=2)]
         self.layers = N.Sequential(*layers)
 
@@ -41,11 +48,11 @@ class _VggBase(N.Module):
         self.frontend = N.MLP(512*y*x, 4096, 4096, ndim)
         self.reset()
 
-    def reset(self):
+    def reset(self, init_fn=N.init.kaiming_uniform):
         for m in self.modules():
-            if isinstance(m, (N.Conv2d, N.Linear)):
-                N.init.kaiming_uniform(m.weight)
-                N.init.constant(m.bias, 0)
+            if not isinstance(m, (N.BatchNorm1d, N.BatchNorm2d, N.BatchNorm3d)):
+                if hasattr(m, 'weight'): init_fn(m.weight)
+                if hasattr(m, 'bias'): m.bias.data.fill_(0)
         return self
 
     def forward(self, x):

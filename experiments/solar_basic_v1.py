@@ -61,7 +61,10 @@ def main(name=None, *, epochs=600, learning_rate=0.001, patience=None, batch_siz
 
     set_seed(seed)
 
-    torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+    if torch.cuda.is_available():
+        torch.set_default_tensor_type('torch.cuda.DoubleTensor')
+    else:
+        torch.set_default_tensor_type('torch.DoubleTensor')
 
     # TODO: Accept features and region as args
     features = ('DSWRF_SFC', 'DLWRF_SFC', 'TCC_EATM', 'TMP_SFC', 'VGRD_TOA', 'UGRD_TOA')
@@ -84,3 +87,49 @@ def main(name=None, *, epochs=600, learning_rate=0.001, patience=None, batch_siz
     model.fit(train_set, num_workers=0, epochs=epochs, patience=patience, batch_size=batch_size)
 
     return model
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        add_help=False,
+        argument_default=argparse.SUPPRESS,
+        formatter_class=argparse.RawTextHelpFormatter,
+        description=('Runs the solar_basic_v1 experiment'),
+    )
+
+    group = parser.add_argument_group('Hyper-parameters')
+    group.add_argument('-e', '--epochs', metavar='X', type=int)
+    group.add_argument('-l', '--learning-rate', metavar='X', type=float)
+    group.add_argument('-z', '--patience', metavar='X', type=int)
+
+    group = parser.add_argument_group('Performance')
+    group.add_argument('-b', '--batch-size', metavar='X', type=int)
+
+    group = parser.add_argument_group('Debugging')
+    group.add_argument('-d', '--dry-run', action='store_true')
+    group.add_argument('-v', '--verbose', action='store_const', const='DEBUG')
+
+    group = parser.add_argument_group('Other')
+    group.add_argument('--seed')
+    group.add_argument('--name', type=str)
+    group.add_argument('--help', action='help')
+
+    group = parser.add_argument_group('Positional')
+    group.add_argument('start', nargs='?')
+    group.add_argument('stop', nargs='?')
+
+    args = vars(parser.parse_args())
+
+    # Convert 'verbose' to 'log_level'
+    if 'verbose' in args:
+        log_level = args.pop('verbose')
+        args['log_level'] = log_level
+
+    # Handle 'start' and 'stop' just like `range`
+    if 'start' in args and 'stop' not in args:
+        args['stop'] = args['start']
+        del args['start']
+
+    main(**args)

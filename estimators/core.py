@@ -2,6 +2,7 @@ import logging
 import sys
 from pathlib import Path
 
+import numpy as np
 import torch
 
 import autograd as A
@@ -9,7 +10,6 @@ import datasets as D
 import networks as N
 import networks.functional as F
 import metrics as M
-
 
 
 logger = logging.getLogger(__name__)
@@ -205,9 +205,16 @@ class Estimator:
         y = self.variable(y)
         h = self.net(x)
         j = self.loss(h, y)
-        j.backward()
-        self.opt.step()
-        return j.data.mean()
+        j_mean = j.data.mean()
+
+        if np.isnan(j_mean):
+            logger.warn('Gradient is NaN')
+            self.opt.zero_grad()
+        else:
+            j.backward()
+            self.opt.step()
+
+        return j_mean
 
     def fit(self, train, validation=None, epochs=100, patience=None, reports={}, **kwargs):
         '''Fit the model to a dataset.
@@ -246,7 +253,7 @@ class Estimator:
             print(f'epoch {epoch+1} [0%]', end='\r', flush=True, file=sys.stderr)
             for i, (x, y) in enumerate(train):
                 j = self.partial_fit(x, y)
-                train_loss.accumulate(j)
+                if not np.isnan(j): train_loss.accumulate(j)
                 progress = (i+1) / n
                 print(f'epoch {epoch+1} [{progress:.2%}]', end='\r', flush=True, file=sys.stderr)
                 if self.dry_run: break
