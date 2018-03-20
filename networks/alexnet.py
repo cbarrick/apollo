@@ -1,10 +1,9 @@
 import numpy as np
-import torch
 
-import networks as N
+from torch import nn
 
 
-class AlexNet(N.Module):
+class AlexNet(nn.Module):
     '''An AlexNet-like model based on the CIFAR-10 variant of AlexNet in Caffe.
 
     See:
@@ -21,18 +20,18 @@ class AlexNet(N.Module):
 
         # The Caffe version of this network uses LRN layers,
         # but Janowczyk and Madabhushi do not.
-        self.features = N.Sequential(
-            N.Conv2d(shape[0], 32, kernel_size=5, stride=1, padding=2),
-            N.MaxPool2d(kernel_size=3, stride=2, padding=1),
-            N.ReLU(inplace=True),
+        self.features = nn.Sequential(
+            nn.Conv2d(shape[0], 32, kernel_size=5, stride=1, padding=2),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            nn.ReLU(inplace=True),
 
-            N.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
-            N.ReLU(inplace=True),
-            N.AvgPool2d(kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(inplace=True),
+            nn.AvgPool2d(kernel_size=3, stride=2, padding=1),
 
-            N.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
-            N.ReLU(inplace=True),
-            N.AvgPool2d(kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(inplace=True),
+            nn.AvgPool2d(kernel_size=3, stride=2, padding=1),
         )
 
         # The Caffe version of the network uses a single linear layer without
@@ -44,10 +43,10 @@ class AlexNet(N.Module):
         # layers reduce to a single linear layer.
         n = int(np.ceil(shape[1] / 2 / 2 / 2))
         m = int(np.ceil(shape[2] / 2 / 2 / 2))
-        self.classifier = N.Sequential(
-            N.Linear(64*n*m, 64),
-            N.ReLU(inplace=True),
-            N.Linear(64, ndim),
+        self.classifier = nn.Sequential(
+            nn.Linear(64*n*m, 64),
+            nn.ReLU(inplace=True),
+            nn.Linear(64, ndim),
         )
 
         self.reset()
@@ -55,9 +54,9 @@ class AlexNet(N.Module):
     def reset(self):
         # Apply Kaiming initialization to conv and linear layers
         for m in self.modules():
-            if isinstance(m, (N.Conv2d, N.Linear)):
-                N.init.kaiming_uniform(m.weight)
-                N.init.constant(m.bias, 0)
+            if isinstance(m, (nn.Conv2d, nn.Linear)):
+                nn.init.kaiming_uniform(m.weight)
+                nn.init.constant(m.bias, 0)
         return self
 
     def forward(self, x):

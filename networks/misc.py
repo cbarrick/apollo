@@ -1,7 +1,7 @@
-import networks as N
+from torch import nn
 
 
-class LRN(N.Module):
+class LRN(nn.Module):
     '''A local response normalization layer.
 
     Written by @jiecaoyu on GitHub:
@@ -14,13 +14,13 @@ class LRN(N.Module):
         self.cross_channel = cross_channel
 
         if self.cross_channel:
-            self.average = N.AvgPool3d(
+            self.average = nn.AvgPool3d(
                 kernel_size=(local_size, 1, 1),
                 stride=1,
                 padding=(int((local_size-1.0)/2), 0, 0),
             )
         else:
-            self.average=N.AvgPool2d(
+            self.average=nn.AvgPool2d(
                 kernel_size=local_size,
                 stride=1,
                 padding=int((local_size-1.0)/2),

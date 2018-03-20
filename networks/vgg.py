@@ -1,38 +1,39 @@
 import logging
 
 import numpy as np
-import torch
 
-import networks as N
+from torch import nn
+
+from networks import MLP
 
 
 logger = logging.getLogger(__name__)
 
 
-class VggBlock2d(N.Module):
+class VggBlock2d(nn.Module):
     def __init__(self, in_chans, *chans):
         super().__init__()
         layers = []
 
         # TODO: I should use input normalization
         # instead of batch norm on an input layer.
-        bn = N.BatchNorm2d(in_chans)
+        bn = nn.BatchNorm2d(in_chans)
         layers += [bn]
 
         for c in chans:
-            conv = N.Conv2d(in_chans, c, kernel_size=3, stride=1, padding=1)
-            bn = N.BatchNorm2d(c)
-            relu = N.ReLU(inplace=True)
+            conv = nn.Conv2d(in_chans, c, kernel_size=3, stride=1, padding=1)
+            bn = nn.BatchNorm2d(c)
+            relu = nn.ReLU(inplace=True)
             layers += [conv, bn, relu]
             in_chans = c
-        layers += [N.MaxPool2d(kernel_size=2, stride=2)]
-        self.layers = N.Sequential(*layers)
+        layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+        self.layers = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.layers(x)
 
 
-class _VggBase(N.Module):
+class _VggBase(nn.Module):
     def __init__(self, cnn, shape, ndim):
         super().__init__()
         (c, y, x) = shape
@@ -45,12 +46,12 @@ class _VggBase(N.Module):
         x = int(np.ceil(x / 2 ** len(cnn)))
 
         self.cnn = cnn
-        self.frontend = N.MLP(512*y*x, 4096, 4096, ndim)
+        self.frontend = MLP(512*y*x, 4096, 4096, ndim)
         self.reset()
 
-    def reset(self, init_fn=N.init.kaiming_uniform):
+    def reset(self, init_fn=nn.init.kaiming_uniform):
         for m in self.modules():
-            if not isinstance(m, (N.BatchNorm1d, N.BatchNorm2d, N.BatchNorm3d)):
+            if not isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
                 if hasattr(m, 'weight'): init_fn(m.weight)
                 if hasattr(m, 'bias'): m.bias.data.fill_(0)
         return self
@@ -64,7 +65,7 @@ class _VggBase(N.Module):
 
 class Vgg11(_VggBase):
     def __init__(self, shape=(3, 224, 224), ndim=1000):
-        cnn = N.Sequential(
+        cnn = nn.Sequential(
             VggBlock2d(shape[0], 64),
             VggBlock2d(64, 128),
             VggBlock2d(128, 256, 256),
@@ -76,7 +77,7 @@ class Vgg11(_VggBase):
 
 class Vgg13(_VggBase):
     def __init__(self, shape=(3, 224, 224), ndim=1000):
-        cnn = N.Sequential(
+        cnn = nn.Sequential(
             VggBlock2d(shape[0], 64, 64),
             VggBlock2d(64, 128, 128),
             VggBlock2d(128, 256, 256),
@@ -88,7 +89,7 @@ class Vgg13(_VggBase):
 
 class Vgg16(_VggBase):
     def __init__(self, shape=(3, 224, 224), ndim=1000):
-        cnn = N.Sequential(
+        cnn = nn.Sequential(
             VggBlock2d(shape[0], 64, 64),
             VggBlock2d(64, 128, 128),
             VggBlock2d(128, 256, 256, 256),
@@ -100,7 +101,7 @@ class Vgg16(_VggBase):
 
 class Vgg19(_VggBase):
     def __init__(self, shape=(3, 224, 224), ndim=1000):
-        cnn = N.Sequential(
+        cnn = nn.Sequential(
             VggBlock2d(shape[0], 64, 64),
             VggBlock2d(64, 128, 128),
             VggBlock2d(128, 256, 256, 256, 256),
