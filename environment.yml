@@ -9,7 +9,7 @@ dependencies:
     - scipy
     - pandas
     - xarray>=0.10
-    - conda-forge/label/dev::pynio  # dev version
+    - conda-forge/label/dev::pynio  # dev version, python 3 support
     - matplotlib
     - cartopy
     - pytorch
