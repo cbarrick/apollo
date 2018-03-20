@@ -12,10 +12,6 @@ def open_aggregate(module, **kwargs):
     return loader.open_aggregate(module)
 
 
-def round_down(num, divisor):
-    return num - (num % divisor)
-
-
 def interval(**kwargs):
     '''Group a timeseries DataFrame by interval.
 
@@ -43,6 +39,9 @@ def interval(**kwargs):
     kwargs.setdefault('day', 1)
     kwargs.setdefault('hour', 1)
     kwargs.setdefault('minute', 1)
+
+    def round_down(num, divisor):
+        return num - (num % divisor)
 
     def grouper(t):
         year = round_down(t.year, kwargs['year'])
