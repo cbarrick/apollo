@@ -9,7 +9,7 @@ import estimators as E
 import metrics as M
 import networks as N
 import optim as O
-from ugasolar import datasets
+from apollo import datasets
 
 
 logger = logging.getLogger(__name__)

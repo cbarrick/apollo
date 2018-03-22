@@ -10,7 +10,7 @@ from torch import autograd as A
 from torch import utils.data as D
 from torch import nn.functional as F
 
-from ugasolar import metrics as M
+from apollo import metrics as M
 
 
 logger = logging.getLogger(__name__)

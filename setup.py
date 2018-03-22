@@ -26,7 +26,7 @@ setup(
     #
     # There are some restrictions on what makes a valid project name:
     # https://packaging.python.org/specifications/core-metadata/#name
-    name='ugasolar',
+    name='apollo',
 
     # Versions should comply with PEP 440: https://www.python.org/dev/peps/pep-0440/
     #
@@ -36,7 +36,7 @@ setup(
 
     # Packages included in the project.
     # You can list packages manually, or use `setuptools.find_packages`.
-    packages=['ugasolar'],
+    packages=['apollo'],
 
     # Corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary

@@ -1,4 +1,4 @@
-name: uga-solar
+name: apollo
 channels:
     - pytorch
     - conda-forge

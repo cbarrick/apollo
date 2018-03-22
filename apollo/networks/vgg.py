@@ -4,7 +4,7 @@ import numpy as np
 
 from torch import nn
 
-from ugasolar.networks import MLP
+from apollo.networks import MLP
 
 
 logger = logging.getLogger(__name__)
