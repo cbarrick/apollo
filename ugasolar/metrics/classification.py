@@ -1,6 +1,6 @@
 import sys
 
-import metrics as M
+from ugasolar import metrics as M
 
 
 # Use epsilon only to prevent ZeroDivisionError.

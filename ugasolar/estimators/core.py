@@ -5,21 +5,22 @@ from pathlib import Path
 import numpy as np
 import torch
 
-import autograd as A
-import datasets as D
-import networks as N
-import networks.functional as F
-import metrics as M
+from torch import nn
+from torch import autograd as A
+from torch import utils.data as D
+from torch import nn.functional as F
+
+from ugasolar import metrics as M
 
 
 logger = logging.getLogger(__name__)
 
 
-class _DataParallel(N.Module):
+class _DataParallel(nn.Module):
     def __init__(self, module, *args, **kwargs):
         super().__init__()
         self.module = module
-        self.parallel = N.parallel.DataParallel(module, *args, **kwargs)
+        self.parallel = nn.parallel.DataParallel(module, *args, **kwargs)
 
     def forward(self, *args, **kwargs):
         return self.parallel(*args, **kwargs)

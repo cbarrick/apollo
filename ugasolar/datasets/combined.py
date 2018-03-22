@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from datasets.uga_solar import nam, ga_power
+from ugasolar.datasets import nam, ga_power
 
 
 def open_range(module=7, start='2017-01-01', stop='today', nam_kwargs={}, ga_power_kwargs={}):

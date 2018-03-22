@@ -9,7 +9,7 @@ import estimators as E
 import metrics as M
 import networks as N
 import optim as O
-from datasets import uga_solar
+from ugasolar import datasets
 
 
 logger = logging.getLogger(__name__)
@@ -70,13 +70,13 @@ def main(name=None, *, epochs=600, learning_rate=0.001, patience=None, batch_siz
     features = ('DSWRF_SFC', 'DLWRF_SFC', 'TCC_EATM', 'TMP_SFC', 'VGRD_TOA', 'UGRD_TOA')
     region = {'y':slice(59,124),'x':slice(49,114)}
 
-    forecast = uga_solar.nam.open_range(start, stop)
+    forecast = datasets.nam.open_range(start, stop)
     forecast = select(forecast, *features)
     forecast = forecast.isel(**region)
 
-    targets = uga_solar.ga_power.open_aggregate(target_module)
+    targets = datasets.ga_power.open_aggregate(target_module)
 
-    train_set = uga_solar.join(forecast, targets, on='reftime')
+    train_set = datasets.join(forecast, targets, on='reftime')
     train_set = SqueezeTime(train_set)
     logger.info(f'train set size: {len(train_set)}')
 
