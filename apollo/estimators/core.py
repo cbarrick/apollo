@@ -10,7 +10,7 @@ from torch import autograd as A
 from torch import utils.data as D
 from torch import nn.functional as F
 
-from apollo import metrics as M
+from apollo.metrics import Mean
 
 
 logger = logging.getLogger(__name__)
@@ -250,7 +250,7 @@ class Estimator:
 
             # Training
             n = len(train)
-            train_loss = M.Mean()
+            train_loss = Mean()
             print(f'epoch {epoch+1} [0%]', end='\r', flush=True, file=sys.stderr)
             for i, (x, y) in enumerate(train):
                 j = self.partial_fit(x, y)
@@ -372,7 +372,7 @@ class Estimator:
 
         if criteria is None or callable(criteria):
             # average criteria across batches
-            mean = M.Mean()
+            mean = Mean()
             for x, y in data:
                 j = self.score(x, y, criteria)
                 mean.accumulate(j)
