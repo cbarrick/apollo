@@ -1,18 +1,65 @@
-from datetime import datetime
 from pathlib import Path
-import logging
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 
-logger = logging.getLogger(__name__)
-
-
-def open_aggregate(module, **kwargs):
-    loader = GaPowerLoader(**kwargs)
-    return loader.open_aggregate(module)
+import xarray as xr
 
 
-def interval(**kwargs):
+# Names of the columns in the MB007 labels.
+MB007_NAMES = (
+    # Index column.
+    # The name 'reftime' joins with the NAM data.
+    'reftime',
+
+    # The next three columns are undocumented.
+    'unknown1', 'unknown2', 'unknown3',
+
+    # Array A
+    'UGA-A-POA-1-IRR',    # POA Irradiance
+    'UGA-A-POA-2-IRR',    # POA Irradiance
+    'UGA-A-POA-3-IRR',    # POA Irradiance
+    'UGA-A-POA-REF-IRR',  # Cell Temp and Irradiance
+
+    # Array B
+    'UGA-B-POA-1-IRR',    # POA Irradiance
+    'UGA-B-POA-2-IRR',    # POA Irradiance
+    'UGA-B-POA-3-IRR',    # POA Irradiance
+    'UGA-B-POA-REF-IRR',  # Cell Temp and Irradiance
+
+    # Array D
+    # NOTE: array D comes before array C
+    'UGA-D-POA-1-IRR',    # POA Irradiance
+    'UGA-D-POA-2-IRR',    # POA Irradiance
+    'UGA-D-POA-3-IRR',    # POA Irradiance
+    'UGA-D-POA-REF-IRR',  # Cell Temp and Irradiance
+
+    # Array C
+    # NOTE: array C comes after array D
+    'UGA-C-POA-1-IRR',    # POA Irradiance
+    'UGA-C-POA-2-IRR',    # POA Irradiance
+    'UGA-C-POA-3-IRR',    # POA Irradiance
+    'UGA-C-POA-REF-IRR',  # Cell Temp and Irradiance
+
+    # Array E
+    'UGA-E-POA-1-IRR',    # POA Irradiance
+    'UGA-E-POA-2-IRR',    # POA Irradiance
+    'UGA-E-POA-3-IRR',    # POA Irradiance
+    'UGA-E-POA-REF-IRR',  # Cell Temp and Irradiance
+
+    # MDAS weather station
+    'UGA-MET01-POA-1-IRR',  # GHI
+    'UGA-MET01-POA-2-IRR',  # GHI
+
+    # SOLYS2
+    'UGA-MET02-GHI-IRR',  # GHI
+    'UGA-MET02-DHI-IRR',  # DHI
+    'UGA-MET02-FIR-IRR',  # DLWIR
+    'UGA-MET02-DNI-IRR',  # DNI
+)
+
+
+def interval(year=None, month=None, day=None, hour=None, minute=None):
     '''Group a timeseries DataFrame by interval.
 
     Example:
@@ -34,106 +81,94 @@ def interval(**kwargs):
         A function that maps arbitrary datetimes to reference datetimes by
         rounding interval properties like `second` and `minute`.
     '''
-    kwargs.setdefault('year', 1)
-    kwargs.setdefault('month', 1)
-    kwargs.setdefault('day', 1)
-    kwargs.setdefault('hour', 1)
-    kwargs.setdefault('minute', 1)
+    # Only one of the kwargs should be given. The rest are derived.
+    # We use values that exceed the traditional range for the derived values.
+    # This is to account for any number of "leap" issues. It has not been
+    # demonstrated that this is needed, but it doesn't hurt the correctness.
 
-    def round_down(num, divisor):
-        return num - (num % divisor)
+    # If year is rounded, all 12 months should round down.
+    if year is not None:
+        assert month is None
+        month = 13
+    else:
+        year = 1
+
+    if month is not None:
+        assert day is None
+        day = 32
+    else:
+        month = 1
+
+    if day is not None:
+        assert hour is None
+        hour = 25
+    else:
+        day = 1
+
+    if hour is not None:
+        assert minute is None
+        minute = 70
+    else:
+        hour = 1
+
+    if minute is None:
+        minute = 1
+
+    def round_down(num, divisor, origin=0):
+        num -= origin
+        num -= (num % divisor)
+        num += origin
+        return num
 
     def grouper(t):
-        year = round_down(t.year, kwargs['year'])
-        month = round_down(t.month, kwargs['month'])
-        day = round_down(t.day, kwargs['day'])
-        hour = round_down(t.hour, kwargs['hour'])
-        minute = round_down(t.minute, kwargs['minute'])
-        return datetime(year, month, day, hour, minute, tzinfo=t.tzinfo)
+        group_year = round_down(t.year, year, origin=1)
+        group_month = round_down(t.month, month, origin=1)
+        group_day = round_down(t.day, day, origin=1)
+        group_hour = round_down(t.hour, hour)
+        group_minute = round_down(t.minute, minute)
+        return datetime(group_year, group_month, group_day, group_hour, group_minute,
+                tzinfo=t.tzinfo)
 
     return grouper
 
 
-class GaPowerLoader:
-    '''A database of the GA Power target data.
+def open_mb007(*cols, data_dir='./data/GA-POWER'):
+    # The data directory contains more than just the mb-007 labels.
+    data_dir = Path(data_dir)
+    paths = data_dir.glob('raw/mb-007.*.log.gz')
 
-    The data should live together in some directory with names matching the
-    pattern: `**/mb-{module:03}.*.log.gz' where `module` is an integer index.
+    # All columns must be given by name.
+    # This enforces good style.
+    if len(cols) is 0:
+        cols = list(MB007_NAMES)
+    for c in cols:
+        assert isinstance(c, str)
 
-    The database will compute agregate statistics for 1 hour windows and
-    cache the results in the same directory.
-    '''
+    # Ensure reftime is always selected.
+    if 'reftime' not in cols:
+        cols.append('reftime')
 
-    def __init__(self,
-            data_dir='./data/GA-POWER',
-            data_fmt='mb-{module:03}-targets.csv'):
-        '''Create a new GaPowerLoader.
+    # Read each log into a dataframe.
+    frames = []
+    for path in paths:
+        try:
+            frames.append(
+                pd.read_csv(
+                    path, header=None, index_col='reftime', usecols=cols,
+                    parse_dates=['reftime'], names=MB007_NAMES))
+        except EmptyDataError:
+            continue
 
-        Args:
-            data_dir (Path or str):
-                The path to the directory containing the data.
-            data_fmt (str):
-                The filename format for saving/loading summary statistics.
-        '''
-        self.data_dir = Path(data_dir)
-        self.data_fmt = data_fmt
+    # Combine the dataframes and aggregate by hour.
+    df = pd.concat(frames)
+    df = df.dropna()
+    df = df.sort_index()
+    df = df.groupby(interval(hour=1)).mean()
 
-    def select(self, module):
-        read_options = {
-            'header': None,
-            'index_col': [0],
-            'parse_dates': [0],
-            'infer_datetime_format': True,
-        }
+    # For some reason, the index name isn't set by default.
+    df.index.name = 'reftime'
 
-        def parts():
-            for path in self.data_dir.glob(f'**/mb-{int(module):03}.*.log.gz'):
-                try:
-                    logger.info(f'Reading {path}')
-                    df = pd.read_csv(str(path), **read_options)
-                    df = df.tz_localize('UTC')
-                    yield df
-                    continue
-                except Exception as e:
-                    logger.warning(f'Could not read {path}')
-                    logger.warning(e)
+    # For this project, all datasets should be presented as xarray.
+    df = df.to_xarray()
 
-                try:
-                    logger.warning('Retrying without compression')
-                    df = pd.read_csv(str(path), **read_options, compression=None)
-                    df = df.tz_localize('UTC')
-                    yield df
-                    continue
-                except Exception as e:
-                    logger.error(f'Could not read {path}')
-                    logger.error(e)
-                    logger.error('skipping file')
-
-        logger.info(f'loading raw module {module}')
-        return pd.concat(parts())
-
-    def open_aggregate(self, module):
-        read_options = {
-            'header': None,
-            'index_col': [0],
-            'parse_dates': [0],
-            'infer_datetime_format': True,
-        }
-
-        write_options = {
-            'header': False,
-        }
-
-        path = self.data_dir / self.data_fmt.format(module=module)
-        if not path.exists():
-            df = self.select(module)
-            logger.info(f'computing aggregate')
-            df = df.sort_index()
-            df = df.groupby(interval(minute=60)).mean()
-            logger.info(f'writing to cache {path}')
-            df.to_csv(str(path), **write_options)
-        else:
-            logger.info(f'loading aggregate module {module} from cache')
-            df = pd.read_csv(str(path), **read_options)
-
-        return df
+    return df
