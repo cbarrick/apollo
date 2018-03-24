@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 '''Provides access to a subset of the NAM-NMM dataset.
 
 > The North American Mesoscale Forecast System (NAM) is one of the
@@ -33,22 +32,17 @@ measuring the axis, e.g. `z_ISBL`.
 '''
 
 from concurrent.futures import ThreadPoolExecutor
-from copy import copy
 from pathlib import Path
 from time import sleep
 import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
-import dask.array as da
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 import scipy.spatial
 import requests
-import torch
-import torch.utils.data
 import xarray as xr
 
 
