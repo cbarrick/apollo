@@ -4,7 +4,7 @@ This module provides accumulators for various classification metrics.
 '''
 
 from apollo.metrics import Accumulator
-from apollo.metrics.core import Sum, Mean
+from apollo.metrics.stats import Sum, Mean
 
 
 # Use epsilon only to prevent ZeroDivisionError.

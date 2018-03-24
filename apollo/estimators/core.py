@@ -10,7 +10,7 @@ from torch import autograd as A
 from torch import utils.data as D
 from torch import nn.functional as F
 
-from apollo.metrics import Mean
+from apollo.metrics.stats import Mean
 
 
 logger = logging.getLogger(__name__)

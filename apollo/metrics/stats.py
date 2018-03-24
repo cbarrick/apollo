@@ -1,4 +1,4 @@
-'''Universal accumulators.
+'''Accumulators for general purpose statistics.
 
 This module provides accumulators like `Mean` which are universally useful.
 These general accumulators all accept a `transform` function to apply to each
