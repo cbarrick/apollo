@@ -146,7 +146,7 @@ def open_mb007(*cols, data_dir='./data/GA-POWER'):
 
     # Ensure reftime is always selected.
     if 'reftime' not in cols:
-        cols.append('reftime')
+        cols = ('reftime', *cols)
 
     # Read each log into a dataframe.
     frames = []
