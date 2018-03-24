@@ -7,10 +7,14 @@ For example, if you have a loss function called `loss`, you can create an
 accumulator for mean loss with `Mean(loss)`.
 '''
 
+import abc
+
 import numpy as np
 
+from apollo.metrics import Accumulator
 
-class Sum:
+
+class Sum(Accumulator):
     '''An accumulator for sums of data.
 
     Inputs to the accumulator are taken in batches. Each batch is first
@@ -70,7 +74,7 @@ class Sum:
         return val
 
 
-class Mean:
+class Mean(Accumulator):
     '''An accumulator for means of data.
 
     Inputs to the accumulator are taken in batches. Each batch is first

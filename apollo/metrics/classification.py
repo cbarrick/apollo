@@ -3,7 +3,8 @@
 This module provides accumulators for various classification metrics.
 '''
 
-from apollo.metrics.core import Mean, Sum
+from apollo.metrics import Accumulator
+from apollo.metrics.core import Sum, Mean
 
 
 # Use epsilon only to prevent ZeroDivisionError.
@@ -12,7 +13,7 @@ import sys
 EPSILON = sys.float_info.epsilon
 
 
-class Accuracy:
+class Accuracy(Accumulator):
     '''An accumulator for accuracy scores.
 
     Labels and predictions are compared using the `==` operator and then
@@ -44,7 +45,7 @@ class Accuracy:
         return self.val.reduce()
 
 
-class TruePositives:
+class TruePositives(Accumulator):
     '''An accumulator for true positive counts.
 
     Labels and predictions are compared to the target using the `==` operator
@@ -79,7 +80,7 @@ class TruePositives:
         return self.val.reduce()
 
 
-class FalsePositives:
+class FalsePositives(Accumulator):
     '''An accumulator for false positive counts.
 
     Labels and predictions are compared to the target using the `==` operator
@@ -114,7 +115,7 @@ class FalsePositives:
         return self.val.reduce()
 
 
-class TrueNegatives:
+class TrueNegatives(Accumulator):
     '''An accumulator for true negatives counts.
 
     Labels and predictions are compared to the target using the `==` operator
@@ -149,7 +150,7 @@ class TrueNegatives:
         return self.val.reduce()
 
 
-class FalseNegatives:
+class FalseNegatives(Accumulator):
     '''An accumulator for false negatives counts.
 
     Labels and predictions are compared to the target using the `==` operator
@@ -184,7 +185,7 @@ class FalseNegatives:
         return self.val.reduce()
 
 
-class Precision:
+class Precision(Accumulator):
     '''An accumulator for precision scores.
 
     Labels and predictions are compared to the target using the `==` operator
@@ -220,7 +221,7 @@ class Precision:
         return tp / (tp + fp + EPSILON)
 
 
-class Recall:
+class Recall(Accumulator):
     '''An accumulator for recall scores.
 
     Labels and predictions are compared to the target using the `==` operator
@@ -256,7 +257,7 @@ class Recall:
         return tp / (tp + fn + EPSILON)
 
 
-class FScore:
+class FScore(Accumulator):
     '''An accumulator for F-scores.
 
     Labels and predictions are compared to the target using the `==` operator
