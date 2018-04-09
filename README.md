@@ -18,6 +18,6 @@ Utilities and experiments to analyze solar radiation forecasts.
     
 4. Run experiments
     
-    `$ python experiments/...`
+    `$ (apollo) python experiments/...`
 
 
