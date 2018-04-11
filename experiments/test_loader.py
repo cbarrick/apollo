@@ -9,6 +9,9 @@ from sklearn.model_selection import cross_val_score
 
 from apollo.datasets import nam, ga_power, simple_loader
 
-data, targets = simple_loader.load(target_hour=24)
+desired_attributes = []
 
+data, targets = simple_loader.load(target_hour=24, start='2017-06-08', stop='2017-06-09', cache_dir='../data')
+
+print(data)
 print(targets)
