@@ -14,7 +14,7 @@ from apollo.datasets import nam, ga_power
 
 
 def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, target_var='UGA-C-POA-1-IRR',
-         cache_dir='/mnt/data6tb/chris/data', standardize=True, desired_attributes='surface'):
+         cache_dir='/mnt/data6tb/chris/data', standardize=True, desired_attributes='surface', grid_size=3):
     """
     Loads a dataset from cached grib files into a numpy array
     This function assumes that cache_dir contains two subdirectories: NAM-NMM containing NAM forecast summary files
@@ -38,6 +38,12 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
     :param desired_attributes: array<str> or keyword 'all' or keyword 'surface'
         Array containing the names of the data variables to select, or the keyword 'all' to select all data variables,
         or the keyword 'surface' to select surface variables.
+    :param grid_size: odd integer >= 1
+        The size of the spatial grid from which features will be selected.
+        Features will be included from all cells in a (grid_size x grid_size) spatial grid centered on the cell where
+        the solar array resides.
+        Values will be rounded up to the nearest odd number >= 1
+        DEFAULT: 3
 
     :return: (X, y) where X is an n x m np.array containing the non-target attributes,
              and y is an n x 1 np.array containing the target values
@@ -68,8 +74,13 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
     (pos_y, pos_x) = nam.find_nearest(np.stack([lat, lon]), latlon)[0]
 
     # Slice out the region we want.
-    slice_y = slice(pos_y - 1, pos_y + 2)
-    slice_x = slice(pos_x - 1, pos_x + 2)
+    grid_size = max(int(grid_size), 1)  # ensure grid_size is an integer >= 1
+    if grid_size % 2 != 1:
+        grid_size += 1
+
+    offset = (grid_size - 1) // 2  # the number of cells that the grid extends in each direction
+    slice_y = slice(pos_y - offset, pos_y + offset + 1)
+    slice_x = slice(pos_x - offset, pos_x + offset + 1)
     data = full_data[{'y': slice_y, 'x': slice_x}]
 
     # for some algorithms, the data should be centered around the mean and normalized to unit variance
