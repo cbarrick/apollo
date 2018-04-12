@@ -1,6 +1,9 @@
 """
-The simple_loader module provides high-level functions for loading datasets into in-memory numpy arrays
-This format is useful for simple models (a la scikit-learn)
+The simple_loader module provides high-level functions for loading cached data into in-memory numpy arrays
+
+The loader expects a `cache_dir` argument, which specifies the directory where the NAM and Georgia Power data can be
+found.  NAM forecasts generated from apollo.datasets.open should be located in the <cache_dir>/NAM-NMM directory.
+There should be a single log file
 """
 
 import numpy as np
@@ -10,39 +13,75 @@ import xarray as xr
 from apollo.datasets import nam, ga_power
 
 
-def load(target_hour=24, desired_attributes='all', start='2017-01-01 00:00', stop='2017-12-31 18:00',
-         target='UGA-C-POA-1-IRR', cache_dir='/mnt/data6tb/chris/data'):
+def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, target_var='UGA-C-POA-1-IRR',
+         cache_dir='/mnt/data6tb/chris/data', standardize=True, desired_attributes='surface'):
     """
     Loads a dataset from cached grib files into a numpy array
+    This function assumes that cache_dir contains two subdirectories: NAM-NMM containing NAM forecast summary files
+    and GA-POWER, containing an uncompressed log file with the ML targets (see apollo/bin/generate_targets.sh)
 
-    :param target_hour: integer in [1, 36]
-        The hour you are targeting for solar radiation prediction
-    :param desired_attributes: array<str> or keyword 'all'
-        Array containing the names of the data variables to select, or the keyword 'all' to select all data variables
     :param start: anything accepted by numpy's np.datetime64 constructor
         The reference time of the first data point to be selected
     :param stop: anything accepted by numpy's np.datetime64 constructor
         The reference time of the last data point to be selected
-    :param target: string
-        The name of value from the solar farm data that we are trying to predict
+    :param target_hour: integer in [1, 36]
+        The hour you are targeting for solar radiation prediction
+    :param target_var: string
+        The name of variable from the solar farm logs that we are trying to predict.
+        DEFAULT: 'UGA-C-POA-1-IRR', a ventilated pyranometer on a fixed solar array
     :param cache_dir: string
         The local directory where the data resides on disk.  Should have subfolders 'NAM-NMM' containing NAM forecasts
         and 'GA-POWER' containing the data from the solar farm
+    :param standardize: boolean
+        Should the data be standardized during loading?
+        DEFAULT: True
+    :param desired_attributes: array<str> or keyword 'all' or keyword 'surface'
+        Array containing the names of the data variables to select, or the keyword 'all' to select all data variables,
+        or the keyword 'surface' to select surface variables.
 
-    :return: (X, y) where X is a np.array containing the non-target attributes, and y is a np.array containing the target values
+    :return: (X, y) where X is an n x m np.array containing the non-target attributes,
+             and y is an n x 1 np.array containing the target values
     """
 
-    # load nam data
-    inputs = nam.open_range(start, stop, cache_dir=cache_dir + '/NAM-NMM')
+    # ensure the user hasn't requested data for two different years
+    assert np.datetime64(start).astype(object).year == np.datetime64(stop).astype(object).year, \
+        "Loading across different years is not yet supported."
+    year = np.datetime64(start).astype(object).year
 
-    # load data from solar farm
-    targets = ga_power.open_mb007(target, data_dir=cache_dir + '/GA-POWER')
+    # open weather forecast data
+    nam2017 = nam.open_range(start, stop, cache_dir=cache_dir + '/NAM-NMM')
 
-    # inner join with nam data to eliminate missing times
+    # open readings from the targeted solar array
+    targets = ga_power.open_mb007(target_var, data_dir=cache_dir + '/GA-POWER', group=year)
+
+    # pair input forecasts with radiation observations n hours in the future by subtracting n hours from the
+    # target reftimes and performing an inner join with the forecast data
     targets['reftime'] -= np.timedelta64(target_hour, 'h')
-    data = xr.merge([inputs, targets], join='inner')
+    full_data = xr.merge([nam2017, targets], join='inner')
 
-    # extract features for time-of-day and time-of-year
+    # Find the index of the cell nearest to the given lat and lon.
+    # I've been using the coordinates of the Botanical Gardens since I don't know the exact location of the solar farm.
+    # The `nam.find_nearest` function helps some, but this could still be cleaned up.
+    latlon = [33.9052058, -83.382608]
+    lat = full_data['lat'].data
+    lon = full_data['lon'].data
+    (pos_y, pos_x) = nam.find_nearest(np.stack([lat, lon]), latlon)[0]
+
+    # Slice out the region we want.
+    slice_y = slice(pos_y - 1, pos_y + 2)
+    slice_x = slice(pos_x - 1, pos_x + 2)
+    data = full_data[{'y': slice_y, 'x': slice_x}]
+
+    # for some algorithms, the data should be centered around the mean and normalized to unit variance
+    if standardize:
+        standards = {}
+        for name, var in data.data_vars.items():
+            mean = var.mean()
+            std = var.std()
+            standards[name] = {'mean': mean, 'std': std}
+            data[name] = (var - mean) / std
+
+    # extract periodic features for the time of day and time of year
     timedelta = data['reftime']
     timedelta = timedelta - timedelta[0]
     timedelta = timedelta.astype('float64')
@@ -50,55 +89,40 @@ def load(target_hour=24, desired_attributes='all', start='2017-01-01 00:00', sto
     time_of_year = timedelta / 3.1536e+16  # convert from ns to year
     time_of_year_sin = np.sin(time_of_year * 2 * np.pi)
     time_of_year_cos = np.cos(time_of_year * 2 * np.pi)
-    data['time_of_year_sin'] = time_of_year_sin
-    data['time_of_year_cos'] = time_of_year_cos
 
     time_of_day = timedelta / 8.64e+13  # convert from ns to day
     time_of_day_sin = np.sin(time_of_day * 2 * np.pi)
     time_of_day_cos = np.cos(time_of_day * 2 * np.pi)
-    data['time_of_day_sin'] = time_of_day_sin
-    data['time_of_day_cos'] = time_of_day_cos
 
-    # Find the index of the cell nearest to the given lat and lon.
-    # I've been using the coordinates of the Botanical Gardens since I don't know the exact location of the solar farm.
-    # The `nam.find_nearest` function helps some, but this could still be cleaned up.
-    latlon = [33.9052058, -83.382608]
-    lat = data['lat'].data
-    lon = data['lon'].data
-    (pos_y, pos_x) = nam.find_nearest(np.stack([lat, lon]), latlon)[0]
+    time_features = [time_of_year_sin, time_of_year_cos, time_of_day_sin, time_of_day_cos]
+    time_features = da.stack(time_features, axis=1)  # stacks time features as columns
 
-    # Slice out the region we want.
-    slice_y = slice(pos_y - 1, pos_y + 2)
-    slice_x = slice(pos_x - 1, pos_x + 2)
-    region = data[{'y': slice_y, 'x': slice_x}]
-
-    # Select the desired input variables.
-    # The syntax `dataset[['var1', 'var2', ...]]` returns a reduced dataset.
-    # Select the desired input variables.
     if desired_attributes == 'all':
-        x = region
+        planar_features = data
+    elif desired_attributes == 'surface':
+        planar_features = data[[
+            'PRES_SFC',
+            'HGT_SFC',
+            'HGT_TOA',
+            'TMP_SFC',
+            'VIS_SFC',
+            'UGRD_TOA',
+            'VGRD_TOA',
+            'DSWRF_SFC',
+            'DLWRF_SFC',
+        ]]
     else:
-        x = region[desired_attributes]
+        planar_features = data[desired_attributes]
 
-    # Extract the underlying arrays.
-    x = [arr.data for arr in x.data_vars.values()]  # The underlying array may be dask or numpy.
-    x = da.concatenate(x, axis=2)  # Stack along the z axis.
+    # Extract the underlying arrays and stack
+    # The len test ensures that we only stack data variables with a third axis (this should nearly always be the z-dim)
+    planar_features = [arr.data for arr in planar_features.data_vars.values() if len(arr.dims) >= 3]
+    planar_features = da.concatenate(planar_features, axis=2)
 
-    # scikit-learn wants tabular data.
-    x = x.reshape(len(x), -1)
-
-    # Stack on the time_of_day and time_of_year features.
-    times = region[['time_of_day_sin', 'time_of_day_cos', 'time_of_year_sin', 'time_of_year_cos']]
-    times = [arr.data for arr in times.data_vars.values()]
-    times = da.stack(times, axis=1)
-    x = da.concatenate([x, times], axis=1)
-
-    # Select the target, and extract the underlying array.
-    y = data['UGA-C-POA-1-IRR']
-    y = y.data
-
-    # ensure the data are numpy arrays
-    x = np.asarray(x)
-    y = np.asarray(y)
+    # scikit-learn models expect tabular data
+    n = len(planar_features)
+    planar_tabular = planar_features.reshape(n, -1)
+    x = np.concatenate([planar_tabular, time_features], axis=1)
+    y = data[target_var].data
 
     return x, y
