@@ -22,22 +22,28 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
 
     :param start: anything accepted by numpy's np.datetime64 constructor
         The reference time of the first data point to be selected
+        DEFAULT: 2017-01-01 00:00
     :param stop: anything accepted by numpy's np.datetime64 constructor
         The reference time of the last data point to be selected
+        DEFAULT: 2017-12-31 18:00
     :param target_hour: integer in [1, 36]
         The hour you are targeting for solar radiation prediction
+        DEFAULT: 24
     :param target_var: string
         The name of variable from the solar farm logs that we are trying to predict.
         DEFAULT: 'UGA-C-POA-1-IRR', a ventilated pyranometer on a fixed solar array
     :param cache_dir: string
         The local directory where the data resides on disk.  Should have subfolders 'NAM-NMM' containing NAM forecasts
-        and 'GA-POWER' containing the data from the solar farm
+        and 'GA-POWER' containing the data from the solar farm.
+        The default cache directory is where the data is currently stored on aigpc3.
+        DEFAULT: /mnt/data6tb/chris/data
     :param standardize: boolean
         Should the data be standardized during loading?
         DEFAULT: True
     :param desired_attributes: array<str> or keyword 'all' or keyword 'surface'
         Array containing the names of the data variables to select, or the keyword 'all' to select all data variables,
         or the keyword 'surface' to select surface variables.
+        DEFAULT: 'surface'
     :param grid_size: odd integer >= 1
         The size of the spatial grid from which features will be selected.
         Features will be included from all cells in a (grid_size x grid_size) spatial grid centered on the cell where
