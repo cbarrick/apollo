@@ -99,7 +99,7 @@ def open_mb007(*cols, group=2017, data_dir='./data/GA-POWER'):
     # Load the CSV and aggregate by hour.
     df = pd.read_csv(path, usecols=cols, index_col='reftime')
     df = df.dropna()
-    df.index = pd.to_datetime(df.index)
+    df.index = pd.to_datetime(df.index, infer_datetime_format=True)
     df = df.groupby(interval(hour=1)).mean()
 
     # For some reason, the index name isn't set by default.
