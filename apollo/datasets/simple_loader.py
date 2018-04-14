@@ -3,7 +3,8 @@ The simple_loader module provides high-level functions for loading cached data i
 
 The loader expects a `cache_dir` argument, which specifies the directory where the NAM and Georgia Power data can be
 found.  NAM forecasts generated from apollo.datasets.open should be located in the <cache_dir>/NAM-NMM directory.
-There should be a single log file
+There should be a single log file located in the <cache_dir>/GA-POWER directory that has target readings from the solar
+array.
 """
 
 import numpy as np
@@ -13,12 +14,14 @@ import xarray as xr
 from apollo.datasets import nam, ga_power
 
 
-def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, target_var='UGA-C-POA-1-IRR',
-         cache_dir='/mnt/data6tb/chris/data', standardize=True, desired_attributes='surface', grid_size=3):
+def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', desired_attributes='surface', grid_size=3,
+         cache_dir='/mnt/data6tb/chris/data', standardize=True, target_var='UGA-C-POA-1-IRR', target_hour=24):
     """
     Loads a dataset from cached grib files into a numpy array
     This function assumes that cache_dir contains two subdirectories: NAM-NMM containing NAM forecast summary files
     and GA-POWER, containing an uncompressed log file with the ML targets (see apollo/bin/generate_targets.sh)
+
+    This function can also be used to load plain NAM data (with no targers) by setting the `target_var` to None
 
     :param start: anything accepted by numpy's np.datetime64 constructor
         The reference time of the first data point to be selected
@@ -26,12 +29,6 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
     :param stop: anything accepted by numpy's np.datetime64 constructor
         The reference time of the last data point to be selected
         DEFAULT: 2017-12-31 18:00
-    :param target_hour: integer in [1, 36]
-        The hour you are targeting for solar radiation prediction
-        DEFAULT: 24
-    :param target_var: string
-        The name of variable from the solar farm logs that we are trying to predict.
-        DEFAULT: 'UGA-C-POA-1-IRR', a ventilated pyranometer on a fixed solar array
     :param cache_dir: string
         The local directory where the data resides on disk.  Should have subfolders 'NAM-NMM' containing NAM forecasts
         and 'GA-POWER' containing the data from the solar farm.
@@ -50,6 +47,13 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
         the solar array resides.
         Values will be rounded up to the nearest odd number >= 1
         DEFAULT: 3
+    :param target_var: string, or None
+        The name of variable from the solar farm logs that we are trying to predict, or None if you'd like to load
+        NAM-only data.
+        DEFAULT: 'UGA-C-POA-1-IRR', a ventilated pyranometer on a fixed solar array
+    :param target_hour: integer in [1, 36]
+        The hour you are targeting for solar radiation prediction
+        DEFAULT: 24
 
     :return: (X, y) where X is an n x m np.array containing the non-target attributes,
              and y is an n x 1 np.array containing the target values
@@ -61,15 +65,18 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
     year = np.datetime64(start).astype(object).year
 
     # open weather forecast data
-    nam2017 = nam.open_range(start, stop, cache_dir=cache_dir + '/NAM-NMM')
+    nam_data = nam.open_range(start, stop, cache_dir=cache_dir + '/NAM-NMM')
 
-    # open readings from the targeted solar array
-    targets = ga_power.open_mb007(target_var, data_dir=cache_dir + '/GA-POWER', group=year)
+    if target_var is not None:
+        # open readings from the targeted solar array
+        targets = ga_power.open_mb007(target_var, data_dir=cache_dir + '/GA-POWER', group=year)
 
-    # pair input forecasts with radiation observations n hours in the future by subtracting n hours from the
-    # target reftimes and performing an inner join with the forecast data
-    targets['reftime'] -= np.timedelta64(target_hour, 'h')
-    full_data = xr.merge([nam2017, targets], join='inner')
+        # pair input forecasts with radiation observations n hours in the future by subtracting n hours from the
+        # target reftimes and performing an inner join with the forecast data
+        targets['reftime'] -= np.timedelta64(target_hour, 'h')
+        full_data = xr.merge([nam_data, targets], join='inner')
+    else:
+        full_data = nam_data
 
     # Find the index of the cell nearest to the given lat and lon.
     # I've been using the coordinates of the Botanical Gardens since I don't know the exact location of the solar farm.
@@ -141,6 +148,9 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
     n = len(planar_features)
     planar_tabular = planar_features.reshape(n, -1)
     x = np.concatenate([planar_tabular, time_features], axis=1)
-    y = data[target_var].data
+    if target_var is not None:
+        y = data[target_var].data
+    else:
+        y = None
 
     return x, y
