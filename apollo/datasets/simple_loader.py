@@ -93,10 +93,11 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, targ
     if standardize:
         standards = {}
         for name, var in data.data_vars.items():
-            mean = var.mean()
-            std = var.std()
-            standards[name] = {'mean': mean, 'std': std}
-            data[name] = (var - mean) / std
+            if name != target_var:
+                mean = var.mean()
+                std = var.std()
+                standards[name] = {'mean': mean, 'std': std}
+                data[name] = (var - mean) / std
 
     # extract periodic features for the time of day and time of year
     timedelta = data['reftime']
