@@ -88,7 +88,7 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', desired_attributes='
     if standardize:
         standards = {}
         for name, var in data.data_vars.items():
-            if name != target_var:
+            if name != target_var and name != 'reftime':
                 mean = var.mean()
                 std = var.std()
                 standards[name] = {'mean': mean, 'std': std}
@@ -109,6 +109,9 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', desired_attributes='
 
     time_features = [time_of_year_sin, time_of_year_cos, time_of_day_sin, time_of_day_cos]
     time_features = da.stack(time_features, axis=1)  # stacks time features as columns
+
+    # sort the data by reftime
+    data.sortby('reftime')
 
     if desired_attributes == 'all':
         planar_features = data
@@ -142,3 +145,8 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', desired_attributes='
         y = None
 
     return x, y
+
+
+def get_reftimes(start, stop):
+    start_time, end_time =  np.datetime64(start), np.datetime64(stop)
+    return np.arange(start_time, end_time, np.timedelta64(6, 'h'))
