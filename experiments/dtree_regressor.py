@@ -22,7 +22,7 @@ HYPERPARAMS = {
     'splitter': 'best',
     'max_depth': None,
     'random_state': 0,
-    'min_impurity_decrease': 0
+    'min_impurity_decrease': 0.50
 }
 
 
@@ -34,7 +34,9 @@ def make_model_name(target_hour, target_var):
 def save(model, save_dir, target_hour, target_var):
     # logic to serialize a trained model
     name = make_model_name(target_hour, target_var)
-    path =  os.path.join(save_dir, name)
+    path = os.path.join(save_dir, name)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     joblib.dump(model, path)
     return path
 
@@ -42,8 +44,12 @@ def save(model, save_dir, target_hour, target_var):
 def load(save_dir, target_hour, target_var):
     # logic to load a serialized model
     name = make_model_name(target_hour, target_var)
-    model = joblib.load(os.path.join(save_dir, name))
-    return model
+    path_to_model = os.path.join(save_dir, name)
+    if os.path.exists(path_to_model):
+        model = joblib.load(path_to_model)
+        return model
+    else:
+        return None
 
 
 def tune(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
@@ -88,19 +94,30 @@ def evaluate(n_folds=3, start='2017-12-01 00:00', stop='2017-12-31 18:00', targe
 
 
 # TODO - need more specs from Dr. Maier
-def predict(start, stop, target_hour=24, target_var=_DEFAULT_TARGET, cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR):
-    # logic to make predictions on a new dataset and export the results
-    path_to_model = os.path.join(save_dir, 'dtree.model')
-    if not os.path.exists(path_to_model):
+def predict(start, stop, target_hour=24, target_var=_DEFAULT_TARGET,
+            cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, prediction_dir='../predictions'):
+
+    model_name = make_model_name(target_hour, target_var)
+    path_to_model = os.path.join(save_dir, model_name)
+    model = load(save_dir, target_hour, target_var)
+    if model is None:
         print("You must train the model before making predictions!\nNo serialized model found at '%s'" % path_to_model)
         return None
+    data = simple_loader.load(start=start, stop=stop, target_var=None, cache_dir=cache_dir)[0]
+    reftimes = simple_loader.get_reftimes(start, stop)
+    if not os.path.exists(prediction_dir):
+        os.makedirs(prediction_dir)
+    outpath = os.path.join(prediction_dir, model_name + '.out.csv')
+    with open(outpath, 'w') as outfile:
+        for idx, data_point in enumerate(data):
+            prediction = model.predict([data_point])
+            outfile.write("%s,%s\n" % (reftimes[idx], prediction[0]))
 
-    model = load(save_dir, target_hour, target_var)
-    pass
+    return outpath
 
 
 def main(action='train', start_date='2017-01-01 00:00', end_date='2017-12-31 18:00',
-         target_hour=24, target_var=_DEFAULT_TARGET, save_dir=_MODELS_DIR, data_dir=_CACHE_DIR):
+         target_hour=24, target_var=_DEFAULT_TARGET, save_dir=_MODELS_DIR, cache_dir=_CACHE_DIR, prediction_dir='../predictions'):
     # accepts command line args and calls the correct sub-commands
     if action == 'train':
         save_path = train(
@@ -108,7 +125,7 @@ def main(action='train', start_date='2017-01-01 00:00', end_date='2017-12-31 18:
             stop=end_date,
             target_hour=target_hour,
             target_var=target_var,
-            cache_dir=data_dir,
+            cache_dir=cache_dir,
             save_dir=save_dir)
         print("Model trained successfully.  Saved to %s" % save_path)
 
@@ -118,11 +135,19 @@ def main(action='train', start_date='2017-01-01 00:00', end_date='2017-12-31 18:
             stop=end_date,
             target_hour=target_hour,
             target_var=target_var,
-            cache_dir=data_dir)
+            cache_dir=cache_dir)
         print("Average MAE: %0.4f" % avg_score)
 
     elif action == 'predict':
-        pass  # TODO
+        prediction_file = predict(
+            start=start_date,
+            stop=end_date,
+            target_hour=target_hour,
+            target_var=target_var,
+            cache_dir=cache_dir,
+            save_dir=save_dir,
+            prediction_dir=prediction_dir)
+        print("Output written to %s" % prediction_file)
 
     elif action == 'tune':
         best_params = tune(
@@ -130,7 +155,7 @@ def main(action='train', start_date='2017-01-01 00:00', end_date='2017-12-31 18:
             stop=end_date,
             target_hour=target_hour,
             target_var=target_var,
-            cache_dir=data_dir)
+            cache_dir=cache_dir)
 
         print("Best hyperparameters found: ")
         print(best_params)
