@@ -1,10 +1,5 @@
 """
 The simple_loader module provides high-level functions for loading cached data into in-memory numpy arrays
-
-The loader expects a `cache_dir` argument, which specifies the directory where the NAM and Georgia Power data can be
-found.  NAM forecasts generated from apollo.datasets.open should be located in the <cache_dir>/NAM-NMM directory.
-There should be a single log file located in the <cache_dir>/GA-POWER directory that has target readings from the solar
-array.
 """
 
 import numpy as np
@@ -16,47 +11,40 @@ from apollo.datasets import nam, ga_power
 
 def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', desired_attributes='surface', grid_size=3,
          cache_dir='/mnt/data6tb/chris/data', standardize=True, target_var='UGA-C-POA-1-IRR', target_hour=24):
-    """
-    Loads a dataset from cached grib files into a numpy array
-    This function assumes that cache_dir contains two subdirectories: NAM-NMM containing NAM forecast summary files
-    and GA-POWER, containing an uncompressed log file with the ML targets (see apollo/bin/generate_targets.sh)
+    """Loads a dataset from on-disk GRIB files into an in-memory numpy array
 
-    This function can also be used to load plain NAM data (with no targers) by setting the `target_var` to None
+    By default, loads weather forecast attributes from local grib files and joins them with the target values found in
+    logs from Georgia Power.  Data should be cached (downloaded) in the cache_dir.
+    NAM forecasts generated from apollo.datasets.open should be located in the <cache_dir>/NAM-NMM directory.
+    There should be a single uncompressed log file located in the <cache_dir>/GA-POWER directory that has
+    target readings from the solar array.
 
-    :param start: anything accepted by numpy's np.datetime64 constructor
-        The reference time of the first data point to be selected
-        DEFAULT: 2017-01-01 00:00
-    :param stop: anything accepted by numpy's np.datetime64 constructor
-        The reference time of the last data point to be selected
-        DEFAULT: 2017-12-31 18:00
-    :param cache_dir: string
-        The local directory where the data resides on disk.  Should have subfolders 'NAM-NMM' containing NAM forecasts
-        and 'GA-POWER' containing the data from the solar farm.
-        The default cache directory is where the data is currently stored on aigpc3.
-        DEFAULT: /mnt/data6tb/chris/data
-    :param standardize: boolean
-        Should the data be standardized during loading?
-        DEFAULT: True
-    :param desired_attributes: array<str> or keyword 'all' or keyword 'surface'
-        Array containing the names of the data variables to select, or the keyword 'all' to select all data variables,
-        or the keyword 'surface' to select surface variables.
-        DEFAULT: 'surface'
-    :param grid_size: odd integer >= 1
-        The size of the spatial grid from which features will be selected.
-        Features will be included from all cells in a (grid_size x grid_size) spatial grid centered on the cell where
-        the solar array resides.
-        Values will be rounded up to the nearest odd number >= 1
-        DEFAULT: 3
-    :param target_var: string, or None
-        The name of variable from the solar farm logs that we are trying to predict, or None if you'd like to load
-        NAM-only data.
-        DEFAULT: 'UGA-C-POA-1-IRR', a ventilated pyranometer on a fixed solar array
-    :param target_hour: integer in [1, 36]
-        The hour you are targeting for solar radiation prediction
-        DEFAULT: 24
+    This function can also be used to load plain NAM data (with no targets) by setting the `target_var` to None.
 
-    :return: (X, y) where X is an n x m np.array containing the non-target attributes,
-             and y is an n x 1 np.array containing the target values
+    All parameters are optional.
+
+    Args:
+        start (str): Specifies the reference time of the first data point to be selected.
+            Any string accepted by the np.datetime64 constructor is acceptable.
+        stop (str): Specifies the reference time of the last data point to be selected.  Any string accepted by
+            the np.datetime64 constructor is acceptable.
+        cache_dir (str): The local directory where the data can be found.  Should have subfolders 'NAM-NMM'
+            containing NAM forecasts and 'GA-POWER' containing the data from the solar farm.
+        standardize (bool): Should the data be standardized?
+        desired_attributes (array or str): One-dimensional numpy array with the names of the data variables to select,
+            or the keyword 'all' to select all data variables, or the keyword 'surface' to select surface variables.
+        grid_size (int): The size of the spatial grid from which features will be selected.
+            This parameter will be rounded up to the nearest odd integer, and a grid of shape (grid_size, grid_size)
+            will be selected.
+        target_var (str): Name of the reading from Georgia Power logs which will be used as the target.
+        target_hour (int): Integer in the range [1, 36] specifying the target prediction hour
+
+    Returns:
+        A tuple (x, y), where where x is an n x m np.array containing the non-target attributes,
+        and y is an n x 1 np.array containing the target values.
+
+        If the target_var is None, then y will be None.
+
     """
 
     # ensure the user hasn't requested data for two different years
