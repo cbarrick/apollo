@@ -148,5 +148,15 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', desired_attributes='
 
 
 def get_reftimes(start, stop):
-    start_time, end_time =  np.datetime64(start), np.datetime64(stop)
+    """Generates a sorted list of reftimes between the specified datetime strings
+
+    Args:
+        start (str): string specifying the start of the sequence
+        stop (str): string specifying the upper bound of the sequence
+
+    Returns:
+        array: reftimes in 6 hour increments between `start` and `stop`
+
+    """
+    start_time, end_time = np.datetime64(start), np.datetime64(stop)
     return np.arange(start_time, end_time, np.timedelta64(6, 'h'))
