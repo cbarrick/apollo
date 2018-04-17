@@ -112,3 +112,7 @@ ENV/
 
 # PyCharm project settings
 .idea
+
+# files output by experiments
+models/
+predictions/
