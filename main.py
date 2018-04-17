@@ -20,9 +20,8 @@ def main():
     parser = argparse.ArgumentParser(description='Apollo: Solar Radiation Prediction')
     parser.add_argument('experiment', default='dtree', type=str, choices=list(EXPERIMENTS.keys()),
                         help='The name of the experiment to run \n[DEFAULT: dtree]')
-    parser.add_argument('action', default='evaluate', type=str, choices=['tune', 'train', 'evaluate', 'predict'],
+    parser.add_argument('action', default='evaluate', type=str, choices=['train', 'evaluate', 'predict'],
                         help='The action to perform with this experiment.'
-                             '\n\t - "tune" : performs hyper-parameter tuning and outputs the results'
                              '\n\t - "train" : trains the model'
                              '\n\t - "evaluate" : uses cross-validation to output an approximation of the model\'s MAE'
                              '\n\t - "predict" : uses the model to make predictions about a new dataset'
