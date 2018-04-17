@@ -52,32 +52,26 @@ def load(save_dir, target_hour, target_var):
         return None
 
 
-def tune(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-         cache_dir=_CACHE_DIR, n_folds=3):
-    # logic to perform parameter tuning and report the results
-    X, y = simple_loader.load(start=start, stop=stop, target_hour=target_hour, target_var=target_var,
-                              cache_dir=cache_dir)
-    model = GridSearchCV(
-        estimator=DecisionTreeRegressor(),
-        param_grid={
-            'splitter': ['best', 'random'],  # splitting criterion
-            'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
-            'min_impurity_decrease': np.arange(0, 0.6, 0.05)
-        },
-        cv=KFold(n_splits=n_folds, shuffle=True),
-        scoring='neg_mean_absolute_error',
-        return_train_score=False,
-        n_jobs=-1,
-    ).fit(X, y)
-
-    return model.best_params_
-
-
 def train(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-          cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR):
+          cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, n_folds=3):
     # logic to train the model using the full dataset
     X, y = simple_loader.load(start=start, stop=stop, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
-    model = DecisionTreeRegressor(**HYPERPARAMS)
+    if tune:
+        model = GridSearchCV(
+            estimator=DecisionTreeRegressor(),
+            param_grid={
+                'splitter': ['best', 'random'],  # splitting criterion
+                'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
+                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+            },
+            cv=KFold(n_splits=n_folds, shuffle=True),
+            scoring='neg_mean_absolute_error',
+            return_train_score=False,
+            n_jobs=-1,
+        )
+    else:
+        model = DecisionTreeRegressor()
+
     model = model.fit(X, y)
     save_location = save(model, save_dir, target_hour, target_var)
     return save_location
@@ -148,14 +142,3 @@ def main(action='train', start_date='2017-01-01 00:00', end_date='2017-12-31 18:
             save_dir=save_dir,
             prediction_dir=prediction_dir)
         print("Output written to %s" % prediction_file)
-
-    elif action == 'tune':
-        best_params = tune(
-            start=start_date,
-            stop=end_date,
-            target_hour=target_hour,
-            target_var=target_var,
-            cache_dir=cache_dir)
-
-        print("Best hyperparameters found: ")
-        print(best_params)
