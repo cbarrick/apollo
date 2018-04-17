@@ -104,7 +104,7 @@ def predict(start, stop, target_hour=24, target_var=_DEFAULT_TARGET,
         print("You must train the model before making predictions!\nNo serialized model found at '%s'" % path_to_model)
         return None
     data = simple_loader.load(start=start, stop=stop, target_var=None, cache_dir=cache_dir)[0]
-    reftimes = simple_loader.get_reftimes(start, stop)
+    reftimes = np.arange(start, stop, dtype='datetime64[6h]')
     if not os.path.exists(prediction_dir):
         os.makedirs(prediction_dir)
     outpath = os.path.join(prediction_dir, model_name + '.out.csv')
