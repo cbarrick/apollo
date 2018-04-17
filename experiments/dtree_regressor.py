@@ -108,34 +108,3 @@ def predict(begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET,
             outfile.write("%s,%s\n" % (reftimes[idx], prediction[0]))
 
     return outpath
-
-
-def main(action='train', start_date='2017-01-01 00:00', end_date='2017-12-31 18:00',
-         target_hour=24, target_var=_DEFAULT_TARGET, save_dir=_MODELS_DIR, cache_dir=_CACHE_DIR, prediction_dir='../predictions'):
-    # accepts command line args and calls the correct sub-commands
-    if action == 'train':
-        save_path = train(
-            start=start_date,
-            stop=end_date,
-            target_hour=target_hour,
-            target_var=target_var,
-            cache_dir=cache_dir,
-            save_dir=save_dir)
-
-    elif action == 'evaluate':
-        avg_score = evaluate(
-            start=start_date,
-            stop=end_date,
-            target_hour=target_hour,
-            target_var=target_var,
-            cache_dir=cache_dir)
-
-    elif action == 'predict':
-        prediction_file = predict(
-            start=start_date,
-            stop=end_date,
-            target_hour=target_hour,
-            target_var=target_var,
-            cache_dir=cache_dir,
-            save_dir=save_dir,
-            prediction_dir=prediction_dir)
