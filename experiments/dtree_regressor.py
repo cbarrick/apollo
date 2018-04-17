@@ -71,7 +71,6 @@ def train(start='2017-01-01 00:00', stop='2017-12-31 18:00', target_hour=24, tar
         )
     else:
         model = DecisionTreeRegressor()
-
     model = model.fit(X, y)
     save_location = save(model, save_dir, target_hour, target_var)
     return save_location
