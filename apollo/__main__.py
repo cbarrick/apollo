@@ -1,9 +1,10 @@
 import argparse
 from experiments import dtree_regressor
-
+from experiments import linreg
 
 EXPERIMENTS = {
-    'dtree': dtree_regressor
+    'dtree': dtree_regressor,
+    'linreg': linreg
 }
 
 
@@ -17,6 +18,7 @@ def main():
 
     parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(EXPERIMENTS.keys()),
                         help='The name of the model that you would like to run.')
+
 
     parser.add_argument('--begin_date', '-b', default='2017-01-01 00:00', type=str,
                         help='The start date of the dataset that you want to use.  Any string accepted by numpy\'s '
