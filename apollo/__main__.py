@@ -1,10 +1,12 @@
 import argparse
 from experiments import dtree_regressor
 from experiments import linreg
+from experiments import svreg
 
 EXPERIMENTS = {
     'dtree': dtree_regressor,
-    'linreg': linreg
+    'linreg': linreg,
+    'svreg': svreg
 }
 
 
