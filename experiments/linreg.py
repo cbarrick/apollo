@@ -71,13 +71,6 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
         model = linear_model.LinearRegression()
     model = model.fit(X, y)
     save_location = save(model, save_dir, target_hour, target_var)
-    plt.scatter(X, y, color='black')
-    plt.plot(X, y, color='blue', linewidth=3)
-
-    plt.xticks(())
-    plt.yticks(())
-
-    plt.show()
 
     return save_location
 
