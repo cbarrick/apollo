@@ -27,7 +27,7 @@ HYPERPARAMS = {
 
 def make_model_name(target_hour, target_var):
     # creates a unique name for a model that predicts a specific target variable at a specific target hour
-    return 'linreg_%shr_%s.model' % (target_hour, target_var)
+    return 'svreg%shr_%s.model' % (target_hour, target_var)
 
 
 # TODO: export these functions to a utils module
@@ -60,9 +60,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
         model = GridSearchCV(
             estimator=svm.SVR(),
             param_grid={
-                'splitter': ['best', 'random'],  # splitting criterion
-                'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
-                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+                
             },
             cv=KFold(n_splits=num_folds, shuffle=True),
             scoring='mean_squared_error',
