@@ -4,25 +4,18 @@ Solar Radiation Prediction with scikit's linear regression
 
 import os
 
-from sklearn.model_selection import KFold, GridSearchCV, cross_val_score
+from sklearn.model_selection import cross_val_score
 from sklearn.externals import joblib
 
 from apollo.datasets import simple_loader
 
-import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import linear_model
-from sklearn.metrics import mean_squared_error, r2_score
+
 
 _CACHE_DIR = "../data"  # where the NAM and GA-POWER data resides
 _MODELS_DIR = "../models"  # directory where serialized models will be saved
 _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
-
-# hyperparameters used during training, evaluation, and prediction
-HYPERPARAMS = {
-   'normalize': True,
-
-}
 
 
 def make_model_name(target_hour, target_var):
@@ -30,7 +23,6 @@ def make_model_name(target_hour, target_var):
     return 'linreg_%shr_%s.model' % (target_hour, target_var)
 
 
-# TODO: export these functions to a utils module
 def save(model, save_dir, target_hour, target_var):
     # logic to serialize a trained model
     name = make_model_name(target_hour, target_var)
@@ -56,19 +48,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
           cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
     # logic to train the model using the full dataset
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
-    if tune:
-        model = GridSearchCV(
-            estimator=linear_model.LinearRegression(),
-            param_grid={
-                'normalize': [True, False],
-            },
-            cv=KFold(n_splits=num_folds, shuffle=True),
-            scoring='neg_mean_absolute_error',
-            return_train_score=False,
-            n_jobs=-1,
-        )
-    else:
-        model = linear_model.LinearRegression()
+    model = linear_model.LinearRegression()
     model = model.fit(X, y)
     save_location = save(model, save_dir, target_hour, target_var)
 
