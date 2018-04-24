@@ -75,7 +75,7 @@ echo -n ',UGA-MET02-DNI-IRR'  # DNI
 echo
 
 # Print the contents of the files.
-find $1/mb-007.*.log.gz -not -size 0 -print0 |  # Find non-empty files.
-xargs -0 zcat                                |  # Unzip them.
-grep -e "$2"                                 |  # Filter out the desired lines.
-sort                                            # Sort the lines.
+find $1/group-mb-007*.csv -not -size 0 -print0 |  # Find non-empty files.
+xargs -0 cat                                   |  # Read them.
+grep -e "$2"                                   |  # Filter out the desired lines.
+sort                                              # Sort the lines.
