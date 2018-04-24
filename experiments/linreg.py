@@ -56,7 +56,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
 
 
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-             cache_dir=_CACHE_DIR, num_folds=3, metrics=['neg_mean_absolute_error']):
+             cache_dir=_CACHE_DIR, num_folds=3, metrics=['neg_mean_absolute_error'], save_dir=_MODELS_DIR):
     # logic to estimate a model's accuracy and report the results
     model = linear_model.LinearRegression()
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)

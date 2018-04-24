@@ -61,10 +61,12 @@ def main():
 
     evaluate.add_argument('--num_folds', '-n', default=3, type=int,
                           help='The number of folds to use when computing cross-validated accuracy.')
-    evaluate.add_argument('--metrics', '-s', default=['neg_mean_absolute_error', 'r2'], nargs='+',
+    evaluate.add_argument('--metrics', '-r', default=['neg_mean_absolute_error', 'r2'], nargs='+',
                           help='The set of metrics used to evaluate the model.  '
-                               'Each metric should be a string from '
+                               'Each metric should be a string from the Regression section of '
                                'http://scikit-learn.org/stable/modules/model_evaluation.html.')
+    evaluate.add_argument('--save_dir', '-s', default='./models', type=str,
+                       help='The directory where trained models are serialized during training.')
 
     # predict
     predict = subcommands.add_parser('predict', argument_default=argparse.SUPPRESS,
@@ -72,8 +74,7 @@ def main():
     predict.set_defaults(action='predict')
 
     predict.add_argument('--save_dir', '-s', default='./models', type=str,
-                         help='The directory where trained models will be serialized. This directory will be created if'
-                              ' it does not exist.')
+                         help='The directory where trained models are serialized during training.')
     predict.add_argument('--output_dir', '-o', default='./predictions', type=str,
                          help='The directory where predictions will be written.')
 
