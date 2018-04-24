@@ -16,6 +16,10 @@
 # data downloaded by datasets
 /data
 
+# files output by experiments
+models/
+predictions/
+
 
 # Generic Python ignores
 # --------------------------------------------------
@@ -113,6 +117,5 @@ ENV/
 # PyCharm project settings
 .idea
 
-# files output by experiments
-models/
-predictions/
+# dask files
+dask-worker-space
