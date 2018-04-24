@@ -52,6 +52,13 @@ def load(start='2017-01-01 00:00', stop='2017-12-31 18:00', desired_attributes='
         "Loading across different years is not yet supported."
     year = np.datetime64(start).astype(object).year
 
+    # create local Dask cluster and connect
+    # from Dask docs:
+    # The Client registers itself as the default Dask scheduler
+    # and so runs all dask collections like dask.array, dask.bag, dask.dataframe and dask.delayed
+    from dask.distributed import Client
+    client = Client()
+
     # open weather forecast data
     nam_data = nam.open_range(start, stop, cache_dir=cache_dir + '/NAM-NMM')
 
