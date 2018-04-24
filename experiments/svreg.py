@@ -12,22 +12,25 @@ from apollo.datasets import simple_loader
 import numpy as np
 from sklearn import svm
 
-_CACHE_DIR = "../data"  # where the NAM and GA-POWER data resides
-_MODELS_DIR = "../models"  # directory where serialized models will be saved
+_CACHE_DIR = '../data'  # where the NAM and GA-POWER data resides
+_MODELS_DIR = '../models'  # directory where serialized models will be saved
 _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
 
 # hyperparameters used during training, evaluation, and prediction
 HYPERPARAMS = {
-
+    'C': 1.0,           # penalty parameter of the error term
+    'epsilon': 0.1,     # width of no-penalty tube
+    'kernel': 'rbf',    # kernel type
+    'gamma': 'auto',    # kernel coefficient
+    'degree': 3,        # degree if
 }
 
 
 def make_model_name(target_hour, target_var):
     # creates a unique name for a model that predicts a specific target variable at a specific target hour
-    return 'svreg%shr_%s.model' % (target_hour, target_var)
+    return 'svr%shr_%s.model' % (target_hour, target_var)
 
 
-# TODO: export these functions to a utils module
 def save(model, save_dir, target_hour, target_var):
     # logic to serialize a trained model
     name = make_model_name(target_hour, target_var)
@@ -57,18 +60,25 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
         model = GridSearchCV(
             estimator=svm.SVR(),
             param_grid={
-                
+                'C': np.arange(0.6, 2.0, 0.2),
+                'epsilon': np.arange(0.1, 0.8, 0.1),
+                'kernel': ['rbf', 'poly', 'sigmoid'],
+                'degree': np.arange(1, 7, 1),
+                'gamma': [1/4, 1/8, 1/16, 1/32, 1/64, 1/500, 1/1000, 1/2000, 'auto']
             },
             cv=KFold(n_splits=num_folds, shuffle=True),
-            scoring='mean_squared_error',
+            scoring='neg_mean_absolute_error',
             return_train_score=False,
             n_jobs=-1,
         )
     else:
         model = svm.SVR()
     model = model.fit(X, y)
-    save_location = save(model, save_dir, target_hour, target_var)
 
+    if tune:
+        print("Grid search completed.  Best parameters found: ")
+        print(model.best_params_)
+    save_location = save(model, save_dir, target_hour, target_var)
 
     return save_location
 
