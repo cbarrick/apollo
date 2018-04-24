@@ -72,7 +72,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
             n_jobs=-1,
         )
     else:
-        model = svm.SVR()
+        model = svm.SVR(**HYPERPARAMS)
     model = model.fit(X, y)
 
     if tune:
@@ -86,7 +86,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
              cache_dir=_CACHE_DIR, num_folds=3):
     # logic to estimate a model's accuracy and report the results
-    model = svm.SVR()
+    model = svm.SVR(**HYPERPARAMS)
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     scores = cross_val_score(model, X, y, scoring='neg_mean_absolute_error', cv=num_folds, n_jobs=-1)
 
