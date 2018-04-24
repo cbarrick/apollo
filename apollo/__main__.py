@@ -19,7 +19,6 @@ def main():
     parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(EXPERIMENTS.keys()),
                         help='The name of the model that you would like to run.')
 
-
     parser.add_argument('--begin_date', '-b', default='2017-01-01 00:00', type=str,
                         help='The start date of the dataset that you want to use.  Any string accepted by numpy\'s '
                         'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
@@ -62,8 +61,10 @@ def main():
 
     evaluate.add_argument('--num_folds', '-n', default=3, type=int,
                           help='The number of folds to use when computing cross-validated accuracy.')
-
-    # TODO: add option to evaluate using several metrics
+    evaluate.add_argument('--metrics', '-s', default=['neg_mean_absolute_error', 'r2'], nargs='+',
+                          help='The set of metrics used to evaluate the model.  '
+                               'Each metric should be a string from '
+                               'http://scikit-learn.org/stable/modules/model_evaluation.html.')
 
     # predict
     predict = subcommands.add_parser('predict', argument_default=argparse.SUPPRESS,
@@ -89,8 +90,10 @@ def main():
         save_path = experiment.train(**args)
         print(f'Model trained successfully.  Saved to {save_path}')
     elif action == 'evaluate':
-        score = experiment.evaluate(**args)
-        print('Average MAE: %0.4f' % score)
+        scores = experiment.evaluate(**args)
+        # report the mean scores for each metrics
+        for key in scores:
+            print("Mean %s: %0.4f" % (key, scores[key]))
     elif action == 'predict':
         prediction_file = experiment.predict(**args)
         print(f'Output written to {prediction_file}')
