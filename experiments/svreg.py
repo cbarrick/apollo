@@ -1,5 +1,5 @@
 """
-Solar Radiation Prediction with scikit's SVR
+Solar Radiation Prediction with scikit's Support Vector Regression
 """
 
 import os
@@ -11,8 +11,6 @@ from apollo.datasets import simple_loader
 
 import numpy as np
 from sklearn import svm
-from sklearn.svm import SVR
-from sklearn.metrics import mean_squared_error, r2_score
 
 _CACHE_DIR = "../data"  # where the NAM and GA-POWER data resides
 _MODELS_DIR = "../models"  # directory where serialized models will be saved
@@ -20,7 +18,6 @@ _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
 
 # hyperparameters used during training, evaluation, and prediction
 HYPERPARAMS = {
-
 
 }
 
