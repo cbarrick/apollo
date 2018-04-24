@@ -12,6 +12,7 @@ from apollo.datasets import simple_loader
 import numpy as np
 from sklearn import svm
 
+
 _CACHE_DIR = '../data'  # where the NAM and GA-POWER data resides
 _MODELS_DIR = '../models'  # directory where serialized models will be saved
 _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
