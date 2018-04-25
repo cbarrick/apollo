@@ -26,6 +26,9 @@ HYPERPARAMS = {
     'min_impurity_decrease': 0.50
 }
 
+#dates of interest
+starting_date='2017-11-08 00:00'
+ending_date='2017-11-13 18:00'
 
 def make_model_name(target_hour, target_var):
     # creates a unique name for a model that predicts a specific target variable at a specific target hour
@@ -54,7 +57,7 @@ def load(save_dir, target_hour, target_var):
         return None
 
 
-def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
+def train(begin_date=starting_date, end_date=ending_date, target_hour=24, target_var=_DEFAULT_TARGET,
           cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
     # logic to train the model using the full dataset
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
