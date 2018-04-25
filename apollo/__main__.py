@@ -1,10 +1,14 @@
 import argparse
 from experiments import dtree_regressor
 from experiments import linreg
+from experiments import random_forest
+from experiments import gradient_boosted_trees
 
 EXPERIMENTS = {
     'dtree': dtree_regressor,
-    'linreg': linreg
+    'linreg': linreg,
+    'rforest': random_forest,
+    'gboosted': gradient_boosted_trees
 }
 
 
