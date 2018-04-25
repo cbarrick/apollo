@@ -5,7 +5,7 @@ Solar Radiation Prediction with scikit's DecisionTreeRegressor
 import os
 import numpy as np
 
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import KFold, GridSearchCV, cross_val_score
 from sklearn.externals import joblib
 
@@ -18,6 +18,7 @@ _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
 
 # hyperparameters used during training, evaluation, and prediction
 HYPERPARAMS = {
+    'loss': 'huber',
     'learning_rate': 0.1,
     'n_estimators': 100,
     'criterion': 'mse',
@@ -63,7 +64,7 @@ def train(begin_date=starting_date, end_date=ending_date, target_hour=24, target
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     if tune:
         model = GridSearchCV(
-            estimator=GradientBoostingClassifier(),
+            estimator=GradientBoostingRegressor(),
             param_grid={
                 'learning_rate': [0.01, 0.1], #learning rate
                 'n_estimators': [10, 100, 1000], #number of boosting stages. Large number may lead to over fitting
@@ -76,7 +77,7 @@ def train(begin_date=starting_date, end_date=ending_date, target_hour=24, target
             n_jobs=-1,
         )
     else:
-        model = GradientBoostingClassifier()
+        model = GradientBoostingRegressor()
     model = model.fit(X, y)
     save_location = save(model, save_dir, target_hour, target_var)
     return save_location
@@ -85,7 +86,7 @@ def train(begin_date=starting_date, end_date=ending_date, target_hour=24, target
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
              cache_dir=_CACHE_DIR, num_folds=3):
     # logic to estimate a model's accuracy and report the results
-    model = GradientBoostingClassifier(**HYPERPARAMS)
+    model = GradientBoostingRegressor(**HYPERPARAMS)
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     scores = cross_val_score(model, X, y, scoring='neg_mean_absolute_error', cv=num_folds, n_jobs=-1)
 
