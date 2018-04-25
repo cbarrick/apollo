@@ -47,9 +47,8 @@ def main():
     train.add_argument('--save_dir', '-s', default='./models', type=str,
                        help='The directory where trained models will be serialized. This directory will be created if'
                             ' it does not exist.')
-    train.add_argument('--tune', '-p', action='store_true',
-                       help='If set, hyperparameter tuning will be performed using a cross-validated grid search before'
-                            'training on the specified dataset')
+    train.add_argument('--no_tune', '-p', action='store_true',
+                       help='If set, hyperparameter tuning will NOT be performed during training.')
     train.add_argument('--num_folds', '-n', default=3, type=int,
                        help='If `tune` is enabled, the number of folds to use during the cross-validated grid search. ' 
                             'Ignored if tuning is disabled.')
@@ -86,6 +85,11 @@ def main():
     action = args.pop('action')
     # argparse guarantees that `args.model` will be the key name of one of the experiments
     experiment = EXPERIMENTS[args.pop('model')]
+
+    # do a bit of preprocessing with the tuning argument
+    if 'no_tune' in args:
+        dont_tune = args.pop('no_tune')
+        args['tune'] = not dont_tune
 
     if action == 'train':
         save_path = experiment.train(**args)

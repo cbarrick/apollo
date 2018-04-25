@@ -33,8 +33,8 @@ def save(model, save_dir, target_hour, target_var, hyperparams={}):
 
     # serialize the hyperparameters:
     hyperparams_name = name + '.hyper'
-    path = os.path.join(save_dir, hyperparams_name)
-    with open(path, 'w') as hyperparam_file:
+    hyperparam_path = os.path.join(save_dir, hyperparams_name)
+    with open(hyperparam_path, 'w') as hyperparam_file:
         json.dump(hyperparams, hyperparam_file)
 
     return path
