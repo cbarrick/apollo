@@ -19,7 +19,6 @@ def main():
     parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(EXPERIMENTS.keys()),
                         help='The name of the model that you would like to run.')
 
-
     parser.add_argument('--begin_date', '-b', default='2017-01-01 00:00', type=str,
                         help='The start date of the dataset that you want to use.  Any string accepted by numpy\'s '
                         'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
@@ -48,9 +47,8 @@ def main():
     train.add_argument('--save_dir', '-s', default='./models', type=str,
                        help='The directory where trained models will be serialized. This directory will be created if'
                             ' it does not exist.')
-    train.add_argument('--tune', '-p', action='store_true',
-                       help='If set, hyperparameter tuning will be performed using a cross-validated grid search before'
-                            'training on the specified dataset')
+    train.add_argument('--no_tune', '-p', action='store_true',
+                       help='If set, hyperparameter tuning will NOT be performed during training.')
     train.add_argument('--num_folds', '-n', default=3, type=int,
                        help='If `tune` is enabled, the number of folds to use during the cross-validated grid search. ' 
                             'Ignored if tuning is disabled.')
@@ -62,8 +60,12 @@ def main():
 
     evaluate.add_argument('--num_folds', '-n', default=3, type=int,
                           help='The number of folds to use when computing cross-validated accuracy.')
-
-    # TODO: add option to evaluate using several metrics
+    evaluate.add_argument('--metrics', '-r', default=['neg_mean_absolute_error', 'r2'], nargs='+',
+                          help='The set of metrics used to evaluate the model.  '
+                               'Each metric should be a string from the Regression section of '
+                               'http://scikit-learn.org/stable/modules/model_evaluation.html.')
+    evaluate.add_argument('--save_dir', '-s', default='./models', type=str,
+                       help='The directory where trained models are serialized during training.')
 
     # predict
     predict = subcommands.add_parser('predict', argument_default=argparse.SUPPRESS,
@@ -71,8 +73,7 @@ def main():
     predict.set_defaults(action='predict')
 
     predict.add_argument('--save_dir', '-s', default='./models', type=str,
-                         help='The directory where trained models will be serialized. This directory will be created if'
-                              ' it does not exist.')
+                         help='The directory where trained models are serialized during training.')
     predict.add_argument('--output_dir', '-o', default='./predictions', type=str,
                          help='The directory where predictions will be written.')
 
@@ -85,12 +86,19 @@ def main():
     # argparse guarantees that `args.model` will be the key name of one of the experiments
     experiment = EXPERIMENTS[args.pop('model')]
 
+    # do a bit of preprocessing with the tuning argument
+    if 'no_tune' in args:
+        dont_tune = args.pop('no_tune')
+        args['tune'] = not dont_tune
+
     if action == 'train':
         save_path = experiment.train(**args)
         print(f'Model trained successfully.  Saved to {save_path}')
     elif action == 'evaluate':
-        score = experiment.evaluate(**args)
-        print('Average MAE: %0.4f' % score)
+        scores = experiment.evaluate(**args)
+        # report the mean scores for each metrics
+        for key in scores:
+            print("Mean %s: %0.4f" % (key, scores[key]))
     elif action == 'predict':
         prediction_file = experiment.predict(**args)
         print(f'Output written to {prediction_file}')
