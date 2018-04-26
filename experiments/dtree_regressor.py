@@ -51,7 +51,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
 
     # train model
     if tune:
-        model = GridSearchCV(
+        grid = GridSearchCV(
             estimator=DecisionTreeRegressor(),
             param_grid={
                 'splitter': ['best', 'random'],  # splitting criterion
@@ -63,15 +63,13 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
             return_train_score=False,
             n_jobs=-1,
         )
+        grid.fit(X, y)
+        print("Grid search completed.  Best parameters found: ")
+        print(grid.best_params_)
+        model = grid.best_estimator_
     else:
         model = DecisionTreeRegressor()
-
-    model = model.fit(X, y)
-
-    # output optimal hyperparams to the console
-    if tune:
-        print("Done training.  Best hyperparameters found:")
-        print(model.best_params_)
+        model = model.fit(X, y)
 
     # serialize model to a file
     save_location = save(model, save_dir, target_hour, target_var)
@@ -79,7 +77,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
 
 
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, num_folds=3, metrics=['neg_mean_absolute_error']):
+             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, metrics=['neg_mean_absolute_error'], num_folds=3):
     # load hyperparams saved in training step:
     saved_model = load(save_dir, target_hour, target_var)
     if saved_model is None:
@@ -90,7 +88,7 @@ def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_
         hyperparams = saved_model.get_params()
 
     # Evaluate the classifier
-    model = DecisionTreeRegressor(hyperparams)
+    model = DecisionTreeRegressor(**hyperparams)
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     scores = cross_validate(model, X, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
 
