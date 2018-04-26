@@ -3,7 +3,6 @@ Solar Radiation Prediction with scikit's DecisionTreeRegressor
 """
 
 import os
-import json
 import numpy as np
 
 from sklearn.tree import DecisionTreeRegressor
@@ -23,7 +22,7 @@ def make_model_name(target_hour, target_var):
     return 'dtree_%shr_%s.model' % (target_hour, target_var)
 
 
-def save(model, save_dir, target_hour, target_var, hyperparams={}):
+def save(model, save_dir, target_hour, target_var):
     # serialize the trained model
     name = make_model_name(target_hour, target_var)
     path = os.path.join(save_dir, name)
@@ -31,35 +30,27 @@ def save(model, save_dir, target_hour, target_var, hyperparams={}):
         os.makedirs(save_dir)
     joblib.dump(model, path)
 
-    # serialize the hyperparameters:
-    hyperparams_name = name + '.hyper'
-    hyperparam_path = os.path.join(save_dir, hyperparams_name)
-    with open(hyperparam_path, 'w') as hyperparam_file:
-        json.dump(hyperparams, hyperparam_file)
-
     return path
 
 
 def load(save_dir, target_hour, target_var):
     # logic to load a serialized model
     name = make_model_name(target_hour, target_var)
-    hyperparams_name = name + '.hyper'
     path_to_model = os.path.join(save_dir, name)
-    path_to_hyperparams = os.path.join(save_dir, hyperparams_name)
-    if os.path.exists(path_to_model) and os.path.exists(path_to_hyperparams):
+    if os.path.exists(path_to_model):
         model = joblib.load(path_to_model)
-        hyperparams = json.load(path_to_hyperparams)
-        return model, hyperparams
+        return model
     else:
-        return None, None
+        return None
 
 
 def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
           cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
-    # logic to train the model using the full dataset
+    # load data
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
+
+    # train model
     if tune:
-        print("Tuning Parameters")
         model = GridSearchCV(
             estimator=DecisionTreeRegressor(),
             param_grid={
@@ -75,29 +66,28 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
     else:
         model = DecisionTreeRegressor()
 
-    # train model
     model = model.fit(X, y)
 
     # output optimal hyperparams to the console
     if tune:
         print("Done training.  Best hyperparameters found:")
         print(model.best_params_)
-        hyperparams = model.best_params_
-    else:
-        hyperparams = dict()
 
-    save_location = save(model, save_dir, target_hour, target_var, hyperparams=hyperparams)
+    # serialize model to a file
+    save_location = save(model, save_dir, target_hour, target_var)
     return save_location
 
 
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
              cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, num_folds=3, metrics=['neg_mean_absolute_error']):
-    # load hyperparams saved by training step:
-    _, hyperparams = load(save_dir, target_hour, target_var)
-    if hyperparams is None:
+    # load hyperparams saved in training step:
+    saved_model = load(save_dir, target_hour, target_var)
+    if saved_model is None:
         print('WARNING: Evaluating model using default hyperparameters.  '
               'Run `train` before calling `evaluate` to find optimal hyperparameters.')
         hyperparams = dict()
+    else:
+        hyperparams = saved_model.get_params()
 
     # Evaluate the classifier
     model = DecisionTreeRegressor(hyperparams)
@@ -115,14 +105,16 @@ def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_
 # TODO - need more specs from Dr. Maier
 def predict(begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET,
             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, output_dir='../predictions'):
-
+    # load serialized model
     model_name = make_model_name(target_hour, target_var)
     path_to_model = os.path.join(save_dir, model_name)
-    model, hyperparams = load(save_dir, target_hour, target_var)
+    model = load(save_dir, target_hour, target_var)
     if model is None:
         print("You must train the model before making predictions!\nNo serialized model found at '%s'" % path_to_model)
         return None
     data = simple_loader.load(start=begin_date, stop=end_date, target_var=None, cache_dir=cache_dir)[0]
+
+    # write predictions to a file
     reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
