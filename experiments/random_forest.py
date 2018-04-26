@@ -18,8 +18,8 @@ _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
 
 # hyperparameters used during training, evaluation, and prediction
 HYPERPARAMS = {
+    'n_estimators': 10,
     'criterion': 'mse',
-    'splitter': 'best',
     'max_depth': None,
     'random_state': 0,
     'min_impurity_decrease': 0.50
@@ -64,7 +64,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
         model = GridSearchCV(
             estimator=RandomForestRegressor(),
             param_grid={
-                'splitter': ['best', 'random'],  # splitting criterion
+                'n_estimators': [10, 50, 100, 250],
                 'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
                 'min_impurity_decrease': np.arange(0, 0.6, 0.05)
             },
