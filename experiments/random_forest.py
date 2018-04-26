@@ -5,7 +5,7 @@ Solar Radiation Prediction with scikit's DecisionTreeRegressor
 import os
 import numpy as np
 
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import KFold, GridSearchCV, cross_val_score
 from sklearn.externals import joblib
 
@@ -62,7 +62,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     if tune:
         model = GridSearchCV(
-            estimator=DecisionTreeRegressor(),
+            estimator=RandomForestRegressor(),
             param_grid={
                 'splitter': ['best', 'random'],  # splitting criterion
                 'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
@@ -74,7 +74,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
             n_jobs=-1,
         )
     else:
-        model = DecisionTreeRegressor()
+        model = RandomForestRegressor()
     model = model.fit(X, y)
     save_location = save(model, save_dir, target_hour, target_var)
     return save_location
@@ -83,7 +83,7 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
 def evaluate(begin_date=starting_date, end_date=ending_date, target_hour=24, target_var=_DEFAULT_TARGET,
              cache_dir=_CACHE_DIR, num_folds=3):
     # logic to estimate a model's accuracy and report the results
-    model = DecisionTreeRegressor(**HYPERPARAMS)
+    model = RandomForestRegressor(**HYPERPARAMS)
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     scores = cross_val_score(model, X, y, scoring='neg_mean_absolute_error', cv=num_folds, n_jobs=-1)
 

@@ -1,5 +1,5 @@
 """
-Solar Radiation Prediction with scikit's DecisionTreeRegressor
+Solar Radiation Prediction with scikit's GradientBosstingRegressor
 """
 
 import os
