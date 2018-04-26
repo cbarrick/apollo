@@ -3,14 +3,13 @@ Solar Radiation Prediction with scikit's Support Vector Regression
 """
 
 import os
+import numpy as np
 
-from sklearn.model_selection import KFold, GridSearchCV, cross_val_score
+from sklearn.model_selection import KFold, GridSearchCV, cross_validate
 from sklearn.externals import joblib
+from sklearn import svm
 
 from apollo.datasets import simple_loader
-
-import numpy as np
-from sklearn import svm
 
 
 _CACHE_DIR = '../data'  # where the NAM and GA-POWER data resides
@@ -23,7 +22,7 @@ HYPERPARAMS = {
     'epsilon': 0.1,     # width of no-penalty tube
     'kernel': 'rbf',    # kernel type
     'gamma': 'auto',    # kernel coefficient
-    'degree': 3,        # degree if
+    'degree': 3,        # degree of polyn
 }
 
 
@@ -58,40 +57,53 @@ def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hou
     # logic to train the model using the full dataset
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     if tune:
-        model = GridSearchCV(
+        grid = GridSearchCV(
             estimator=svm.SVR(),
             param_grid={
-                'C': np.arange(0.6, 2.0, 0.2),
+                'C': np.arange(0.6, 1.6, 0.2),
                 'epsilon': np.arange(0.1, 0.8, 0.1),
-                'kernel': ['rbf', 'poly', 'sigmoid'],
-                'degree': np.arange(1, 7, 1),
-                'gamma': [1/4, 1/8, 1/16, 1/32, 1/64, 1/500, 1/1000, 1/2000, 'auto']
+                'kernel': ['rbf', 'sigmoid'],
+                'gamma': [1/500, 1/1000, 1/2000, 'auto']
             },
             cv=KFold(n_splits=num_folds, shuffle=True),
             scoring='neg_mean_absolute_error',
             return_train_score=False,
             n_jobs=-1,
         )
-    else:
-        model = svm.SVR(**HYPERPARAMS)
-    model = model.fit(X, y)
-
-    if tune:
+        grid.fit(X, y)
         print("Grid search completed.  Best parameters found: ")
-        print(model.best_params_)
-    save_location = save(model, save_dir, target_hour, target_var)
+        print(grid.best_params_)
+        model = grid.best_estimator_
+    else:
+        model = svm.SVR()
+        model = model.fit(X, y)
 
+    save_location = save(model, save_dir, target_hour, target_var)
     return save_location
 
 
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-             cache_dir=_CACHE_DIR, num_folds=3):
-    # logic to estimate a model's accuracy and report the results
-    model = svm.SVR(**HYPERPARAMS)
-    X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
-    scores = cross_val_score(model, X, y, scoring='neg_mean_absolute_error', cv=num_folds, n_jobs=-1)
+             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, metrics=['negative_mean_absolute_error'], num_folds=3):
+    # load hyperparams saved in training step:
+    saved_model = load(save_dir, target_hour, target_var)
+    if saved_model is None:
+        print('WARNING: Evaluating model using default hyperparameters.  '
+              'Run `train` before calling `evaluate` to find optimal hyperparameters.')
+        hyperparams = dict()
+    else:
+        hyperparams = saved_model.get_params()
 
-    return np.mean(scores)
+    # evaluate model
+    model = svm.SVR(**hyperparams)
+    X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
+    scores = cross_validate(model, X, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
+
+    # scores is dictionary with keys "test_<metric_name> for each metric"
+    mean_scores = dict()
+    for metric in metrics:
+        mean_scores[metric] = np.mean(scores['test_' + metric])
+
+    return mean_scores
 
 
 # TODO - need more specs from Dr. Maier
