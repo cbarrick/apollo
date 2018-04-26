@@ -1,35 +1,43 @@
 """
-Solar Radiation Prediction with scikit's DecisionTreeRegressor
+Solar Radiation Prediction with scikit's Support Vector Regression
 """
 
 import os
 import numpy as np
 
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import KFold, GridSearchCV, cross_validate
 from sklearn.externals import joblib
+from sklearn import svm
 
 from apollo.datasets import simple_loader
 
 
-_CACHE_DIR = "../data"  # where the NAM and GA-POWER data resides
-_MODELS_DIR = "../models"  # directory where serialized models will be saved
+_CACHE_DIR = '../data'  # where the NAM and GA-POWER data resides
+_MODELS_DIR = '../models'  # directory where serialized models will be saved
 _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
+
+# hyperparameters used during training, evaluation, and prediction
+HYPERPARAMS = {
+    'C': 1.0,           # penalty parameter of the error term
+    'epsilon': 0.1,     # width of no-penalty tube
+    'kernel': 'rbf',    # kernel type
+    'gamma': 'auto',    # kernel coefficient
+    'degree': 3,        # degree of polyn
+}
 
 
 def make_model_name(target_hour, target_var):
     # creates a unique name for a model that predicts a specific target variable at a specific target hour
-    return 'dtree_%shr_%s.model' % (target_hour, target_var)
+    return 'svr%shr_%s.model' % (target_hour, target_var)
 
 
 def save(model, save_dir, target_hour, target_var):
-    # serialize the trained model
+    # logic to serialize a trained model
     name = make_model_name(target_hour, target_var)
     path = os.path.join(save_dir, name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     joblib.dump(model, path)
-
     return path
 
 
@@ -46,40 +54,36 @@ def load(save_dir, target_hour, target_var):
 
 def train(begin_date='2017-01-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
           cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
-    # load data
+    # logic to train the model using the full dataset
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
-
-    # train model
     if tune:
-        model = GridSearchCV(
-            estimator=DecisionTreeRegressor(),
+        grid = GridSearchCV(
+            estimator=svm.SVR(),
             param_grid={
-                'splitter': ['best', 'random'],  # splitting criterion
-                'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
-                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+                'C': np.arange(0.6, 1.6, 0.2),
+                'epsilon': np.arange(0.1, 0.8, 0.1),
+                'kernel': ['rbf', 'sigmoid'],
+                'gamma': [1/500, 1/1000, 1/2000, 'auto']
             },
             cv=KFold(n_splits=num_folds, shuffle=True),
             scoring='neg_mean_absolute_error',
             return_train_score=False,
             n_jobs=-1,
         )
+        grid.fit(X, y)
+        print("Grid search completed.  Best parameters found: ")
+        print(grid.best_params_)
+        model = grid.best_estimator_
     else:
-        model = DecisionTreeRegressor()
+        model = svm.SVR()
+        model = model.fit(X, y)
 
-    model = model.fit(X, y)
-
-    # output optimal hyperparams to the console
-    if tune:
-        print("Done training.  Best hyperparameters found:")
-        print(model.best_params_)
-
-    # serialize model to a file
     save_location = save(model, save_dir, target_hour, target_var)
     return save_location
 
 
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, num_folds=3, metrics=['neg_mean_absolute_error']):
+             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, metrics=['negative_mean_absolute_error'], num_folds=3):
     # load hyperparams saved in training step:
     saved_model = load(save_dir, target_hour, target_var)
     if saved_model is None:
@@ -89,8 +93,8 @@ def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_
     else:
         hyperparams = saved_model.get_params()
 
-    # Evaluate the classifier
-    model = DecisionTreeRegressor(hyperparams)
+    # evaluate model
+    model = svm.SVR(**hyperparams)
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     scores = cross_validate(model, X, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
 
@@ -105,7 +109,7 @@ def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_
 # TODO - need more specs from Dr. Maier
 def predict(begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET,
             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, output_dir='../predictions'):
-    # load serialized model
+
     model_name = make_model_name(target_hour, target_var)
     path_to_model = os.path.join(save_dir, model_name)
     model = load(save_dir, target_hour, target_var)
@@ -113,8 +117,6 @@ def predict(begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET,
         print("You must train the model before making predictions!\nNo serialized model found at '%s'" % path_to_model)
         return None
     data = simple_loader.load(start=begin_date, stop=end_date, target_var=None, cache_dir=cache_dir)[0]
-
-    # write predictions to a file
     reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -125,3 +127,4 @@ def predict(begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET,
             outfile.write("%s,%s\n" % (reftimes[idx], prediction[0]))
 
     return outpath
+
