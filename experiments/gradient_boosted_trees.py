@@ -1,12 +1,12 @@
 """
-Solar Radiation Prediction with scikit's GradientBosstingRegressor
+Solar Radiation Prediction with scikit's GradientBoostingRegressor
 """
 
 import os
 import numpy as np
 
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import KFold, GridSearchCV, cross_val_score
+from sklearn.model_selection import KFold, GridSearchCV, cross_validate
 from sklearn.externals import joblib
 
 from apollo.datasets import simple_loader
@@ -16,24 +16,10 @@ _CACHE_DIR = "../data"  # where the NAM and GA-POWER data resides
 _MODELS_DIR = "../models"  # directory where serialized models will be saved
 _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
 
-# hyperparameters used during training, evaluation, and prediction
-HYPERPARAMS = {
-    'loss': 'huber',
-    'learning_rate': 0.1,
-    'n_estimators': 100,
-    'criterion': 'mse',
-    'max_depth': None,
-    'random_state': 0,
-    'min_impurity_decrease': 0.50
-}
-
-#dates of interest
-starting_date='2017-11-08 00:00'
-ending_date='2017-11-13 18:00'
 
 def make_model_name(target_hour, target_var):
     # creates a unique name for a model that predicts a specific target variable at a specific target hour
-    return 'gradient_boosted_%shr_%s.model' % (target_hour, target_var)
+    return 'GBTs_%shr_%s.model' % (target_hour, target_var)
 
 
 # TODO: export these functions to a utils module
@@ -58,12 +44,12 @@ def load(save_dir, target_hour, target_var):
         return None
 
 
-def train(begin_date=starting_date, end_date=ending_date, target_hour=24, target_var=_DEFAULT_TARGET,
+def train(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
           cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
     # logic to train the model using the full dataset
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     if tune:
-        model = GridSearchCV(
+        grid = GridSearchCV(
             estimator=GradientBoostingRegressor(),
             param_grid={
                 'learning_rate': [0.01, 0.1], #learning rate
@@ -76,21 +62,41 @@ def train(begin_date=starting_date, end_date=ending_date, target_hour=24, target
             return_train_score=False,
             n_jobs=-1,
         )
+        grid.fit(X, y)
+        print("Grid search completed.  Best parameters found: ")
+        print(grid.best_params_)
+        model = grid.best_estimator_
     else:
         model = GradientBoostingRegressor()
-    model = model.fit(X, y)
+        model = model.fit(X, y)
+
     save_location = save(model, save_dir, target_hour, target_var)
     return save_location
 
 
 def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-             cache_dir=_CACHE_DIR, num_folds=3):
-    # logic to estimate a model's accuracy and report the results
-    model = GradientBoostingRegressor(**HYPERPARAMS)
-    X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
-    scores = cross_val_score(model, X, y, scoring='neg_mean_absolute_error', cv=num_folds, n_jobs=-1)
+             cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, metrics=['neg_mean_absolute_error'], num_folds=3):
+    # load hyperparams saved in training step:
+    saved_model = load(save_dir, target_hour, target_var)
+    if saved_model is None:
+        print('WARNING: Evaluating model using default hyperparameters.  '
+              'Run `train` before calling `evaluate` to find optimal hyperparameters.')
+        hyperparams = dict()
+    else:
+        hyperparams = saved_model.get_params()
 
-    return np.mean(scores)
+    # Evaluate the classifier
+    model = GradientBoostingRegressor(**hyperparams)
+    X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var,
+                              cache_dir=cache_dir)
+    scores = cross_validate(model, X, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
+
+    # scores is dictionary with keys "test_<metric_name> for each metric"
+    mean_scores = dict()
+    for metric in metrics:
+        mean_scores[metric] = np.mean(scores['test_' + metric])
+
+    return mean_scores
 
 
 # TODO - need more specs from Dr. Maier

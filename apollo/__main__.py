@@ -10,7 +10,7 @@ EXPERIMENTS = {
     'dtree': dtree_regressor,
     'linreg': linreg,
     'rf': random_forest,
-    'gboosted': gradient_boosted_trees,
+    'gbt': gradient_boosted_trees,
     'svr': svr
 }
 
