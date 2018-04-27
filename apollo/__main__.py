@@ -9,7 +9,7 @@ from experiments import svr
 EXPERIMENTS = {
     'dtree': dtree_regressor,
     'linreg': linreg,
-    'rforest': random_forest,
+    'rf': random_forest,
     'gboosted': gradient_boosted_trees,
     'svr': svr
 }
