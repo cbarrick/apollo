@@ -5,7 +5,7 @@ Solar Radiation Prediction with scikit's GradientBoostingRegressor
 import os
 import numpy as np
 
-from sklearn.ensemble import GradientBoostingRegressor
+from xgboost import XGBRegressor
 from sklearn.model_selection import KFold, GridSearchCV, cross_validate
 from sklearn.externals import joblib
 
@@ -22,7 +22,6 @@ def make_model_name(target_hour, target_var):
     return 'GBTs_%shr_%s.model' % (target_hour, target_var)
 
 
-# TODO: export these functions to a utils module
 def save(model, save_dir, target_hour, target_var):
     # logic to serialize a trained model
     name = make_model_name(target_hour, target_var)
@@ -50,9 +49,9 @@ def train(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hou
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
     if tune:
         grid = GridSearchCV(
-            estimator=GradientBoostingRegressor(),
+            estimator=XGBRegressor(),
             param_grid={
-                'learning_rate': [0.01, 0.1], #learning rate
+                'learning_rate': [0.01, 0.1], # learning rate
                 'n_estimators': [10, 100, 1000], #number of boosting stages. Large number may lead to over fitting
                 'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
                 'min_impurity_decrease': np.arange(0, 0.6, 0.05)
@@ -67,7 +66,7 @@ def train(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hou
         print(grid.best_params_)
         model = grid.best_estimator_
     else:
-        model = GradientBoostingRegressor()
+        model = XGBRegressor()
         model = model.fit(X, y)
 
     save_location = save(model, save_dir, target_hour, target_var)
@@ -86,7 +85,7 @@ def evaluate(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_
         hyperparams = saved_model.get_params()
 
     # Evaluate the classifier
-    model = GradientBoostingRegressor(**hyperparams)
+    model = XGBRegressor(**hyperparams)
     X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var,
                               cache_dir=cache_dir)
     scores = cross_validate(model, X, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
