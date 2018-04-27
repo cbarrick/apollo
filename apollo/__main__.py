@@ -74,7 +74,7 @@ def main():
                                'http://scikit-learn.org/stable/modules/model_evaluation.html.')
     evaluate.add_argument('--save_dir', '-s', default='./models', type=str,
                        help='The directory where trained models are serialized during training.')
-Experiment/trees
+
     # predict
     predict = subcommands.add_parser('predict', argument_default=argparse.SUPPRESS,
                                      description='Make predictions using a trained model.')
