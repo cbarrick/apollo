@@ -51,10 +51,9 @@ def train(begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hou
         grid = GridSearchCV(
             estimator=XGBRegressor(),
             param_grid={
-                'learning_rate': [0.01, 0.1], # learning rate
-                'n_estimators': [10, 100, 1000], #number of boosting stages. Large number may lead to over fitting
-                'max_depth': [None, 10, 20, 50, 100],  # Maximum depth of the tree. None means unbounded.
-                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+                'learning_rate': np.arange(0.01, 0.13, 0.02),  # learning rate
+                'n_estimators': [10, 20, 50, 100, 200],  # number of boosting stages. Large number may lead to over fitting
+                'max_depth': [None, 3, 5, 10, 50, 100],  # Maximum depth of the tree. None means unbounded.
             },
             cv=KFold(n_splits=num_folds, shuffle=True),
             scoring='neg_mean_absolute_error',
