@@ -19,7 +19,7 @@ _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
 
 def make_model_name(target_hour, target_var):
     # creates a unique name for a model that predicts a specific target variable at a specific target hour
-    return 'dtree_%shr_%s.model' % (target_hour, target_var)
+    return 'knn_%shr_%s.model' % (target_hour, target_var)
 
 
 def save(model, save_dir, target_hour, target_var):
