@@ -2,17 +2,17 @@ import argparse
 from experiments import dtree_regressor
 from experiments import linreg
 from experiments import svr
-
+from experiments import knn
 from experiments import random_forest
 from experiments import gradient_boosted_trees
-from experiments import svr
 
 EXPERIMENTS = {
     'dtree': dtree_regressor,
     'linreg': linreg,
     'rf': random_forest,
     'gbt': gradient_boosted_trees,
-    'svr': svr
+    'svr': svr,
+    'knn': knn
 }
 
 
