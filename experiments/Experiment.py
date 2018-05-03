@@ -23,15 +23,12 @@ class Experiment(object):
     def load(self, save_dir, target_hour, target_var):
         pass
 
-    def train(self, begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-              cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
+    def train(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, tune, num_folds):
         pass
 
-    def evaluate(self, begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-                 cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, metrics=['neg_mean_absolute_error'], num_folds=3):
+    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, num_folds):
         pass
 
-    def predict(self, begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET,
-                cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, output_dir=_OUTPUT_DIR):
+    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, output_dir):
         pass
 
