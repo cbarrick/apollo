@@ -55,10 +55,9 @@ class SKExperiment(Experiment):
 
     def train(self, begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
               cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
-
-        # logic to train the model using the full dataset
+        # trains the model using the dataset between the begin and end date
         X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
-        if tune:
+        if tune and self.param_grid is not None:
             grid = GridSearchCV(
                 estimator=self.regressor(),
                 param_grid=self.param_grid,
@@ -98,7 +97,7 @@ class SKExperiment(Experiment):
         # scores is dictionary with keys "test_<metric_name> for each metric"
         mean_scores = dict()
         for metric in self.metrics:
-            mean_scores[metric] = np.mean(scores[metric])
+            mean_scores[metric] = np.mean(scores['test_' + metric])
 
         return mean_scores
 
