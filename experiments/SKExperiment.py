@@ -8,6 +8,7 @@ import os
 import json
 from datetime import datetime
 import numpy as np
+import pandas as pd
 from apollo.datasets import simple_loader
 from experiments.Experiment import Experiment
 from sklearn.model_selection import GridSearchCV, KFold, cross_validate
@@ -127,23 +128,25 @@ class SKExperiment(Experiment):
         # create path to summary and to resource files
         summary_filename = f'{self.make_model_name(target_var, target_hour)}_{begin_date}_{end_date}.summary'
         summary_path = os.path.join(summary_dir, summary_filename)
+        summary_path = os.path.realpath(summary_path)
 
         resource_filename = f'{self.make_model_name(target_var, target_hour)}_{begin_date}_{end_date}.json'
         resource_path = os.path.join(output_dir, resource_filename)
+        resource_path = os.path.realpath(resource_path)
 
         summary_dict = {
             'source': self.name,
             'sourcelabel': self.name.replace('_', ' '),
             'site': target_var,
-            'created': datetime.utcnow(),
-            'start': datetime.utcfromtimestamp(begin_date),
-            'stop': datetime.utcfromtimestamp(end_date),
+            'created': round(datetime.utcnow().timestamp()),
+            'start': _datestring_to_posix(begin_date),
+            'stop': _datestring_to_posix(end_date),
             'resource': resource_path
         }
 
         data_dict = {
-            'start': datetime.utcfromtimestamp(begin_date),
-            'stop': datetime.utcfromtimestamp(end_date),
+            'start': _datestring_to_posix(begin_date),
+            'stop': _datestring_to_posix(end_date),
             'site': target_var,
             'columns': [
                 {
@@ -165,7 +168,8 @@ class SKExperiment(Experiment):
         # make predictions
         for idx, data_point in enumerate(data):
             prediction = model.predict([data_point])
-            data_point = [reftimes[idx], prediction[0]]
+            timestamp = pd.to_datetime(reftimes[idx]).timestamp()
+            data_point = [timestamp, prediction[0]]
             data_dict['rows'].append(data_point)
 
         # write the summary file
@@ -177,3 +181,8 @@ class SKExperiment(Experiment):
             json.dump(data_dict, resource_file, separators=(',', ':'))
 
         return summary_path, resource_path
+
+
+def _datestring_to_posix(date_string):
+    timestring = pd.to_datetime(date_string, utc=True).timestamp()
+    return round(timestring)
