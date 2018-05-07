@@ -168,7 +168,7 @@ class SKExperiment(Experiment):
         # make predictions
         for idx, data_point in enumerate(data):
             prediction = model.predict([data_point])
-            timestamp = pd.to_datetime(reftimes[idx]).timestamp()
+            timestamp = _datestring_to_posix(reftimes[idx])
             data_point = [timestamp, prediction[0]]
             data_dict['rows'].append(data_point)
 
