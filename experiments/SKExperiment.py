@@ -5,6 +5,8 @@ The constructor allows experiments to be created from any scikit-learn regressio
 """
 
 import os
+import json
+from datetime import datetime
 import numpy as np
 from apollo.datasets import simple_loader
 from experiments.Experiment import Experiment
@@ -16,6 +18,7 @@ from sklearn.externals import joblib
 _CACHE_DIR = '../data'                  # where the NAM and GA-POWER data resides
 _MODELS_DIR = '../models'               # directory where serialized models will be saved
 _OUTPUT_DIR = '../predictions'          # directory where predictions are saved
+_SUMMARY_DIR = '../summaries'          # directory where predictions are saved
 _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'     # name of target var
 
 # scoring metrics
@@ -101,23 +104,76 @@ class SKExperiment(Experiment):
 
         return mean_scores
 
-    # TODO: output predictions in format required by Dr. Maier
-    def predict(self, begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET,
-                cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, output_dir=_OUTPUT_DIR):
+    def predict(self, begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET, cache_dir=_CACHE_DIR,
+                save_dir=_MODELS_DIR, summary_dir=_SUMMARY_DIR, output_dir=_OUTPUT_DIR):
+        # load the trained model
         model_name = self.make_model_name(target_hour, target_var)
         path_to_model = os.path.join(save_dir, model_name)
         model = self.load(save_dir, target_hour, target_var)
         if model is None:
             print("You must train the model before making predictions!\nNo serialized model found at '%s'" % path_to_model)
             return None
+
+        # load NAM data without labels
         data = simple_loader.load(start=begin_date, stop=end_date, target_var=None, cache_dir=cache_dir)[0]
         reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
+
+        # ensure output directories exist
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        outpath = os.path.join(output_dir, model_name + '.out.csv')
-        with open(outpath, 'w') as outfile:
-            for idx, data_point in enumerate(data):
-                prediction = model.predict([data_point])
-                outfile.write("%s,%s\n" % (reftimes[idx], prediction[0]))
+        if not os.path.exists(summary_dir):
+            os.makedirs(summary_dir)
 
-        return outpath
+        # create path to summary and to resource files
+        summary_filename = f'{self.make_model_name(target_var, target_hour)}_{begin_date}_{end_date}.summary'
+        summary_path = os.path.join(summary_dir, summary_filename)
+
+        resource_filename = f'{self.make_model_name(target_var, target_hour)}_{begin_date}_{end_date}.json'
+        resource_path = os.path.join(output_dir, resource_filename)
+
+        summary_dict = {
+            'source': self.name,
+            'sourcelabel': self.name.replace('_', ' '),
+            'site': target_var,
+            'created': datetime.utcnow(),
+            'start': datetime.utcfromtimestamp(begin_date),
+            'stop': datetime.utcfromtimestamp(end_date),
+            'resource': resource_path
+        }
+
+        data_dict = {
+            'start': datetime.utcfromtimestamp(begin_date),
+            'stop': datetime.utcfromtimestamp(end_date),
+            'site': target_var,
+            'columns': [
+                {
+                    'label': 'TIMESTAMP',
+                    'units': '',
+                    'longname': '',
+                    'type': 'datetime'
+                },
+                {
+                    'label': target_var,
+                    'units': 'w/m2',
+                    'longname': '',
+                    'type': 'number'
+                },
+            ],
+            'rows': []
+        }
+
+        # make predictions
+        for idx, data_point in enumerate(data):
+            prediction = model.predict([data_point])
+            data_point = [reftimes[idx], prediction[0]]
+            data_dict['rows'].append(data_point)
+
+        # write the summary file
+        with open(summary_path, 'w') as summary_file:
+            json.dump(summary_dict, summary_file, separators=(',', ':'))
+
+        # write the file containing the data
+        with open(resource_path, 'w') as resource_file:
+            json.dump(data_dict, resource_file, separators=(',', ':'))
+
+        return summary_path, resource_path

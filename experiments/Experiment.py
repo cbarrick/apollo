@@ -29,6 +29,6 @@ class Experiment(object):
     def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, num_folds):
         pass
 
-    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, output_dir):
+    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, summary_dir, output_dir):
         pass
 
