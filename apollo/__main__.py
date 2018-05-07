@@ -68,15 +68,15 @@ def main():
                              'subdirectory with downloaded NAM data. If training or evaluating a model, '
                              'this directory should also contain a `GA-POWER` subdirectory with the target data.')
 
+    parser.add_argument('--save_dir', '-s', default='./models', type=str,
+                        help='The directory where trained models will be serialized. This directory will be created if'
+                             ' it does not exist.')
+
     subcommands = parser.add_subparsers()
 
     # train
     train = subcommands.add_parser('train', argument_default=argparse.SUPPRESS, description='Train a model.')
     train.set_defaults(action='train')
-
-    train.add_argument('--save_dir', '-s', default='./models', type=str,
-                       help='The directory where trained models will be serialized. This directory will be created if'
-                            ' it does not exist.')
     train.add_argument('--no_tune', '-p', action='store_true',
                        help='If set, hyperparameter tuning will NOT be performed during training.')
     train.add_argument('--num_folds', '-n', default=3, type=int,
@@ -87,19 +87,15 @@ def main():
     evaluate = subcommands.add_parser('evaluate', argument_default=argparse.SUPPRESS,
                                       description='Evaluate a model using n-fold cross-validation')
     evaluate.set_defaults(action='evaluate')
-
     evaluate.add_argument('--num_folds', '-n', default=3, type=int,
                           help='The number of folds to use when computing cross-validated accuracy.')
-    evaluate.add_argument('--save_dir', '-s', default='./models', type=str,
-                          help='The directory where trained models are serialized during training.')
 
     # predict
     predict = subcommands.add_parser('predict', argument_default=argparse.SUPPRESS,
                                      description='Make predictions using a trained model.')
     predict.set_defaults(action='predict')
-
-    predict.add_argument('--save_dir', '-s', default='./models', type=str,
-                         help='The directory where trained models are serialized during training.')
+    predict.add_argument('--summary_dir', '-z', default='./summaries', type=str,
+                         help='The directory where summary files will be written.')
     predict.add_argument('--output_dir', '-o', default='./predictions', type=str,
                          help='The directory where predictions will be written.')
 
@@ -126,8 +122,8 @@ def main():
         for key in scores:
             print("Mean %s: %0.4f" % (key, scores[key]))
     elif action == 'predict':
-        prediction_file = experiment.predict(**args)
-        print(f'Output written to {prediction_file}')
+        summary_path, prediction_path = experiment.predict(**args)
+        print(f'Summary file written to {summary_path}\nPredictions written to {prediction_path}')
     else:
         print(f'ERROR: Action {action} is not defined for model {experiment}')
         parser.print_help()
