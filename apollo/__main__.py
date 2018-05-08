@@ -1,18 +1,40 @@
 import argparse
-from experiments import dtree_regressor
-from experiments import linreg
-from experiments import svr
-from experiments import knn
-from experiments import random_forest
-from experiments import gradient_boosted_trees
+import numpy as np
+from experiments.SKExperiment import SKExperiment
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 
 EXPERIMENTS = {
-    'dtree': dtree_regressor,
-    'linreg': linreg,
-    'rf': random_forest,
-    'gbt': gradient_boosted_trees,
-    'svr': svr,
-    'knn': knn
+    'linreg': SKExperiment('linear_regression', LinearRegression, parameter_grid=None),
+    'svr': SKExperiment('svr', SVR, {
+                'C': np.arange(0.6, 1.6, 0.2),                  # penalty parameter C of the error term
+                'epsilon': np.arange(0.1, 0.8, 0.1),            # width of the no-penalty region
+                'kernel': ['rbf', 'sigmoid'],                   # kernel function
+                'gamma': [1/500, 1/1000, 1/2000, 'auto']        # kernel coefficient
+            }),
+    'knn': SKExperiment('knn', KNeighborsRegressor, {
+                'n_neighbors': np.arange(3, 25, 2),             # k
+                'weights': ['uniform', 'distance'],             # how are neighboring values weighted
+            }),
+    'dtree': SKExperiment('dtree', DecisionTreeRegressor, {
+                'splitter': ['best', 'random'],                 # splitting criterion
+                'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
+                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+            }),
+    'rf': SKExperiment('rf', RandomForestRegressor, {
+                'n_estimators': [10, 50, 100, 250],
+                'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
+                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+            }),
+    'gbt': SKExperiment('gbt', XGBRegressor, {
+                'learning_rate': np.arange(0.01, 0.13, 0.02),   # learning rate
+                'n_estimators': [10, 20, 50, 100, 200],         # number of boosting stages
+                'max_depth': [3, 5, 10, 50, 100],               # Maximum depth of the tree. None means unbounded.
+            }),
 }
 
 
@@ -46,15 +68,15 @@ def main():
                              'subdirectory with downloaded NAM data. If training or evaluating a model, '
                              'this directory should also contain a `GA-POWER` subdirectory with the target data.')
 
+    parser.add_argument('--save_dir', '-s', default='./models', type=str,
+                        help='The directory where trained models will be serialized. This directory will be created if'
+                             ' it does not exist.')
+
     subcommands = parser.add_subparsers()
 
     # train
     train = subcommands.add_parser('train', argument_default=argparse.SUPPRESS, description='Train a model.')
     train.set_defaults(action='train')
-
-    train.add_argument('--save_dir', '-s', default='./models', type=str,
-                       help='The directory where trained models will be serialized. This directory will be created if'
-                            ' it does not exist.')
     train.add_argument('--no_tune', '-p', action='store_true',
                        help='If set, hyperparameter tuning will NOT be performed during training.')
     train.add_argument('--num_folds', '-n', default=3, type=int,
@@ -65,23 +87,15 @@ def main():
     evaluate = subcommands.add_parser('evaluate', argument_default=argparse.SUPPRESS,
                                       description='Evaluate a model using n-fold cross-validation')
     evaluate.set_defaults(action='evaluate')
-
     evaluate.add_argument('--num_folds', '-n', default=3, type=int,
                           help='The number of folds to use when computing cross-validated accuracy.')
-    evaluate.add_argument('--metrics', '-r', default=['neg_mean_absolute_error', 'r2'], nargs='+',
-                          help='The set of metrics used to evaluate the model.  '
-                               'Each metric should be a string from the Regression section of '
-                               'http://scikit-learn.org/stable/modules/model_evaluation.html.')
-    evaluate.add_argument('--save_dir', '-s', default='./models', type=str,
-                       help='The directory where trained models are serialized during training.')
 
     # predict
     predict = subcommands.add_parser('predict', argument_default=argparse.SUPPRESS,
                                      description='Make predictions using a trained model.')
     predict.set_defaults(action='predict')
-
-    predict.add_argument('--save_dir', '-s', default='./models', type=str,
-                         help='The directory where trained models are serialized during training.')
+    predict.add_argument('--summary_dir', '-z', default='./summaries', type=str,
+                         help='The directory where summary files will be written.')
     predict.add_argument('--output_dir', '-o', default='./predictions', type=str,
                          help='The directory where predictions will be written.')
 
@@ -108,8 +122,8 @@ def main():
         for key in scores:
             print("Mean %s: %0.4f" % (key, scores[key]))
     elif action == 'predict':
-        prediction_file = experiment.predict(**args)
-        print(f'Output written to {prediction_file}')
+        summary_path, prediction_path = experiment.predict(**args)
+        print(f'Summary file written to {summary_path}\nPredictions written to {prediction_path}')
     else:
         print(f'ERROR: Action {action} is not defined for model {experiment}')
         parser.print_help()

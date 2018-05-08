@@ -44,8 +44,6 @@ Run `python -m apollo <action> -h` to view help for a specific action.
 
 ### Additional Notes
 
-By default, models are evaluated using the Negative Mean Absolute Error (NMAE) criterion.
-
 Data must be cached (downloaded) locally before it can be targeted by Apollo.  
 The `--cache_dir` argument specifies the location of the downloaded dataa.
 It should contain two subdirectories, `NAM-NMM` and `GA-POWER`.
@@ -62,11 +60,17 @@ loader.
 
 ### Contribution Guidelines
 
-TODO
+If you would like to contribute, please send us a pull request!  
+We are always happy to look at improvements and new experiments.
+
+Code should comply with PEP8 standards as closely as possible.  
+We use [Google-style docstrings](http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html) 
+to document the Python modules in this project.
 
 ### Writing new experiments
 
-An experiment is a Python module that exposes `train`, `evaluate`, and `predict` functions.
+An experiment is a Python object that inherits from [Experiment](experiments/Experiment.py).
+Custom experiments should overwrite the `save`, `load`, `train`, `evaluate`, and `predict` functions.
 
 An experiment's `train` function should train a machine learning model on the dataset specified 
 by the set of `experiment_args` and should serialize the model to a file.
@@ -81,19 +85,6 @@ This function should use the serialized model from the `train` function to make 
 predictions to a file.
 Currently, the format of the predictions file is unstable.  It will be documented once stabilized.
 The `predict` function must return the path where the predictions were saved.
-
-### Exposing experiments to the command-line
-
-Experiments that conform to the above specifications can be seamlessly integrated with the existing command-line application.
-To add a new experiment, import it in the [`apollo/__main__.py`](apollo/__main__.py) file, and add a key:value
-pair to the `EXPERIMENTS` dictionary at the top of the file.
-The key should be a logical name for the machine learning model that your experiment uses.
-The value should be the experiment module which you imported.
-
-### Example
-
-The [`experiments/dtree_regressor.py`](experiments/dtree_regressor.py) serves as a well-documented example of 
-an experiment that can be run using the command-line interface.
 
 
 ## Contributors
