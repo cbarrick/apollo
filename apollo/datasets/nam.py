@@ -38,7 +38,6 @@ import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 import scipy.spatial
@@ -682,50 +681,3 @@ class NamLoader:
             start += delta
 
         return self._combine(datasets)
-
-
-@xr.register_dataarray_accessor('geo')
-class GeoExtension:
-    '''Extends `xr.DataArray` with geographic specific features.
-    '''
-    def __init__(self, xr_dataarray):
-        self.x = xr_dataarray
-
-    def plot(self, scale='10m', show=True, block=False):
-        '''A helper to plot geographic data.
-
-        Args:
-            scale (str):
-                The resolution of the coastlines and state/country borders.
-                Must be one of '10m' (highest resolution), '50m', or '110m'.
-            show (bool):
-                If True, show the plot immediately.
-            block (bool):
-                The blocking behavior when showing the plot.
-
-        Example:
-            Plot the 0-hour forecast of surface temperature:
-            >>> plot_geo(ds.isel(reftime=0, forecast=0).TMP_SFC)
-        '''
-        vmin = self.x.min()
-        vmax = self.x.max()
-
-        x = self.x
-        while x.ndim > 2:
-            x = x[0]
-
-        feature_kws = {'scale':scale, 'facecolor':'none', 'edgecolor':'black'}
-        coast = cf.NaturalEarthFeature('physical', 'coastline', **feature_kws)
-        countries = cf.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land', **feature_kws)
-        states = cf.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines', **feature_kws)
-
-        fig = plt.figure()
-        ax = plt.axes(projection=NAM218_PROJ)
-        ax.add_feature(coast)
-        ax.add_feature(countries)
-        ax.add_feature(states)
-        im = ax.pcolormesh(x.x, x.y, x.data, vmin=vmin, vmax=vmax)
-
-        if show:
-            plt.show(block=block)
-        return ax
