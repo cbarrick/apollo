@@ -1,13 +1,10 @@
 from pathlib import Path
 
+import dask.array as da
 import numpy as np
 import scipy as sp
 import scipy.spatial
 import xarray as xr
-
-import dask
-from dask import array as da
-from dask.distributed import Client
 
 import torch
 from torch.utils.data import Dataset as TorchDataset
@@ -166,10 +163,6 @@ class SolarDataset(TorchDataset):
             standardize=True, cache_dir='./data'):
 
         assert 0 < window
-
-        # Create local Dask cluster and connect.
-        # This is not required, but doing so adds useful debugging features.
-        self.client = Client()
 
         cache_dir = Path(cache_dir)
         nam_cache = cache_dir / 'NAM-NMM'
