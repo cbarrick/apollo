@@ -36,18 +36,32 @@ PLANAR_FEATURES = [
 ]
 
 
-def find_nearest(data, *points, **kwargs):
-    '''Find the indices of `data` nearest to `points`.
+def find_nearest(data, point):
+    '''Find the index into ``data`` nearest to ``point``.
+
+    The point and data share their outer dimension. In other words, if ``data``
+    has axes ``(a, b, c)`` then ``point`` should have a single axis ``(a,)``.
+    The value returned indexes into axes ``(b, c)``.
+
+    Arguments:
+        data (array):
+            The data to search.
+        point (array):
+            Search for the index nearest to this point.
 
     Returns:
         The unraveled indices into `data` of the cells nearest to `points`.
     '''
-    n = len(data)
-    shape = data[0].shape
-    data = np.require(data).reshape(n, -1).T
-    points = np.require(points).reshape(-1, n)
-    idx = sp.spatial.distance.cdist(points, data, **kwargs).argmin(axis=1)
-    return tuple(np.unravel_index(i, shape) for i in idx)
+    data = np.require(data)
+    point = np.require(point)
+    (n, *shape) = data.shape
+    assert len(data) == len(point)
+
+    data = data.reshape(n, -1).T  # cdist wants data flattened and transposed
+    points = point.reshape(1, n)  # cdist wants a batch of points
+    distance = sp.spatial.distance.cdist(points, data)
+    idx = distance.argmin(axis=1)[0]  # we only have one point
+    return np.unravel_index(idx, shape)
 
 
 def slice_xy(data, center, shape):
@@ -66,9 +80,8 @@ def slice_xy(data, center, shape):
         subset (xr.Dataset):
             The result of slicing data.
     '''
-    # TODO: The `find_nearest` function is a little too clunky.
     latlon = np.stack([data['lat'], data['lon']])
-    i, j = find_nearest(latlon, center)[0]  # indices of center cell
+    i, j = find_nearest(latlon, center)
     h, w = shape  # desired height and width of the region
     top = i - int(np.ceil(h/2)) + 1
     bottom = i + int(np.floor(h/2)) + 1
