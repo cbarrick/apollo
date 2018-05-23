@@ -82,7 +82,7 @@ def slice_xy(data, center, shape):
     '''
     latlon = np.stack([data['lat'], data['lon']])
     i, j = find_nearest(latlon, center)
-    h, w = shape  # desired height and width of the region
+    h, w = shape
     top = i - int(np.ceil(h/2)) + 1
     bottom = i + int(np.floor(h/2)) + 1
     left = j - int(np.ceil(w/2)) + 1
@@ -127,20 +127,49 @@ def extract_temporal_features(data):
     })
 
 
+def create_window(base, window_size):
+    '''Creates a sliding window over the reftime axis.
+
+    Arguments:
+        base (xr.Dataset):
+            The dataset to window.
+        window_size (int):
+            The size of the window.
+
+    Returns:
+        windowed (xr.Dataset):
+            The input dataset extended with a silding window.
+    '''
+    datasets = [base]
+    base_names = list(base.data_vars)
+
+    new_names = {f'{name}':f'{name}_0' for name in base_names}
+    data = base.isel(forecast=0).rename(new_names)
+
+    timedelta = np.timedelta64(6, 'h')
+
+    for i in range(window_size - 1):
+        data = data.copy()
+        data['reftime'] = data['reftime'] + timedelta
+        new_names = {f'{name}_{i}':f'{name}_{i+1}' for name in base_names}
+        data = data.rename(new_names)
+        datasets.append(data)
+
+    return xr.merge(datasets, join='inner')
+
+
 class SolarDataset(TorchDataset):
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
-            center=ATHENS_LATLON, geo_shape=(3, 3),
+            center=ATHENS_LATLON, geo_shape=(3, 3), window=1,
             target='UGA-C-POA-1-IRR', target_hour=24,
             standardize=True, cache_dir='./data'):
+
+        assert 0 < window
 
         # Create local Dask cluster and connect.
         # This is not required, but doing so adds useful debugging features.
         self.client = Client()
-
-        year = np.datetime64(start).astype(object).year
-        stop_year = np.datetime64(stop).astype(object).year
-        assert year == stop_year, "start and stop must be same year"
 
         cache_dir = Path(cache_dir)
         nam_cache = cache_dir / 'NAM-NMM'
@@ -155,16 +184,25 @@ class SolarDataset(TorchDataset):
             data = slice_xy(data, center, geo_shape)
 
         if standardize:
-            d = data.drop(temporal_features) if temporal_features else data
-            mean = d.mean()
-            std = d.std()
+            mean = data.mean()
+            std = data.std()
             data = (data - mean) / std
+
+        if 1 < window:
+            data = create_window(data, window)
 
         if temporal_features:
             temporal_data = extract_temporal_features(data)
             data = xr.merge([data, temporal_data])
 
         if target:
+            # When using targets, the start and stop year must be the same.
+            # This is because the targets are broken out by year and the loader
+            # only loads one group. This can be improved...
+            year = np.datetime64(start, 'Y')
+            stop_year = np.datetime64(stop, 'Y')
+            assert year == stop_year, "start and stop must be same year"
+
             target_data = ga_power.open_mb007(target, data_dir=target_cache, group=year)
             target_data['reftime'] -= np.timedelta64(target_hour, 'h')
             data = xr.merge([data, target_data], join='inner')
