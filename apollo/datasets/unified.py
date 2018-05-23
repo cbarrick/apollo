@@ -77,7 +77,8 @@ def slice_xy(data, center, shape):
         subset (xr.Dataset):
             The result of slicing data.
     '''
-    latlon = np.stack([data['lat'], data['lon']])
+    lat, lon = data['lat'], data['lon']
+    latlon = np.stack([lat, lon])
     i, j = find_nearest(latlon, center)
     h, w = shape
     top = i - int(np.ceil(h/2)) + 1
@@ -106,36 +107,34 @@ def extract_temporal_features(data):
                 - ``time_of_day_cos``
     '''
     reftime = data['reftime'].astype('float64')
-
     time_of_year = reftime / 3.1536e+16  # convert from ns to year
-    time_of_year_sin = np.sin(time_of_year * 2 * np.pi)
-    time_of_year_cos = np.cos(time_of_year * 2 * np.pi)
-
     time_of_day = reftime / 8.64e+13  # convert from ns to day
-    time_of_day_sin = np.sin(time_of_day * 2 * np.pi)
-    time_of_day_cos = np.cos(time_of_day * 2 * np.pi)
 
     return xr.Dataset({
-        'reftime': reftime,
-        'time_of_year_sin': time_of_year_sin,
-        'time_of_year_cos': time_of_year_cos,
-        'time_of_day_sin': time_of_day_sin,
-        'time_of_day_cos': time_of_day_cos,
+        'time_of_year_sin': np.sin(time_of_year * 2 * np.pi),
+        'time_of_year_cos': np.cos(time_of_year * 2 * np.pi),
+        'time_of_day_sin': np.sin(time_of_day * 2 * np.pi),
+        'time_of_day_cos': np.cos(time_of_day * 2 * np.pi),
     })
 
 
-def create_window(base, window_size):
+def window_reftime(base, lag):
     '''Creates a sliding window over the reftime axis.
+
+    Each data variable is copied and renamed from '{NAME}' to '{NAME}_{I}'
+    for each integer I on the range [0,lag). For each I, the corresponding
+    variables are offset along the reftime axis by 6I hours. Variables added
+    by this windowing only include the 0-hour forecast.
 
     Arguments:
         base (xr.Dataset):
             The dataset to window.
-        window_size (int):
+        lag (int):
             The size of the window.
 
     Returns:
         windowed (xr.Dataset):
-            The input dataset extended with a silding window.
+            The resulting dataset.
     '''
     datasets = [base]
     base_names = list(base.data_vars)
@@ -145,7 +144,7 @@ def create_window(base, window_size):
 
     timedelta = np.timedelta64(6, 'h')
 
-    for i in range(window_size - 1):
+    for i in range(lag - 1):
         data = data.copy()
         data['reftime'] = data['reftime'] + timedelta
         new_names = {f'{name}_{i}':f'{name}_{i+1}' for name in base_names}
@@ -156,13 +155,73 @@ def create_window(base, window_size):
 
 
 class SolarDataset(TorchDataset):
+    '''A high level interface for the solar prediction dataset.
+
+    This class unifies the NAM-NMM and GA Power datasets and provides many
+    features including feature and geographic subsetting, sliding window,
+    temporal feature extraction, and standardization.
+
+    This class exposes a PyTorch Dataset interface (i.e. `__len__` and
+    `__getitem__`). Each row is a tuple with one element for each feature. If
+    a target variable is used, it will always be the final column. The dataset
+    can be dumped to a tabular dask array, useful for experiments with
+    Scikit-learn.
+
+    Attributes:
+        xrds (xr.Dataset):
+            The underlying xarray dataset.
+        target (str or None):
+            The name of the target variable.
+        labels (tuple of str):
+            Labels for each feature column.
+    '''
+
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
-            center=ATHENS_LATLON, geo_shape=(3, 3), window=1, forecast=36,
+            geo_shape=(3, 3), center=ATHENS_LATLON, lag=1, forecast=36,
             target='UGA-C-POA-1-IRR', target_hour=24,
             standardize=True, cache_dir='./data'):
+        '''Initialize a SolarDataset
 
-        assert 0 < window
+        Arguments:
+            start (timestamp):
+                The timestamp of the first reftime.
+            stop (timestamp):
+                The timestamp of the final reftime
+            feature_subset (set of str or None):
+                The set of features to select. If None, all features are used.
+                The default `PLANAR_FEATURES` is a selection of features with
+                trivial z-axes.
+            temporal_features (bool):
+                If true, extend with additional temporal features for time of
+                day and time of year.
+            geo_shape (pair of int or None):
+                If given, the y and x axes are sliced to this shape, in grid
+                units (roughly 12km). The default `ATHENS_LATLON` is the rough
+                location of the solar farm which collects the target data.
+            center (pair of float):
+                The latitude and longitude of the center geographic slice.
+                This only applies when ``geo_shape`` is not None.
+            lag (int):
+                If greater than 1, create a sliding window over the reftime
+                axis for data variables at the 0-hour forecast.
+            forecast (int):
+                The maximum forecast hour to include.
+            target (str or None):
+                The name of a variable in the GA Power dataset to include as a
+                target. If a target is given the year of the start and stop
+                timestamps must be the same (this can be improved).
+            target_hour (int):
+                The hour offset of the reftime in the target to predict.
+                This causes the target variable to shift along the reftime
+                axis by this many hours.
+            standardize (bool):
+                If true, standardize the data to center mean and unit variance.
+            cache_dir (str):
+                The directory containing the data.
+        '''
+
+        assert 0 < lag
 
         cache_dir = Path(cache_dir)
         nam_cache = cache_dir / 'NAM-NMM'
@@ -184,8 +243,8 @@ class SolarDataset(TorchDataset):
             std = data.std()
             data = (data - mean) / std
 
-        if 1 < window:
-            data = create_window(data, window)
+        if 1 < lag:
+            data = window_reftime(data, lag)
 
         if temporal_features:
             temporal_data = extract_temporal_features(data)
@@ -204,35 +263,44 @@ class SolarDataset(TorchDataset):
             data = xr.merge([data, target_data], join='inner')
             data = data.set_coords(target)  # NOTE: the target is a coordinate, not data
 
-        self.dataset = data.persist()
-        self.target = target
+        self.xrds = data.persist()
+        self.target = target or None
 
     def __len__(self):
-        return len(self.dataset['reftime'])
+        return len(self.xrds['reftime'])
 
     def __getitem__(self, index):
-        dataset = self.dataset.isel(reftime=index)
-        arrays = dataset.data_vars.values()
-        arrays = (np.as_array(a) for a in arrays)
+        data = self.xrds.isel(reftime=index)
+        arrays = data.data_vars.values()
+        arrays = (np.asarray(a) for a in arrays)
 
         if self.target:
-            target = dataset[self.target]
+            target = data[self.target]
             target = np.asarray(target)
             return (*arrays, target)
         else:
             return (*arrays,)
 
+    @property
     def labels(self):
-        '''Get the labels of the columns.
+        '''The labels of each column.
         '''
-        names = tuple(self.dataset.data_vars)
+        names = tuple(self.xrds.data_vars)
         if self.target:
             return (*names, self.target)
         else:
             return (*names,)
 
+    @property
+    def shape(self):
+        '''The shape of each column.
+        '''
+        names = self.labels
+        data = self.xrds.isel(reftime=0)
+        return tuple(data[name].shape for name in names)
+
     def tabular(self):
-        '''Get a tabular version of the dataset as a dask array(s).
+        '''Get a tabular version of the dataset as dask arrays.
 
         Returns:
             x (array of shape (n,m)):
@@ -242,14 +310,14 @@ class SolarDataset(TorchDataset):
                 The target array. This is only returned if a target is given
                 to the constructor.
         '''
-        n = len(self.dataset['reftime'])
-        x = self.dataset.data_vars.values()
+        n = len(self.xrds['reftime'])
+        x = self.xrds.data_vars.values()
         x = (a.data for a in x)
         x = (a.reshape(n, -1) for a in x)
         x = np.concatenate(list(x), axis=1)
 
         if self.target:
-            y = self.dataset[self.target]
+            y = self.xrds[self.target]
             y = y.data
             assert y.shape == (n,)
             return x, y
