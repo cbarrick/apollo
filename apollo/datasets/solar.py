@@ -332,7 +332,7 @@ class SolarDataset(TorchDataset):
         x = self.xrds.data_vars.values()
         x = (a.data for a in x)
         x = (a.reshape(n, -1) for a in x)
-        x = np.concatenate(list(x), axis=1)
+        x = da.concatenate(list(x), axis=1)
 
         if self.target:
             y = self.xrds[self.target]
