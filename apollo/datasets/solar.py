@@ -9,7 +9,7 @@ import xarray as xr
 import torch
 from torch.utils.data import Dataset as TorchDataset
 
-from apollo.datasets import nam, ga_power
+from apollo.datasets.loaders import nam, ga_power
 
 
 # The latitude and longitude of the solar array.
