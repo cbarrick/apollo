@@ -161,7 +161,7 @@ def create_window(base, window_size):
 class SolarDataset(TorchDataset):
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
-            center=ATHENS_LATLON, geo_shape=(3, 3), window=1,
+            center=ATHENS_LATLON, geo_shape=(3, 3), window=1, forecast=36,
             target='UGA-C-POA-1-IRR', target_hour=24,
             standardize=True, cache_dir='./data'):
 
@@ -182,6 +182,9 @@ class SolarDataset(TorchDataset):
 
         if geo_shape:
             data = slice_xy(data, center, geo_shape)
+
+        if forecast is not None:
+            data = data.isel(forecast=slice(0, forecast+1))
 
         if standardize:
             mean = data.mean()
