@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import numpy as np
+import scipy as sp
+import scipy.spatial
 import xarray as xr
 
 import dask
@@ -34,6 +36,20 @@ PLANAR_FEATURES = [
 ]
 
 
+def find_nearest(data, *points, **kwargs):
+    '''Find the indices of `data` nearest to `points`.
+
+    Returns:
+        The unraveled indices into `data` of the cells nearest to `points`.
+    '''
+    n = len(data)
+    shape = data[0].shape
+    data = np.require(data).reshape(n, -1).T
+    points = np.require(points).reshape(-1, n)
+    idx = sp.spatial.distance.cdist(points, data, **kwargs).argmin(axis=1)
+    return tuple(np.unravel_index(i, shape) for i in idx)
+
+
 def slice_xy(data, center, shape):
     '''Slice a dataset in the x and y dimensions.
 
@@ -50,9 +66,9 @@ def slice_xy(data, center, shape):
         subset (xr.Dataset):
             The result of slicing data.
     '''
-    # TODO: The `nam.find_nearest` function is a little too clunky.
+    # TODO: The `find_nearest` function is a little too clunky.
     latlon = np.stack([data['lat'], data['lon']])
-    i, j = nam.find_nearest(latlon, center)[0]  # indices of center cell
+    i, j = find_nearest(latlon, center)[0]  # indices of center cell
     h, w = shape  # desired height and width of the region
     top = i - int(np.ceil(h/2)) + 1
     bottom = i + int(np.floor(h/2)) + 1

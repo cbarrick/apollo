@@ -39,8 +39,6 @@ import logging
 import cartopy.crs as ccrs
 import cartopy.feature as cf
 import numpy as np
-import scipy as sp
-import scipy.spatial
 import requests
 import xarray as xr
 
@@ -149,33 +147,6 @@ def open_nc(reftime='now', **kwargs):
 
 def normalize_reftime(reftime='now'):
     return np.datetime64(reftime, '6h')
-
-
-def find_nearest(data, *points, **kwargs):
-    '''Find the indices of `data` nearest to `points`.
-
-    Returns:
-        The unraveled indices into `data` of the cells nearest to `points`.
-    '''
-    n = len(data)
-    shape = data[0].shape
-    data = np.require(data).reshape(n, -1).T
-    points = np.require(points).reshape(-1, n)
-    idx = sp.spatial.distance.cdist(points, data, **kwargs).argmin(axis=1)
-    return tuple(np.unravel_index(i, shape) for i in idx)
-
-
-def diagonal_slice(data, a, b, **kwargs):
-    '''Build a diagonal slice between the points nearest to `a` and `b`.
-
-    The slice selects a cube where `a` and `b` are opposite corners.
-
-    Returns:
-        A list of slices to select the cube where each slices the
-        corresponding axis in `data`.
-    '''
-    a, b = find_nearest(data, a, b, **kwargs)
-    return [slice(i, j) for i, j in zip(a,b)]
 
 
 def proj_coords(lats, lons):
@@ -429,10 +400,6 @@ class NamLoader:
             ds = ds.rename(features)
 
         # Subset the geographic region to a square area centered around Macon, GA.
-        # The slice was computed roughly like this:
-        # >>> a = (24.415094, -93.995674) # latlon coordinates
-        # >>> b = (40.090744, -71.77018) # latlon coordinates
-        # >>> diagonal_slice((ds.lat, ds.lon), a, b)
         ds = ds.isel(y=slice(63, 223, None), x=slice(355, 515, None))
 
         # Free memory from unused features and areas.
