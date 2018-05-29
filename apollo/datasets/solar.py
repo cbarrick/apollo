@@ -158,14 +158,15 @@ class SolarDataset(TorchDataset):
     '''A high level interface for the solar prediction dataset.
 
     This class unifies the NAM-NMM and GA Power datasets and provides many
-    features including feature and geographic subsetting, sliding window,
-    temporal feature extraction, and standardization.
+    functionalities including feature and geographic subsetting, sliding
+    window, time of day/year extraction, and standardization.
 
     This class exposes a PyTorch Dataset interface (i.e. `__len__` and
-    `__getitem__`). Each row is a tuple with one element for each feature. If
-    a target variable is used, it will always be the final column. The dataset
-    can be dumped to a tabular dask array, useful for experiments with
-    Scikit-learn.
+    `__getitem__`). Each row is a tuple with one element per feature. If a
+    target variable is used, it will always be the final column.
+
+    The dataset can be dumped to a tabular array, useful for experiments
+    with Scikit-learn.
 
     Attributes:
         xrds (xr.Dataset):
@@ -174,6 +175,12 @@ class SolarDataset(TorchDataset):
             The name of the target variable.
         labels (tuple of str):
             Labels for each feature column.
+        mean (xr.Dataset or float):
+            If the data is standardized, a dataset containing the mean
+            values used to center the data variables, or 0 otherwise.
+        std (xr.Dataset or float):
+            If the data is standardized, a dataset containing the standard
+            deviations used to scale the data variables, or 1 otherwise.
     '''
 
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
@@ -217,6 +224,7 @@ class SolarDataset(TorchDataset):
                 axis by this many hours.
             standardize (bool):
                 If true, standardize the data to center mean and unit variance.
+                Note that the target column is never standardized.
             cache_dir (str):
                 The directory containing the data.
         '''
@@ -261,10 +269,11 @@ class SolarDataset(TorchDataset):
             target_data = ga_power.open_mb007(target, data_dir=target_cache, group=year)
             target_data['reftime'] -= np.timedelta64(target_hour, 'h')
             data = xr.merge([data, target_data], join='inner')
-            data = data.set_coords(target)  # NOTE: the target is a coordinate, not data
 
         self.xrds = data.persist()
         self.target = target or None
+        self.mean = mean if standardize else 0.0
+        self.std = std if standardize else 1.0
 
     def __len__(self):
         return len(self.xrds['reftime'])
@@ -283,7 +292,7 @@ class SolarDataset(TorchDataset):
 
     @property
     def labels(self):
-        '''The labels of each column.
+        '''The labels of each feature column.
         '''
         names = tuple(self.xrds.data_vars)
         if self.target:
@@ -293,19 +302,27 @@ class SolarDataset(TorchDataset):
 
     @property
     def shape(self):
-        '''The shape of each column.
+        '''The shape of each feature column.
         '''
         names = self.labels
         data = self.xrds.isel(reftime=0)
         return tuple(data[name].shape for name in names)
 
     def tabular(self):
-        '''Get a tabular version of the dataset as dask arrays.
+        '''Return a tabular version of the dataset as dask arrays.
+
+        Many features of this dataset include spatial and temporal dimensions.
+        This method flattens and concatenates all features into a single vector
+        per instance.
+
+        The return values are dask arrays streamed from distributed memory. For
+        Scikit-learn experiments, you likely want to cast these to numpy arrays
+        in main memory using `np.asarray`.
 
         Returns:
             x (array of shape (n,m)):
                 The input features, where `n` is the number of instances and
-                `m` is the number of columns after flattening the features
+                `m` is the size of the flattened feature vector.
             y (array of shape (n,)):
                 The target array. This is only returned if a target is given
                 to the constructor.
