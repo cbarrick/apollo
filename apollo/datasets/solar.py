@@ -269,6 +269,7 @@ class SolarDataset(TorchDataset):
             target_data = ga_power.open_mb007(target, data_dir=target_cache, group=year)
             target_data['reftime'] -= np.timedelta64(target_hour, 'h')
             data = xr.merge([data, target_data], join='inner')
+            data = data.set_coords(target)  # NOTE: the target is a coordinate, not data
 
         self.xrds = data.persist()
         self.target = target or None
