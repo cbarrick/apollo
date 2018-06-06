@@ -121,10 +121,8 @@ def extract_temporal_features(data):
 def window_reftime(base, lag):
     '''Creates a sliding window over the reftime axis.
 
-    Each data variable is copied and renamed from '{NAME}' to '{NAME}_{I}'
-    for each integer I on the range [0,lag). For each I, the corresponding
-    variables are offset along the reftime axis by 6I hours. Variables added
-    by this windowing only include the 0-hour forecast.
+    This operation works by duplicating and shifting the data variables along
+    the reftime axis in 6h increments.
 
     Arguments:
         base (xr.Dataset):
@@ -144,7 +142,7 @@ def window_reftime(base, lag):
 
     timedelta = np.timedelta64(6, 'h')
 
-    for i in range(lag - 1):
+    for i in range(lag):
         data = data.copy()
         data['reftime'] = data['reftime'] + timedelta
         new_names = {f'{name}_{i}':f'{name}_{i+1}' for name in base_names}
@@ -229,7 +227,7 @@ class SolarDataset(TorchDataset):
                 The directory containing the data.
         '''
 
-        assert 0 < lag
+        assert 0 <= lag
 
         cache_dir = Path(cache_dir)
         nam_cache = cache_dir / 'NAM-NMM'
@@ -251,7 +249,7 @@ class SolarDataset(TorchDataset):
             std = data.std()
             data = (data - mean) / std
 
-        if 1 < lag:
+        if 0 < lag:
             data = window_reftime(data, lag)
 
         if temporal_features:
