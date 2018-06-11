@@ -1,6 +1,7 @@
-from datetime import datetime
-from pathlib import Path
 import logging
+from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 
 import pandas as pd
 from pandas.errors import EmptyDataError
@@ -85,6 +86,7 @@ def interval(year=None, month=None, day=None, hour=None, minute=None):
     return grouper
 
 
+@lru_cache(maxsize=8)
 def open_mb007(*cols, group=2017, data_dir='./data/GA-POWER'):
     # The data directory contains more than just the mb-007 labels.
     data_dir = Path(data_dir)

@@ -31,10 +31,11 @@ each variable has a different name depending on the type of index
 measuring the axis, e.g. `z_ISBL`.
 '''
 
+import logging
 from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 from pathlib import Path
 from time import sleep
-import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
@@ -75,6 +76,7 @@ NAM218_PROJ = ccrs.LambertConformal(
 )
 
 
+@lru_cache(maxsize=8)
 def open(*reftimes, **kwargs):
     '''Load and combine forecasts for some reference times,
     downloading and preprocessing GRIBs as necessary.
@@ -96,6 +98,7 @@ def open(*reftimes, **kwargs):
     return loader.open(*reftimes)
 
 
+@lru_cache(maxsize=8)
 def open_range(start='2017-01-01', stop='today', **kwargs):
     '''Load and combine forecasts for a range of reference times.
 
