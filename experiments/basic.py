@@ -90,7 +90,7 @@ class Experiment:
         retults = exp()
 
         timestamp = now()
-        path = Path(f'results/{self.name}-{timestamp}.csv')
+        path = Path(f'results/{exp.name}-{timestamp}.csv')
         logger.info(f'writing results to {path}')
         path.parent.mkdir(exist_ok=True)
         results.to_csv(path)
@@ -163,14 +163,14 @@ class Experiment:
             pandas.DataFrame:
                 The cross validation results.
         '''
-        self.logger.info('starting trial: {kwargs}')
+        self.logger.info(f'starting trial: {kwargs}')
         x, y = self.load_data(**kwargs)
         results = self.cross_validate(x, y)
 
         for k, v in kwargs.items():
             results[k] = [v]
 
-        self.logger.info('trial complete: {kwargs}')
+        self.logger.info(f'trial complete: {kwargs}')
         return results
 
     def search(self, **kwargs):
