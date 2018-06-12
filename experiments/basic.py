@@ -88,7 +88,7 @@ class Experiment:
             return client.submit(cls.run, name, client=None)
 
         exp = cls.known_experiments[name]
-        retults = exp()
+        results = exp()
 
         timestamp = now()
         path = Path(f'results/{exp.name}-{timestamp}.csv')
