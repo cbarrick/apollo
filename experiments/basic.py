@@ -9,11 +9,15 @@ import xarray as xr
 import dask
 from dask import array as da
 from dask import distributed
-from dask_ml.model_selection import GridSearchCV
-from dask_ml.xgboost import XGBRegressor
+# from dask_ml.model_selection import GridSearchCV
+# from dask_ml.xgboost import XGBRegressor
 
 import sklearn
 from sklearn.model_selection import KFold, ParameterGrid
+from sklearn.model_selection import GridSearchCV
+
+import xgboost
+from xgboost import XGBRegressor
 
 import apollo
 from apollo.datasets import SolarDataset
@@ -220,10 +224,10 @@ def main():
     parser.add_argument('--dask', metavar='SCHEDULER', default=None, help='the dask scheduler address')
     args = parser.parse_args()
 
-    client = distributed.Client(args.dask or '127.0.0.1:8786')
-
     setup_logging()
-    client.run(setup_logging)
+
+    # client = distributed.Client(args.dask or '127.0.0.1:8786')
+    # client.run(setup_logging)
 
     name = args.exp
     Experiment.run(name)
