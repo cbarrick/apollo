@@ -61,6 +61,7 @@ class Experiment:
         if name is None:
             name = main.__name__
 
+        self.name = name
         self.main = main
         self.logger = logging.getLogger(str(name))
         self.known_experiments[name] = self
