@@ -32,7 +32,6 @@ measuring the axis, e.g. `z_ISBL`.
 '''
 
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from pathlib import Path
 from time import sleep
@@ -189,8 +188,7 @@ class NamLoader:
             cache_dir='./data/NAM-NMM',
             fail_fast=False,
             save_nc=True,
-            keep_gribs=False,
-            parallel=False):
+            keep_gribs=False):
         '''Creates a loader for NAM data.
 
         Args:
@@ -205,24 +203,13 @@ class NamLoader:
                 Convert the dataset to netCDF on disk.
             keep_gribs (bool):
                 Keep the GRIB files after converting to netCDF.
-            parallel (bool):
-                Perform download and preprocess operations in parallel.
-                Note that this will speed up the I/O operations, but the
-                preprocessing may be slower because of the GIL.
         '''
         self.cache_dir = Path(cache_dir)
         self.fail_fast = bool(fail_fast)
         self.save_nc = bool(save_nc)
         self.keep_gribs = bool(keep_gribs)
-        self.parallel = bool(parallel)
 
         self.cache_dir.mkdir(exist_ok=True)
-
-        if self.parallel:
-            logger.info('Parallel loading enabled')
-            self._mapper = ThreadPoolExecutor().map
-        else:
-            self._mapper = map
 
     def grib_url(self, reftime, forecast):
         '''The URL for a specific forecast.
@@ -550,13 +537,14 @@ class NamLoader:
         Returns:
             An `xr.Dataset` describing this forecast.
         '''
-        datasets = self._mapper(lambda f: self.load_grib(reftime, f), FORECAST_PERIOD)
+        load_grib = lambda f: self.load_grib(reftime, f)
+        datasets = map(load_grib, FORECAST_PERIOD)
         ds = xr.concat(datasets, dim='forecast')
 
         if self.save_nc:
             path = self.nc_path(reftime)
             logger.info(f'writing {path}')
-            ds.to_netcdf(str(path)) # must be str, can't be Path, should fix in xarray
+            ds.to_netcdf(str(path))  # must be str, can't be Path, should fix in xarray
             if not self.keep_gribs:
                 logger.info('deleting local gribs')
                 for forecast in FORECAST_PERIOD:
