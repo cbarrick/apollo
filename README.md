@@ -42,6 +42,57 @@ Run `python -m apollo -h` to view a list of `experiment_args` and the available 
 
 Run `python -m apollo <action> -h` to view help for a specific action.
 
+### Output Files
+The `predict` action will write two files - a summary file and a prediction file.  
+
+The summary file will be written to in the directory specified by the `summary_dir` action argument.  The summary file provides meta-data on the predictions made by a model.  It is a json file formatted as follows :
+```javascript
+{
+   "source":"rf",                           // model used to generate the predictions
+   "sourcelabel":"rf",                      // human-readable label
+   "site":"UGA-C-POA-1-IRR",                // name of the target variable
+   "created":1536119284,                    // timestamp (epoch time) when the prediction file was created
+   "start":1514764800,                      // timestamp (epoch time) of the first prediction
+   "stop":1517356800,                       // timestamp (epoch time) of the last prediction
+   "resource":"/PATH/TO/PREDICTION.json"    // the location of the prediction file
+}
+```
+
+The prediction file contains the raw prediction data.  It is also a json file with the following format:
+```javascript
+{
+   "start":1514764800,                  // timestamp (epoch time) of the first prediction
+   "stop":1517356800,                   // timestamp (epoch time) of the last prediction
+   "site":"UGA-C-POA-1-IRR",            // name of the target variable
+   "columns":[                          // column metadata
+      {
+         "label":"TIMESTAMP",           // name of the column
+         "units":"",                    // units for the data in the column
+         "longname":"",
+         "type":"datetime"              // type of the data in the column.  One of {datetime, number, string}
+      },
+      {
+         "label":"UGA-C-POA-1-IRR",
+         "units":"w/m2",
+         "longname":"",
+         "type":"number"
+      }
+   ],
+   "rows":[
+      [
+         1514764800,
+         15.912018618425853
+      ],
+      [
+         1514786400,
+         26.86869409006629
+      ],
+      ...
+   ]
+}
+```
+
+
 ### Additional Notes
 
 Data must be cached (downloaded) locally before it can be targeted by Apollo.  
