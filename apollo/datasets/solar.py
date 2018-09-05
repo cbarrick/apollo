@@ -1,3 +1,23 @@
+'''The primary dataset API in apollo.
+
+The :mod:`apollo.datasets.solar` contains the primary dataset class
+and helper functions for apollo. It handles the joining of NAM input
+variables with Georgia Power targets along with various preprocessing.
+
+The primary class, :class:`SolarDataset`, exposes the data as a
+sequence of tuples, where each tuple is a single training instance, and
+each element is a numpy array giving the data for a particular feature.
+The target feature is always the final element. This format is
+compatible with the PyTorch :class:`~torch.utils.data.DataLoader` API,
+but note that the prefetching feature in PyTorch may interfear with the
+underlying Dask API and cause deadlocks (as of August 2018).
+
+The method :meth:`SolarDataset.tabular` casts the dataset to a pair of arrays.
+It flattens the spatial and temporal dimensions into separate features. This is
+most useful for Scikit-Learn estimators and XGBoost which do not (and cannot)
+exploit the high dimension shape of the features.
+'''
+
 from pathlib import Path
 
 import dask.array as da
@@ -12,15 +32,17 @@ from torch.utils.data import Dataset as TorchDataset
 from apollo.datasets.loaders import nam, ga_power
 
 
-# The latitude and longitude of the solar array.
-# NOTE: This is was taken from Google Maps as the lat/lon of the State
-# Botanical Garden of Georgia, because that was the nearest I could find.
-ATHENS_LATLON = [33.9052058, -83.382608]
+#: The latitude and longitude of the solar array.
+#:
+#: .. note::
+#:     This is was taken from Google Maps as the lat/lon of the State
+#:     Botanical Garden of Georgia, because that was the nearest I could find.
+ATHENS_LATLON = (33.9052058, -83.382608)
 
 
-# The planar features of the NAM dataset,
-# i.e. those where the Z-axis has size 1.
-PLANAR_FEATURES = [
+#: The planar features of the NAM dataset,
+#: i.e. those where the Z-axis has size 1.
+PLANAR_FEATURES = (
     'PRES_SFC',
     'HGT_SFC',
     'HGT_TOA',
@@ -30,7 +52,7 @@ PLANAR_FEATURES = [
     'VGRD_TOA',
     'DSWRF_SFC',
     'DLWRF_SFC',
-]
+)
 
 
 def find_nearest(data, point):
@@ -47,7 +69,8 @@ def find_nearest(data, point):
             Search for the index nearest to this point.
 
     Returns:
-        The unraveled indices into `data` of the cells nearest to `points`.
+        array:
+            The unraveled indices into `data` of the cells nearest to `points`.
     '''
     data = np.require(data)
     point = np.require(point)
@@ -65,7 +88,7 @@ def slice_xy(data, center, shape):
     '''Slice a dataset in the x and y dimensions.
 
     Arguments:
-        data (xr.Dataset):
+        data (xarray.Dataset):
             The dataset to slice, having dimension coordinates 'y' and 'x' and
             non-dimension coordinates 'lat' and 'lon' labeled by `(y, x)`.
         center ([lat, lon]):
@@ -74,7 +97,7 @@ def slice_xy(data, center, shape):
             The height and width of the selection in grid units.
 
     Returns:
-        subset (xr.Dataset):
+        xarray.Dataset:
             The result of slicing data.
     '''
     lat, lon = data['lat'], data['lon']
@@ -94,12 +117,12 @@ def extract_temporal_features(data):
     '''Extract temporal features from a dataset.
 
     Arguments:
-        data (xr.Dataset):
+        data (xarray.Dataset):
             The dataset from which to extract features, having a dimension
             coordinate named 'reftime'.
 
     Returns:
-        time_data (xr.Dataset):
+        xarray.Dataset:
             A dataset with 4 data variables:
                 - ``time_of_year_sin``
                 - ``time_of_year_cos``
@@ -125,14 +148,14 @@ def window_reftime(base, lag):
     the reftime axis in 6h increments.
 
     Arguments:
-        base (xr.Dataset):
+        base (xarray.Dataset):
             The dataset to window.
         lag (int):
             The size of the window.
 
     Returns:
-        windowed (xr.Dataset):
-            The resulting dataset.
+        xarray.Dataset:
+            The windowed dataset.
     '''
     datasets = [base]
     base_names = list(base.data_vars)
@@ -167,16 +190,16 @@ class SolarDataset(TorchDataset):
     with Scikit-learn.
 
     Attributes:
-        xrds (xr.Dataset):
+        xrds (xarray.Dataset):
             The underlying xarray dataset.
         target (str or None):
             The name of the target variable.
         labels (tuple of str):
             Labels for each feature column.
-        mean (xr.Dataset or float):
+        mean (xarray.Dataset or float):
             If the data is standardized, a dataset containing the mean
             values used to center the data variables, or 0 otherwise.
-        std (xr.Dataset or float):
+        std (xarray.Dataset or float):
             If the data is standardized, a dataset containing the standard
             deviations used to scale the data variables, or 1 otherwise.
     '''
@@ -200,11 +223,11 @@ class SolarDataset(TorchDataset):
             temporal_features (bool):
                 If true, extend with additional temporal features for time of
                 day and time of year.
-            geo_shape (pair of int or None):
+            geo_shape (Tuple[int, int] or None):
                 If given, the y and x axes are sliced to this shape, in grid
                 units (roughly 12km). The default `ATHENS_LATLON` is the rough
                 location of the solar farm which collects the target data.
-            center (pair of float):
+            center (Tuple[float, float]):
                 The latitude and longitude of the center geographic slice.
                 This only applies when ``geo_shape`` is not None.
             lag (int):
