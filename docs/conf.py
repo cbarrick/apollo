@@ -92,6 +92,7 @@ intersphinx_mapping = {
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'matplotlib': ('https://matplotlib.org/', None),
     'xarray': ('http://xarray.pydata.org/en/stable/', None),
     'torch': ('https://pytorch.org/docs/stable', None),
 }
