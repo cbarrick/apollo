@@ -75,7 +75,6 @@ NAM218_PROJ = ccrs.LambertConformal(
 )
 
 
-@lru_cache(maxsize=8)
 def open(*reftimes, **kwargs):
     '''Load and combine forecasts for some reference times,
     downloading and preprocessing GRIBs as necessary.
@@ -97,7 +96,6 @@ def open(*reftimes, **kwargs):
     return loader.open(*reftimes)
 
 
-@lru_cache(maxsize=8)
 def open_range(start='2017-01-01', stop='today', **kwargs):
     '''Load and combine forecasts for a range of reference times.
 

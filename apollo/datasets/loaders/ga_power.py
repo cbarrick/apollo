@@ -86,7 +86,6 @@ def interval(year=None, month=None, day=None, hour=None, minute=None):
     return grouper
 
 
-@lru_cache(maxsize=8)
 def open_mb007(*cols, group=2017, data_dir='./data/GA-POWER'):
     # The data directory contains more than just the mb-007 labels.
     data_dir = Path(data_dir)
