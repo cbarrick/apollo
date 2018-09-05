@@ -15,5 +15,5 @@ dependencies:
     - scikit-learn
     - xgboost
     - pytorch
-    - sphinx=1.7.7
+    - sphinx
     - sphinx_rtd_theme
