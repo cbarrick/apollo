@@ -14,3 +14,4 @@ Apollo
 
     api/apollo
     api/apollo.datasets
+    api/apollo.viz

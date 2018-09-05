@@ -1,5 +1,0 @@
-# Only allow the html build and this .gitignore
-*
-!html/
-!html/**
-!.gitignore
