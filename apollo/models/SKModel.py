@@ -10,7 +10,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from apollo.datasets import simple_loader
-from experiments.Experiment import Experiment
+from apollo.models.base import Model
 from sklearn.model_selection import GridSearchCV, KFold, cross_validate
 from sklearn.metrics import make_scorer, mean_absolute_error, r2_score
 from sklearn.externals import joblib
@@ -29,7 +29,7 @@ _DEFAULT_METRICS = {
 }
 
 
-class SKExperiment(Experiment):
+class SKModel(Model):
 
     def __init__(self, name, regressor, parameter_grid, metrics=_DEFAULT_METRICS):
         super().__init__(name)

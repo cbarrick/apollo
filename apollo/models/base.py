@@ -1,5 +1,8 @@
-"""
-Abstract base class for experiments
+""" Abstract base class for models used to generate prediction files
+
+Apollo Models are trainable predictors of solar irradiance.  Any object conforming to the Model API can be used with
+the CLI found in apollo/__main__.py
+
 """
 
 _CACHE_DIR = '../data'  # where the NAM and GA-POWER data resides
@@ -8,7 +11,7 @@ _OUTPUT_DIR = '../predictions'  # directory where predictions are saved
 _DEFAULT_TARGET = 'UGA-C-POA-1-IRR'
 
 
-class Experiment(object):
+class Model(object):
 
     def __init__(self, name):
         self.name = name
