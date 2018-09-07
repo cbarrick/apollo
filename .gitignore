@@ -17,10 +17,10 @@
 /data
 
 # files output by experiments
-models/
-predictions/
-summaries/
-experiments/test
+/models/
+/predictions/
+/summaries/
+/experiments/test
 
 
 # Generic Python ignores
