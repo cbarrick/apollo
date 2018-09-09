@@ -22,13 +22,11 @@ _DEFAULT_METRICS = {
 
 class SKModel(Model):
 
-    def __init__(self, name, regressor, parameter_grid, metrics=_DEFAULT_METRICS):
+    def __init__(self, name, regressor, parameter_grid):
         # TODO: docs
-        # TODO: metrics shouldn't be member variables
         super().__init__(name)
         self.regressor = regressor
         self.param_grid = parameter_grid
-        self.metrics = metrics
 
     def save(self, model, save_dir, target_hour, target_var):
         # serialize the trained model
@@ -78,7 +76,8 @@ class SKModel(Model):
         save_location = self.save(model, save_dir, target_hour, target_var)
         return save_location
 
-    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, num_folds=3):
+    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir,
+                 num_folds=3, metrics=_DEFAULT_METRICS):
         # load hyperparams saved in training step:
         saved_model = self.load(save_dir, target_hour, target_var)
         if saved_model is None:
@@ -96,12 +95,12 @@ class SKModel(Model):
 
         # Evaluate the classifier
         model = self.regressor(**hyperparams)
-        scores = cross_validate(model, x, y, scoring=self.metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
+        scores = cross_validate(model, x, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
 
         # scores is dictionary with keys "test_<metric_name> for each metric"
         mean_scores = dict()
-        for metric in self.metrics:
-            mean_scores[metric] = np.mean(scores['test_' + metric])
+        for metric_name in metrics:
+            mean_scores[metric_name] = np.mean(scores['test_' + metric_name])
 
         return mean_scores
 

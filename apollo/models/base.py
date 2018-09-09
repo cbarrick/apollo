@@ -94,10 +94,8 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, num_folds):
+    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, num_folds, metrics):
         """ Evaluate a trained model using cross validation
-
-        TODO: refactor to allow specification of metrics
 
         Args:
             begin_date (str):
@@ -114,9 +112,12 @@ class Model(ABC):
                 directory where the trained model is currently serialized.
             num_folds (int):
                 number of folds to use.
+            metrics (dict):
+                metrics that should be used for evaluation.  The key should be the metric's name, and the
+                value should be a function that implements that metric.
 
         Returns:
-            dict: mapping of metrics to results. Dictionary has keys "test_<metric_name> for each metric.
+            dict: mapping of metrics to results. Dictionary entries map metric names to evaluation results.
         """
         pass
 
