@@ -159,7 +159,7 @@ class Model(ABC):
 
         Args:
             target_hour (int):
-                The lag targeted by this model.
+                The future hour targeted by this model.
             target_var (str):
                 Name of the target variable.
 
