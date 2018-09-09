@@ -1,6 +1,6 @@
 import argparse
 import numpy as np
-from experiments.SKExperiment import SKExperiment
+from apollo.models.SKModel import SKModel
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
@@ -9,28 +9,28 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
 EXPERIMENTS = {
-    'linreg': SKExperiment('linear_regression', LinearRegression, parameter_grid=None),
-    'svr': SKExperiment('svr', SVR, {
+    'linreg': SKModel('linear_regression', LinearRegression, parameter_grid=None),
+    'svr': SKModel('svr', SVR, {
                 'C': np.arange(0.6, 1.6, 0.2),                  # penalty parameter C of the error term
                 'epsilon': np.arange(0.1, 0.8, 0.1),            # width of the no-penalty region
                 'kernel': ['rbf', 'sigmoid'],                   # kernel function
                 'gamma': [1/500, 1/1000, 1/2000, 'auto']        # kernel coefficient
             }),
-    'knn': SKExperiment('knn', KNeighborsRegressor, {
+    'knn': SKModel('knn', KNeighborsRegressor, {
                 'n_neighbors': np.arange(3, 25, 2),             # k
                 'weights': ['uniform', 'distance'],             # how are neighboring values weighted
             }),
-    'dtree': SKExperiment('dtree', DecisionTreeRegressor, {
+    'dtree': SKModel('dtree', DecisionTreeRegressor, {
                 'splitter': ['best', 'random'],                 # splitting criterion
                 'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
                 'min_impurity_decrease': np.arange(0, 0.6, 0.05)
             }),
-    'rf': SKExperiment('rf', RandomForestRegressor, {
+    'rf': SKModel('rf', RandomForestRegressor, {
                 'n_estimators': [10, 50, 100, 250],
                 'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
                 'min_impurity_decrease': np.arange(0, 0.6, 0.05)
             }),
-    'gbt': SKExperiment('gbt', XGBRegressor, {
+    'gbt': SKModel('gbt', XGBRegressor, {
                 'learning_rate': np.arange(0.01, 0.13, 0.02),   # learning rate
                 'n_estimators': [10, 20, 50, 100, 200],         # number of boosting stages
                 'max_depth': [3, 5, 10, 50, 100],               # Maximum depth of the tree. None means unbounded.
