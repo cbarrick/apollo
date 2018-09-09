@@ -24,9 +24,11 @@ class Model(ABC):
 
     @abstractmethod
     def save(self, regressor, save_dir, target_hour, target_var):
-        """ Serializes a regressor and saves it to disk
+        """ Serializes a trained regressor and saves it to disk
 
-        TODO: refactor;  No need to provide regressor as an arg - should be a member variable
+        Serialization/deserialization are methods because each Model might serialize regressors differently.
+        For example, scikit-learn recommends using joblib to dump trained models, whereas most NN packages like
+        TF and PyTorch have built-in serialization mechanisms.
 
         Args:
             regressor (object):
