@@ -9,19 +9,13 @@ import pandas as pd
 from apollo.datasets import simple_loader
 from apollo.models.base import Model
 from sklearn.model_selection import GridSearchCV, KFold, cross_validate
-from sklearn.metrics import make_scorer, mean_absolute_error, r2_score
+from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.externals import joblib
-
-
-_CACHE_DIR = '../data'                  # where the NAM and GA-POWER data resides
-_MODELS_DIR = '../models'               # directory where serialized models will be saved
-_OUTPUT_DIR = '../predictions'          # directory where predictions are saved
-_SUMMARY_DIR = '../summaries'          # directory where predictions are saved
-_DEFAULT_TARGET = 'UGA-C-POA-1-IRR'     # name of target var
 
 # scoring metrics
 _DEFAULT_METRICS = {
     'mae': make_scorer(mean_absolute_error),
+    'mse': make_scorer(mean_squared_error),
     'r2': make_scorer(r2_score)
 }
 
@@ -29,6 +23,8 @@ _DEFAULT_METRICS = {
 class SKModel(Model):
 
     def __init__(self, name, regressor, parameter_grid, metrics=_DEFAULT_METRICS):
+        # TODO: docs
+        # TODO: metrics shouldn't be member variables
         super().__init__(name)
         self.regressor = regressor
         self.param_grid = parameter_grid
@@ -54,8 +50,7 @@ class SKModel(Model):
         else:
             return None
 
-    def train(self, begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24, target_var=_DEFAULT_TARGET,
-              cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, tune=True, num_folds=3):
+    def train(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, tune=True, num_folds=3):
         # trains the model using the dataset between the begin and end date
         X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
         if tune and self.param_grid is not None:
@@ -78,8 +73,7 @@ class SKModel(Model):
         save_location = self.save(model, save_dir, target_hour, target_var)
         return save_location
 
-    def evaluate(self, begin_date='2017-12-01 00:00', end_date='2017-12-31 18:00', target_hour=24,
-                 target_var=_DEFAULT_TARGET, cache_dir=_CACHE_DIR, save_dir=_MODELS_DIR, num_folds=3):
+    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, num_folds=3):
         # load hyperparams saved in training step:
         saved_model = self.load(save_dir, target_hour, target_var)
         if saved_model is None:
@@ -102,8 +96,7 @@ class SKModel(Model):
 
         return mean_scores
 
-    def predict(self, begin_date, end_date, target_hour=24, target_var=_DEFAULT_TARGET, cache_dir=_CACHE_DIR,
-                save_dir=_MODELS_DIR, summary_dir=_SUMMARY_DIR, output_dir=_OUTPUT_DIR):
+    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, summary_dir, output_dir):
         # load the trained model
         model_name = self.make_model_name(target_hour, target_var)
         path_to_model = os.path.join(save_dir, model_name)
