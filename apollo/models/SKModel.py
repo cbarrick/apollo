@@ -32,7 +32,7 @@ class SKModel(Model):
 
     def save(self, model, save_dir, target_hour, target_var):
         # serialize the trained model
-        name = self.make_model_name(target_hour, target_var)
+        name = self._generate_name(target_hour, target_var)
         path = os.path.join(save_dir, name)
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -42,7 +42,7 @@ class SKModel(Model):
 
     def load(self, save_dir, target_hour, target_var):
         # deserialize a saved model
-        name = self.make_model_name(target_hour, target_var)
+        name = self._generate_name(target_hour, target_var)
         path_to_model = os.path.join(save_dir, name)
         if os.path.exists(path_to_model):
             model = joblib.load(path_to_model)
@@ -98,7 +98,7 @@ class SKModel(Model):
 
     def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, summary_dir, output_dir):
         # load the trained model
-        model_name = self.make_model_name(target_hour, target_var)
+        model_name = self._generate_name(target_hour, target_var)
         path_to_model = os.path.join(save_dir, model_name)
         model = self.load(save_dir, target_hour, target_var)
         if model is None:
@@ -116,11 +116,12 @@ class SKModel(Model):
             os.makedirs(summary_dir)
 
         # create path to summary and to resource files
-        summary_filename = f'{self.make_model_name(target_var, target_hour)}_{begin_date}_{end_date}.summary'
+        model_name = self._generate_name(target_var, target_hour)
+        summary_filename = f'{model_name}_{begin_date}_{end_date}.summary.json'
         summary_path = os.path.join(summary_dir, summary_filename)
         summary_path = os.path.realpath(summary_path)
 
-        resource_filename = f'{self.make_model_name(target_var, target_hour)}_{begin_date}_{end_date}.json'
+        resource_filename = f'{model_name}_{begin_date}_{end_date}.json'
         resource_path = os.path.join(output_dir, resource_filename)
         resource_path = os.path.realpath(resource_path)
 
