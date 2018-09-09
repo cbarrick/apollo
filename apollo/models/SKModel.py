@@ -1,7 +1,4 @@
-"""
-SKExperiment represents a scikit-learn experiment.
-
-The constructor allows experiments to be created from any scikit-learn regression model
+""" Generic Model that works with any scikit-learn estimator.
 """
 
 import os
