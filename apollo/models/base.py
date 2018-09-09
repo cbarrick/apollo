@@ -57,7 +57,7 @@ class Model(ABC):
                 name of the variable targeted by the model.
 
         Returns:
-            object: deserialized regressor
+            object: deserialized regressor if a saved regressor is found.  Otherwise, returns None.
 
         """
         pass
