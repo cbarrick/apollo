@@ -23,7 +23,17 @@ _DEFAULT_METRICS = {
 class SKModel(Model):
 
     def __init__(self, name, regressor, parameter_grid):
-        # TODO: docs
+        """ Initializes a Model that wraps a scikit-learn regressor
+
+        Args:
+            name (str):
+                human-readable name for the model.
+            regressor (class):
+                class of the scikit-learn regressor to use.
+                This should be the regressor class itself, not an instance of a regressor.
+            parameter_grid (dict):
+                parameter grid explored during parameter tuning
+        """
         super().__init__(name)
         self.regressor = regressor
         self.param_grid = parameter_grid
