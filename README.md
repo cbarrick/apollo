@@ -118,24 +118,12 @@ Code should comply with PEP8 standards as closely as possible.
 We use [Google-style docstrings](http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html) 
 to document the Python modules in this project.
 
-### Writing new experiments
+### Writing new models
 
-An experiment is a Python object that inherits from [Experiment](experiments/Experiment.py).
-Custom experiments should overwrite the `save`, `load`, `train`, `evaluate`, and `predict` functions.
-
-An experiment's `train` function should train a machine learning model on the dataset specified 
-by the set of `experiment_args` and should serialize the model to a file.
-The `train` function must return the path of the serialized model.
-
-An experiment's `evaluate` function should evaluate the same machine learning model on the specified dataset
-using n-fold cross-validation.  
-The `evaluate` function must return a single value which estimates the model's performance using the Mean Absolute Error (MAE) criterion.
-
-An experiment's `predict` function is used to generate predictions for a dataset.
-This function should use the serialized model from the `train` function to make predictions and write the 
-predictions to a file.
-Currently, the format of the predictions file is unstable.  It will be documented once stabilized.
-The `predict` function must return the path where the predictions were saved.
+A Model is a Python object that inherits from [Model](apollo/models/base.py).
+Custom models should overwrite the `save`, `load`, `train`, `evaluate`, and `predict` functions.  Models that 
+conform to the API can be used with the [command-line interface](apollo/__main__.py).  The CLI does not automatically
+discover models, so an instance of the custom model needs to be added to the `MODELS` dictionary in the main file.
 
 
 ## Contributors

@@ -8,7 +8,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
-EXPERIMENTS = {
+MODELS = {
     'linreg': SKModel('linear_regression', LinearRegression, parameter_grid=None),
     'svr': SKModel('svr', SVR, {
                 'C': np.arange(0.6, 1.6, 0.2),                  # penalty parameter C of the error term
@@ -46,7 +46,7 @@ def main():
 
     # arguments that are common across all sub-commands
 
-    parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(EXPERIMENTS.keys()),
+    parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(MODELS.keys()),
                         help='The name of the model that you would like to run.')
 
     parser.add_argument('--begin_date', '-b', default='2017-01-01 00:00', type=str,
@@ -105,7 +105,7 @@ def main():
 
     # every subparser has an action arg specifying which action to perform
     action = args.pop('action')
-    # argparse guarantees that `args.model` will be the key name of one of the experiments
+    # argparse guarantees that `args.model` will be the key name of one of the models
     experiment = EXPERIMENTS[args.pop('model')]
 
     # do a bit of preprocessing with the tuning argument
