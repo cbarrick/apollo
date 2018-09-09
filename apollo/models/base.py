@@ -124,6 +124,8 @@ class Model(ABC):
     def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, summary_dir, output_dir):
         """ Predict future solar irradiance readings using a trained model
 
+        TODO: we should separate the method that generate predictions from the method that writes the output files
+
         Predictions are output as two json files: a summary file and a prediction file.
         The summary file contains metadata about the predictions.  The prediction file contains column metadata and
         the raw predictions.
