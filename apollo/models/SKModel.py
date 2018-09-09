@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from apollo.datasets import simple_loader
+from apollo.datasets.solar import SolarDataset
 from apollo.models.base import Model
 from sklearn.model_selection import GridSearchCV, KFold, cross_validate
 from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
@@ -51,8 +51,11 @@ class SKModel(Model):
             return None
 
     def train(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, tune=True, num_folds=3):
-        # trains the model using the dataset between the begin and end date
-        X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var, cache_dir=cache_dir)
+        dataset = SolarDataset(start=begin_date, stop=end_date,
+                               forecast=target_hour, target=target_var,
+                               cache_dir=cache_dir)
+        # convert dataset to tabular form accepted by scikit estimators
+        x, y = dataset.tabular()
         if tune and self.param_grid is not None:
             grid = GridSearchCV(
                 estimator=self.regressor(),
@@ -62,13 +65,15 @@ class SKModel(Model):
                 return_train_score=False,
                 n_jobs=-1,
             )
-            grid.fit(X, y)
+            grid.fit(x, y)
             print("Grid search completed.  Best parameters found: ")
             print(grid.best_params_)
+            # save the estimator with the best parameters
             model = grid.best_estimator_
         else:
+            # if a grid search is not performed, then we use default parameter values
             model = self.regressor()
-            model = model.fit(X, y)
+            model = model.fit(x, y)
 
         save_location = self.save(model, save_dir, target_hour, target_var)
         return save_location
@@ -83,11 +88,15 @@ class SKModel(Model):
         else:
             hyperparams = saved_model.get_params()
 
+        # load dataset
+        dataset = SolarDataset(start=begin_date, stop=end_date,
+                               forecast=target_hour, target=target_var,
+                               cache_dir=cache_dir)
+        x, y = dataset.tabular()
+
         # Evaluate the classifier
         model = self.regressor(**hyperparams)
-        X, y = simple_loader.load(start=begin_date, stop=end_date, target_hour=target_hour, target_var=target_var,
-                                  cache_dir=cache_dir)
-        scores = cross_validate(model, X, y, scoring=self.metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
+        scores = cross_validate(model, x, y, scoring=self.metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
 
         # scores is dictionary with keys "test_<metric_name> for each metric"
         mean_scores = dict()
@@ -106,7 +115,8 @@ class SKModel(Model):
             return None
 
         # load NAM data without labels
-        data = simple_loader.load(start=begin_date, stop=end_date, target_var=None, cache_dir=cache_dir)[0]
+        dataset = SolarDataset(start=begin_date, stop=end_date, target=None, cache_dir=cache_dir)
+        data = dataset.tabular()
         reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
 
         # ensure output directories exist
