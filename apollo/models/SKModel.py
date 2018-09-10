@@ -120,7 +120,8 @@ class SKModel(Model):
         path_to_model = os.path.join(save_dir, model_name)
         model = self.load(save_dir, target_hour, target_var)
         if model is None:
-            print("You must train the model before making predictions!\nNo serialized model found at '%s'" % path_to_model)
+            print("You must train the model before making predictions!"
+                  "\nNo serialized model found at '%s'" % path_to_model)
             return None
 
         # load NAM data without labels
@@ -128,68 +129,17 @@ class SKModel(Model):
         data = dataset.tabular()
         reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
 
-        # ensure output directories exist
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        if not os.path.exists(summary_dir):
-            os.makedirs(summary_dir)
-
-        # create path to summary and to resource files
-        model_name = self._generate_name(target_var, target_hour)
-        summary_filename = f'{model_name}_{begin_date}_{end_date}.summary.json'
-        summary_path = os.path.join(summary_dir, summary_filename)
-        summary_path = os.path.realpath(summary_path)
-
-        resource_filename = f'{model_name}_{begin_date}_{end_date}.json'
-        resource_path = os.path.join(output_dir, resource_filename)
-        resource_path = os.path.realpath(resource_path)
-
-        summary_dict = {
-            'source': self.name,
-            'sourcelabel': self.name.replace('_', ' '),
-            'site': target_var,
-            'created': round(datetime.utcnow().timestamp()),
-            'start': _datestring_to_posix(begin_date),
-            'stop': _datestring_to_posix(end_date),
-            'resource': resource_path
-        }
-
-        data_dict = {
-            'start': _datestring_to_posix(begin_date),
-            'stop': _datestring_to_posix(end_date),
-            'site': target_var,
-            'columns': [
-                {
-                    'label': 'TIMESTAMP',
-                    'units': '',
-                    'longname': '',
-                    'type': 'datetime'
-                },
-                {
-                    'label': target_var,
-                    'units': 'w/m2',
-                    'longname': '',
-                    'type': 'number'
-                },
-            ],
-            'rows': []
-        }
-
+        predictions = []
         # make predictions
         for idx, data_point in enumerate(data):
             prediction = model.predict([data_point])
-            timestamp = _datestring_to_posix(reftimes[idx])
+            timestamp = reftimes[idx]
             data_point = [timestamp, prediction[0]]
-            data_dict['rows'].append(data_point)
+            predictions.append(data_point)
 
-        # write the summary file
-        with open(summary_path, 'w') as summary_file:
-            json.dump(summary_dict, summary_file, separators=(',', ':'))
-
-        # write the file containing the data
-        with open(resource_path, 'w') as resource_file:
-            json.dump(data_dict, resource_file, separators=(',', ':'))
-
+        # write predictions
+        summary_path, resource_path = self.write_predictions(predictions, begin_date, end_date,
+                                                             target_hour, target_var, summary_dir, output_dir)
         return summary_path, resource_path
 
 
