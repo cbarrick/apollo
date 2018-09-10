@@ -99,14 +99,14 @@ def main():
     predict.add_argument('--output_dir', '-o', default='./predictions', type=str,
                          help='The directory where predictions will be written.')
 
-    # parse args and invoke the correct experiment
+    # parse args and invoke the correct model
     args = parser.parse_args()
     args = vars(args)
 
     # every subparser has an action arg specifying which action to perform
     action = args.pop('action')
     # argparse guarantees that `args.model` will be the key name of one of the models
-    experiment = EXPERIMENTS[args.pop('model')]
+    model = MODELS[args.pop('model')]
 
     # do a bit of preprocessing with the tuning argument
     if 'no_tune' in args:
@@ -114,18 +114,26 @@ def main():
         args['tune'] = not dont_tune
 
     if action == 'train':
-        save_path = experiment.train(**args)
+        save_path = model.train(**args)
         print(f'Model trained successfully.  Saved to {save_path}')
     elif action == 'evaluate':
-        scores = experiment.evaluate(**args)
+        scores = model.evaluate(**args)
         # report the mean scores for each metrics
         for key in scores:
             print("Mean %s: %0.4f" % (key, scores[key]))
     elif action == 'predict':
-        summary_path, prediction_path = experiment.predict(**args)
+        predictions = model.predict(begin_date=args['begin_date'], end_date=args['end_date'],
+                                         target_hour=args['target_hour'], target_var=args['target_var'],
+                                         cache_dir=args['cache_dir'], save_dir=args['save_dir'])
+
+        summary_path, prediction_path = \
+            model.write_predictions(predictions, begin_date=args['begin_date'], end_date=args['end_date'],
+                                         target_hour=args['target_hour'], target_var=args['target_var'],
+                                         summary_dir=args['summary_dir'], output_dir=args['output_dir'])
+
         print(f'Summary file written to {summary_path}\nPredictions written to {prediction_path}')
     else:
-        print(f'ERROR: Action {action} is not defined for model {experiment}')
+        print(f'ERROR: Action {action} is not defined for model {model}')
         parser.print_help()
 
 

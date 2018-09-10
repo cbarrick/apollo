@@ -128,14 +128,12 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, summary_dir, output_dir):
+    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir):
         """ Predict future solar irradiance readings using a trained model
 
         Predictions are output as two json files: a summary file and a prediction file.
         The summary file contains metadata about the predictions.  The prediction file contains column metadata and
         the raw predictions.
-
-        TODO: this method should return the predictions, not the location of the output files
 
         Args:
             begin_date (str):
@@ -150,13 +148,10 @@ class Model(ABC):
                 directory where training data is saved.
             save_dir (str):
                 directory where the trained model is currently serialized.
-            summary_dir (str):
-                directory where summary file should be written.
-            output_dir:
-                directory where prediction file should be written.
 
         Returns:
-            (str, str): path to the summary file, path to the prediction file.
+            numpy.array: array of [reftime, prediction] pairs.  Array shape should be n x 2
+
         """
         pass
 

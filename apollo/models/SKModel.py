@@ -2,8 +2,6 @@
 """
 
 import os
-import json
-from datetime import datetime
 import numpy as np
 import pandas as pd
 from apollo.datasets.solar import SolarDataset
@@ -114,7 +112,7 @@ class SKModel(Model):
 
         return mean_scores
 
-    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, summary_dir, output_dir):
+    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir):
         # load the trained model
         model_name = self._generate_name(target_hour, target_var)
         path_to_model = os.path.join(save_dir, model_name)
@@ -137,10 +135,7 @@ class SKModel(Model):
             data_point = [timestamp, prediction[0]]
             predictions.append(data_point)
 
-        # write predictions
-        summary_path, resource_path = self.write_predictions(predictions, begin_date, end_date,
-                                                             target_hour, target_var, summary_dir, output_dir)
-        return summary_path, resource_path
+        return predictions
 
 
 def _datestring_to_posix(date_string):
