@@ -259,7 +259,7 @@ class SolarDataset(TorchDataset):
         data = nam.open_range(start, stop, cache_dir=nam_cache)
 
         if feature_subset:
-            data = data[feature_subset]
+            data = data[list(feature_subset)]
 
         if geo_shape:
             data = slice_xy(data, center, geo_shape)
