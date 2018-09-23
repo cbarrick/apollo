@@ -12,7 +12,7 @@ We run a cron job similar to the following to keep the cache updated:
     date >> cron.log
     python3 -m bin.download -n 4 2>&1| tee -a ./download.log
 '''
-from apollo.datasets import nam
+from apollo.datasets.loaders import nam
 
 import argparse
 import logging

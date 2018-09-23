@@ -1,0 +1,380 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Getting Started &mdash; apollo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="apollo" href="../api/apollo.html" />
+    <link rel="prev" title="Apollo" href="../index.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> apollo
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">User Guides</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-conda">Installing conda</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#local-vs-global-installation">Local vs global installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#download-and-install">Download and install</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-path-and-activating-the-base-environment">Setting <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> and activating the base environment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#working-with-apollo">Working with Apollo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#downloading-apollo">Downloading Apollo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-and-maintaining-the-apollo-environment">Installing and maintaining the Apollo environment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">API Docs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/apollo.html">apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/apollo.datasets.html">apollo.datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.solar">apollo.datasets.solar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.solar.ATHENS_LATLON.html">apollo.datasets.solar.ATHENS_LATLON</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.solar.PLANAR_FEATURES.html">apollo.datasets.solar.PLANAR_FEATURES</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.solar.SolarDataset.html">apollo.datasets.solar.SolarDataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.loaders.nam">apollo.datasets.loaders.nam</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.nam.open.html">apollo.datasets.loaders.nam.open</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.nam.open_range.html">apollo.datasets.loaders.nam.open_range</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.nam.NamLoader.html">apollo.datasets.loaders.nam.NamLoader</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.loaders.ga_power">apollo.datasets.loaders.ga_power</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.ga_power.interval.html">apollo.datasets.loaders.ga_power.interval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.ga_power.open_mb007.html">apollo.datasets.loaders.ga_power.open_mb007</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/apollo.viz.html">apollo.viz</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/stubs/apollo.viz.date_heatmap.html">apollo.viz.date_heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/stubs/apollo.viz.date_heatmap_figure.html">apollo.viz.date_heatmap_figure</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">apollo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Getting Started</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/user-guides/getting-started.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#installing-conda" id="id1">Installing conda</a><ul>
+<li><a class="reference internal" href="#local-vs-global-installation" id="id2">Local vs global installation</a></li>
+<li><a class="reference internal" href="#download-and-install" id="id3">Download and install</a></li>
+<li><a class="reference internal" href="#setting-path-and-activating-the-base-environment" id="id4">Setting <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> and activating the base environment</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#working-with-apollo" id="id5">Working with Apollo</a><ul>
+<li><a class="reference internal" href="#downloading-apollo" id="id6">Downloading Apollo</a></li>
+<li><a class="reference internal" href="#installing-and-maintaining-the-apollo-environment" id="id7">Installing and maintaining the Apollo environment</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="installing-conda">
+<h2><a class="toc-backref" href="#id1">Installing conda</a><a class="headerlink" href="#installing-conda" title="Permalink to this headline">¶</a></h2>
+<p>Conda is a cross-platform, language-agnostic environment and package manager. This guide will use a minimal installer of conda, called Miniconda, to setup a development environment for Apollo.</p>
+<div class="section" id="local-vs-global-installation">
+<h3><a class="toc-backref" href="#id2">Local vs global installation</a><a class="headerlink" href="#local-vs-global-installation" title="Permalink to this headline">¶</a></h3>
+<p>Before installing conda, we must decide if we are installing to our home directory or to a global system directory. To setup a development environment, it is best to install to your home directory. For a deployment environment, it is best to install globally.</p>
+<p>We will use a shell variable to control our installation prefix. For local installations, <code class="docutils literal notranslate"><span class="pre">~/conda</span></code> is a typical choice:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ CONDA_PREFIX=&quot;$HOME/conda&quot;
+</pre></div>
+</div>
+<p>For global installations, consider <code class="docutils literal notranslate"><span class="pre">/opt/conda</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ CONDA_PREFIX=&quot;/opt/conda&quot;
+</pre></div>
+</div>
+<p>Note that installing into <code class="docutils literal notranslate"><span class="pre">/opt</span></code> usually requires superuser privileges. The rest of this guide assumes the <code class="docutils literal notranslate"><span class="pre">CONDA_PREFIX</span></code> variable is set.</p>
+</div>
+<div class="section" id="download-and-install">
+<h3><a class="toc-backref" href="#id3">Download and install</a><a class="headerlink" href="#download-and-install" title="Permalink to this headline">¶</a></h3>
+<p>Our next step is to download the Miniconda3 installer. These can be found online at <a class="reference external" href="https://conda.io/miniconda.html">https://conda.io/miniconda.html</a>. For a detailed list of all Miniconda versions and their MD5 checksums, see <a class="reference external" href="https://repo.continuum.io/miniconda/">https://repo.continuum.io/miniconda/</a>. For this guide, we will install the latest Miniconda3 on a 64-bit Linux platform.</p>
+<p>First, download the latest Miniconda installer:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+</pre></div>
+</div>
+<p>Before installing, you may check the MD5 checksum against the value published at <a class="reference external" href="https://repo.continuum.io/miniconda/">https://repo.continuum.io/miniconda/</a>. If it matches, we can be sure that the download is not corrupt or tampered with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ md5sum Miniconda3-latest-Linux-x86_64.sh
+e1045ee415162f944b6aebfe560b8fee  Miniconda3-latest-Linux-x86_64.sh
+</pre></div>
+</div>
+<p>If the MD5 checksum matches, we can continue to install:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ chmod +x ./Miniconda3-latest-Linux-x86_64.sh
+$ ./Miniconda3-latest-Linux-x86_64.sh -b -p &quot;$CONDA_PREFIX&quot;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-b</span></code> argument tells the installer to use “batch mode”. This implicitly agrees to the terms of service and installs with sane defaults. The <code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">&quot;$CONDA_PREFIX&quot;</span></code> argument gives the installation directory.</p>
+<p>You may view additional options with <code class="docutils literal notranslate"><span class="pre">-h</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./Miniconda3-latest-Linux-x86_64.sh -h
+
+usage: ./Miniconda3-latest-Linux-x86_64.sh [options]
+
+Installs Miniconda3 4.5.11
+
+-b           run install in batch mode (without manual intervention),
+             it is expected the license terms are agreed upon
+-f           no error if install prefix already exists
+-h           print this help message and exit
+-p PREFIX    install prefix, defaults to /home/chris/miniconda3, must not contain spaces.
+-s           skip running pre/post-link/install scripts
+-u           update an existing installation
+-t           run package tests after installation (may install conda-build)
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-path-and-activating-the-base-environment">
+<h3><a class="toc-backref" href="#id4">Setting <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> and activating the base environment</a><a class="headerlink" href="#setting-path-and-activating-the-base-environment" title="Permalink to this headline">¶</a></h3>
+<p>Properly adding conda to your <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> is more subtle than it seems. Fortunately, conda provides a script to handle the subtleties:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ source &quot;$CONDA_PREFIX/etc/profile.d/conda.sh&quot;
+</pre></div>
+</div>
+<p>Now we can activate the base environment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ conda activate
+</pre></div>
+</div>
+<p>To perform this automatically at login, you may add this line to your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ echo &quot;source &#39;$CONDA_PREFIX/etc/profile.d/conda.sh&#39; &amp;&amp; conda activate&quot; &gt;&gt; ~/.bashrc
+</pre></div>
+</div>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">Adding this line to your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code> is not sufficient to make conda available in all scripts. In particular, cron jobs which require a particular conda environment should manually source the <code class="docutils literal notranslate"><span class="pre">conda.sh</span></code> script and activate the appropriate environment.</p>
+</div>
+</div>
+</div>
+<div class="section" id="working-with-apollo">
+<h2><a class="toc-backref" href="#id5">Working with Apollo</a><a class="headerlink" href="#working-with-apollo" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="downloading-apollo">
+<h3><a class="toc-backref" href="#id6">Downloading Apollo</a><a class="headerlink" href="#downloading-apollo" title="Permalink to this headline">¶</a></h3>
+<p>Apollo development is tracked in a git repository. It can be cloned with the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/cbarrick/apollo
+</pre></div>
+</div>
+<p>The rest of this guide assumes that your working directory is the root of the Apollo repository:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd ./apollo
+</pre></div>
+</div>
+</div>
+<div class="section" id="installing-and-maintaining-the-apollo-environment">
+<h3><a class="toc-backref" href="#id7">Installing and maintaining the Apollo environment</a><a class="headerlink" href="#installing-and-maintaining-the-apollo-environment" title="Permalink to this headline">¶</a></h3>
+<p>The development environment for Apollo is maintained in the <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code> file. We must initialize the environment in conda:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ conda env create -f ./environment.yml
+</pre></div>
+</div>
+<p>This will install an environment named <code class="docutils literal notranslate"><span class="pre">apollo</span></code> in the current conda prefix. The environment must be activated before it is used:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ conda activate apollo
+</pre></div>
+</div>
+<p>To update the Apollo environment, use the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ conda env update -f ./environment.yml
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Do not use the simple <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">update</span></code> to update this environment. The simple update command uses the global conda settings, which do not include the required channels by default. The full command given above tells conda to use the settings given in the <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code> file.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../api/apollo.html" class="btn btn-neutral float-right" title="apollo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral" title="Apollo" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, UGA Institute for Artificial Intelligence.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,19 +1,19 @@
 '''Provides access to a subset of the NAM-NMM dataset.
 
-> The North American Mesoscale Forecast System (NAM) is one of the
-> major weather models run by the National Centers for Environmental
-> Prediction (NCEP) for producing weather forecasts. Dozens of weather
-> parameters are available from the NAM grids, from temperature and
-> precipitation to lightning and turbulent kinetic energy.
+    The North American Mesoscale Forecast System (NAM) is one of the
+    major weather models run by the National Centers for Environmental
+    Prediction (NCEP) for producing weather forecasts. Dozens of weather
+    parameters are available from the NAM grids, from temperature and
+    precipitation to lightning and turbulent kinetic energy.
 
-> As of June 20, 2006, the NAM model has been running with a non-
-> hydrostatic version of the Weather Research and Forecasting (WRF)
-> model at its core. This version of the NAM is also known as the NAM
-> Non-hydrostatic Mesoscale Model (NAM-NMM).
+    As of June 20, 2006, the NAM model has been running with a non-
+    hydrostatic version of the Weather Research and Forecasting (WRF)
+    model at its core. This version of the NAM is also known as the NAM
+    Non-hydrostatic Mesoscale Model (NAM-NMM).
 
-Most users will be interested in the `open` and `open_range`
+Most users will be interested in the :func:`open` and :func:`open_range`
 functions which selects forecasts by reference time. The actual data
-loading logic is encapsulated in the `NamLoader` class.
+loading logic is encapsulated in the :class:`NamLoader` class.
 
 The dataset live remotely. A live feed is provided by NCEP and an 11
 month archive is provided by NCDC (both are divisions of NOAA). This
@@ -25,23 +25,20 @@ This module provides access to only a subset of the NAM-NMM dataset.
 The geographic region is reduced and centered around Georgia, and only
 as subset of the variables are provided.
 
-Queries return an instance of `xarray.Dataset` where each variable has
-exactly five dimensions: reftime, forecast, z, y, and x. The z-axis for
-each variable has a different name depending on the type of index
-measuring the axis, e.g. `z_ISBL`.
+Queries return an instance of :class:`xarray.Dataset` where each variable
+has exactly five dimensions: reftime, forecast, z, y, and x. The z-axis
+for each variable has a different name depending on the type of index
+measuring the axis, e.g. ``z_ISBL`` for isobaric pressure levels.
 '''
 
-from concurrent.futures import ThreadPoolExecutor
+import logging
+from functools import lru_cache
 from pathlib import Path
 from time import sleep
-import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cf
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy as sp
-import scipy.spatial
 import requests
 import xarray as xr
 
@@ -84,16 +81,18 @@ def open(*reftimes, **kwargs):
 
     If the dataset exists as a local netCDF file, it is loaded and
     returned. Otherwise, any missing GRIB files are downloaded and
-    preprocessed into an xarray Dataset. The dataset is then saved as a
-    netCDF file, the GRIBs are deleted, and the dataset is returned.
+    preprocessed into an :class:`xarray.Dataset`. The dataset is then
+    saved as a netCDF file, the GRIBs are deleted, and the dataset is
+    returned.
 
-    Args:
-        reftimes (datetime64):
+    Arguments:
+        reftimes (numpy.datetime64 or str):
             The reference times to open.
 
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
+    Returns:
+        xarray.Dataset:
+            Returns a single dataset containing all forecasts at the given
+            reference times. Some data may be dropped when combining forecasts.
     '''
     loader = NamLoader(**kwargs)
     return loader.open(*reftimes)
@@ -104,17 +103,18 @@ def open_range(start='2017-01-01', stop='today', **kwargs):
 
     NOTE: This method only loads data from the cache.
 
-    Args:
-        start (datetime64):
+    Arguments:
+        start (numpy.datetime64 or str):
             The first time in the range.
             The default is 2017-01-01T00:00
-        stop (datetime64):
+        stop (numpy.datetime64 or str):
             The last time in the range.
             The default is the start of the current day.
 
-    Returns (xr.Dataset):
-        Returns a single dataset containing all forecasts at the given
-        reference times. Some data may be dropped when combining forecasts.
+    Returns:
+        xarray.Dataset:
+            Returns a single dataset containing all forecasts at the given
+            reference times. Some data may be dropped when combining forecasts.
     '''
     loader = NamLoader(**kwargs)
     return loader.open_range(start, stop)
@@ -123,12 +123,13 @@ def open_range(start='2017-01-01', stop='today', **kwargs):
 def open_gribs(reftime='now', **kwargs):
     '''Load the forecasts from GRIB, downlading if they do not exist.
 
-    Args:
-        reftime (datetime64):
+    Arguments:
+        reftime (numpy.datetime64 or str):
             The reference time to open.
 
     Returns:
-        An `xr.Dataset` describing this forecast.
+        xarray.Dataset:
+            An `xarray.Dataset` describing this forecast.
     '''
     loader = NamLoader(**kwargs)
     return loader.open_gribs(reftime)
@@ -137,12 +138,13 @@ def open_gribs(reftime='now', **kwargs):
 def open_nc(reftime='now', **kwargs):
     '''Load the forecasts from a netCDF in the cache.
 
-    Args:
-        reftime (datetime64):
+    Arguments:
+        reftime (numpy.datetime64 or str):
             The reference time to open.
 
     Returns:
-        An `xr.Dataset` describing this forecast.
+        xarray.Dataset:
+            The dataset describing this forecast.
     '''
     loader = NamLoader(**kwargs)
     return loader.open_nc(reftime)
@@ -150,33 +152,6 @@ def open_nc(reftime='now', **kwargs):
 
 def normalize_reftime(reftime='now'):
     return np.datetime64(reftime, '6h')
-
-
-def find_nearest(data, *points, **kwargs):
-    '''Find the indices of `data` nearest to `points`.
-
-    Returns:
-        The unraveled indices into `data` of the cells nearest to `points`.
-    '''
-    n = len(data)
-    shape = data[0].shape
-    data = np.require(data).reshape(n, -1).T
-    points = np.require(points).reshape(-1, n)
-    idx = sp.spatial.distance.cdist(points, data, **kwargs).argmin(axis=1)
-    return tuple(np.unravel_index(i, shape) for i in idx)
-
-
-def diagonal_slice(data, a, b, **kwargs):
-    '''Build a diagonal slice between the points nearest to `a` and `b`.
-
-    The slice selects a cube where `a` and `b` are opposite corners.
-
-    Returns:
-        A list of slices to select the cube where each slices the
-        corresponding axis in `data`.
-    '''
-    a, b = find_nearest(data, a, b, **kwargs)
-    return [slice(i, j) for i, j in zip(a,b)]
 
 
 def proj_coords(lats, lons):
@@ -188,12 +163,16 @@ def proj_coords(lats, lons):
 
     The output is undefined if the input does not map to a square area.
 
-    Args:
-        lats (2D floats): The latitude at each cell.
-        lons (2D floats): The longitude at each cell.
+    Arguments:
+        lats (numpy.ndarray):
+            The latitude at each cell as a 2D array.
+        lons (numpy.ndarray):
+            The longitude at each cell as a 2D array.
     Returns:
-        x (1D floats): The coordinates for the x axis in meters.
-        y (1D floats): The coordinates for the y axis in meters.
+        x (numpy.ndarray):
+            The coordinates for the x axis in meters as a 1D array.
+        y (numpy.ndarray):
+            The coordinates for the y axis in meters as a 1D array.
     '''
     unproj = ccrs.PlateCarree()
     coords = NAM218_PROJ.transform_points(unproj, lons, lats)
@@ -206,9 +185,6 @@ class NamLoader:
 
     A `NamLoader` downloads NAM-NMM forecasts from NOAA, subsets their features
     and geographic scope, converts the data to netCDF, and caches the result.
-
-    TODO:
-        - describe the data format
     '''
     class CacheMiss(Exception): pass
 
@@ -216,12 +192,11 @@ class NamLoader:
             cache_dir='./data/NAM-NMM',
             fail_fast=False,
             save_nc=True,
-            keep_gribs=False,
-            parallel=False):
+            keep_gribs=False):
         '''Creates a loader for NAM data.
 
-        Args:
-            cache_dir (Path or str):
+        Arguments:
+            cache_dir (pathlib.Path or str):
                 The path to the cache.
             fail_fast (bool):
                 If true, the download errors are treated as fatal.
@@ -232,27 +207,26 @@ class NamLoader:
                 Convert the dataset to netCDF on disk.
             keep_gribs (bool):
                 Keep the GRIB files after converting to netCDF.
-            parallel (bool):
-                Perform download and preprocess operations in parallel.
-                Note that this will speed up the I/O operations, but the
-                preprocessing may be slower because of the GIL.
         '''
         self.cache_dir = Path(cache_dir)
         self.fail_fast = bool(fail_fast)
         self.save_nc = bool(save_nc)
         self.keep_gribs = bool(keep_gribs)
-        self.parallel = bool(parallel)
 
         self.cache_dir.mkdir(exist_ok=True)
 
-        if self.parallel:
-            logger.info('Parallel loading enabled')
-            self._mapper = ThreadPoolExecutor().map
-        else:
-            self._mapper = map
-
     def grib_url(self, reftime, forecast):
         '''The URL for a specific forecast.
+
+        Arguments:
+            reftime (numpy.datetime64 or str):
+                The reference time.
+            forecast (int):
+                The forecast hour.
+
+        Returns:
+            str:
+                A URL to a GRIB file.
         '''
         reftime = normalize_reftime(reftime)
         now = np.datetime64('now')
@@ -268,6 +242,16 @@ class NamLoader:
 
     def grib_path(self, reftime, forecast):
         '''The path for a forecast GRIB.
+
+        Arguments:
+            reftime (numpy.datetime64 or str):
+                The reference time.
+            forecast (int):
+                The forecast hour.
+
+        Returns:
+            pathlib.Path:
+                The local path for a GRIB file, which may not exist.
         '''
         reftime = normalize_reftime(reftime).astype(object)
         prefix_fmt = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'
@@ -278,6 +262,14 @@ class NamLoader:
 
     def nc_path(self, reftime):
         '''The path to the netCDF cache for a reference time.
+
+        Arguments:
+            reftime (numpy.datetime64 or str):
+                The reference time.
+
+        Returns:
+            pathlib.Path:
+                The local path to a netCDF file, which may not exist.
         '''
         reftime = normalize_reftime(reftime).astype(object)
         prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
@@ -285,10 +277,10 @@ class NamLoader:
         return self.cache_dir / prefix / filename
 
     def download(self, reftime, forecast, max_tries=8, timeout=10):
-        '''Download the GRIB files for this dataset.
+        '''Ensure that the GRIB for this reftime and forecast exists locally.
 
-        Args:
-            reftime (datetime64):
+        Arguments:
+            reftime (numpy.datetime64 or str):
                 The reference time to download.
             forecast (int):
                 The forecast hour to download
@@ -343,6 +335,18 @@ class NamLoader:
 
     def load_grib(self, reftime, forecast):
         '''Load a forecast from GRIB.
+
+        This is where the bulk of the dataset normalization happens.
+
+        Arguments:
+            reftime (numpy.datetime64 or str):
+                The reference time.
+            forecast (int):
+                The forecast hour.
+
+        Returns:
+            xarray.Dataset:
+                A dataset containing the contents of the GRIB.
         '''
         self.download(reftime, forecast)
 
@@ -430,10 +434,6 @@ class NamLoader:
             ds = ds.rename(features)
 
         # Subset the geographic region to a square area centered around Macon, GA.
-        # The slice was computed roughly like this:
-        # >>> a = (24.415094, -93.995674) # latlon coordinates
-        # >>> b = (40.090744, -71.77018) # latlon coordinates
-        # >>> diagonal_slice((ds.lat, ds.lon), a, b)
         ds = ds.isel(y=slice(63, 223, None), x=slice(355, 515, None))
 
         # Free memory from unused features and areas.
@@ -558,6 +558,14 @@ class NamLoader:
         perfectly aligned; the x and y coordinates are offset by up to 4 km.
 
         We force all to align to the final dataset's spatial coordinates.
+
+        Arguments:
+            datasets (Sequence[xarray.Dataset]):
+                The datasets to combine.
+
+        Returns:
+            xarray.Dataset:
+                The combined dataset.
         '''
         coords = {
             'x':   datasets[-1].x,
@@ -574,20 +582,22 @@ class NamLoader:
     def open_gribs(self, reftime='now'):
         '''Load the forecasts from GRIB, downlading if they do not exist.
 
-        Args:
-            reftime (datetime64):
+        Arguments:
+            reftime (numpy.datetime64 or str):
                 The reference time to open.
 
         Returns:
-            An `xr.Dataset` describing this forecast.
+            xarray.Dataset:
+                A dataset for the forecast at this reftime.
         '''
-        datasets = self._mapper(lambda f: self.load_grib(reftime, f), FORECAST_PERIOD)
+        load_grib = lambda f: self.load_grib(reftime, f)
+        datasets = map(load_grib, FORECAST_PERIOD)
         ds = xr.concat(datasets, dim='forecast')
 
         if self.save_nc:
             path = self.nc_path(reftime)
             logger.info(f'writing {path}')
-            ds.to_netcdf(str(path)) # must be str, can't be Path, should fix in xarray
+            ds.to_netcdf(str(path))  # must be str, can't be Path, should fix in xarray
             if not self.keep_gribs:
                 logger.info('deleting local gribs')
                 for forecast in FORECAST_PERIOD:
@@ -599,12 +609,13 @@ class NamLoader:
     def open_nc(self, reftime='now'):
         '''Load the forecasts from a netCDF in the cache.
 
-        Args:
-            reftime (datetime64):
+        Arguments:
+            reftime (numpy.datetime64 or str):
                 The reference time to open.
 
         Returns:
-            An `xr.Dataset` describing this forecast.
+            xarray.Dataset:
+                A dataset for the forecast at this reftime.
         '''
         path = self.nc_path(reftime)
         if path.exists():
@@ -627,13 +638,14 @@ class NamLoader:
         preprocessed into an xarray Dataset. The dataset is then saved as a
         netCDF file, the GRIBs are deleted, and the dataset is returned.
 
-        Args:
-            reftimes (datetime64):
+        Arguments:
+            reftimes (numpy.datetime64 or str):
                 The reference times to open.
 
-        Returns (xr.Dataset):
-            Returns a single dataset containing all forecasts at the given
-            reference times. Some data may be dropped when combining forecasts.
+        Returns:
+            xarray.Dataset:
+                A single dataset containing all forecasts at the given reference
+                times. Some data may be dropped when combining forecasts.
         '''
         def _open(reftime):
             try:
@@ -653,17 +665,18 @@ class NamLoader:
 
         NOTE: This method only loads data from the cache.
 
-        Args:
-            start (datetime64):
+        Arguments:
+            start (numpy.datetime64 or str):
                 The first time in the range.
                 The default is 2017-01-01T00:00
-            stop (datetime64):
+            stop (numpy.datetime64 or str):
                 The last time in the range.
                 The default is the start of the current day.
 
-        Returns (xr.Dataset):
-            Returns a single dataset containing all forecasts at the given
-            reference times. Some data may be dropped when combining forecasts.
+        Returns:
+            xarray.Dataset:
+                A single dataset containing all forecasts at the given reference
+                times. Some data may be dropped when combining forecasts.
         '''
         start = normalize_reftime(start)
         stop = normalize_reftime(stop)
@@ -682,50 +695,3 @@ class NamLoader:
             start += delta
 
         return self._combine(datasets)
-
-
-@xr.register_dataarray_accessor('geo')
-class GeoExtension:
-    '''Extends `xr.DataArray` with geographic specific features.
-    '''
-    def __init__(self, xr_dataarray):
-        self.x = xr_dataarray
-
-    def plot(self, scale='10m', show=True, block=False):
-        '''A helper to plot geographic data.
-
-        Args:
-            scale (str):
-                The resolution of the coastlines and state/country borders.
-                Must be one of '10m' (highest resolution), '50m', or '110m'.
-            show (bool):
-                If True, show the plot immediately.
-            block (bool):
-                The blocking behavior when showing the plot.
-
-        Example:
-            Plot the 0-hour forecast of surface temperature:
-            >>> plot_geo(ds.isel(reftime=0, forecast=0).TMP_SFC)
-        '''
-        vmin = self.x.min()
-        vmax = self.x.max()
-
-        x = self.x
-        while x.ndim > 2:
-            x = x[0]
-
-        feature_kws = {'scale':scale, 'facecolor':'none', 'edgecolor':'black'}
-        coast = cf.NaturalEarthFeature('physical', 'coastline', **feature_kws)
-        countries = cf.NaturalEarthFeature('cultural', 'admin_0_boundary_lines_land', **feature_kws)
-        states = cf.NaturalEarthFeature('cultural', 'admin_1_states_provinces_lines', **feature_kws)
-
-        fig = plt.figure()
-        ax = plt.axes(projection=NAM218_PROJ)
-        ax.add_feature(coast)
-        ax.add_feature(countries)
-        ax.add_feature(states)
-        im = ax.pcolormesh(x.x, x.y, x.data, vmin=vmin, vmax=vmax)
-
-        if show:
-            plt.show(block=block)
-        return ax

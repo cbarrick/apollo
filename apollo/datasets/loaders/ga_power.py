@@ -1,6 +1,14 @@
-from datetime import datetime
-from pathlib import Path
+'''Provides access to a subset of the Georgia Power target data.
+
+The data must have been previously preprocessed into a CSV file named
+``mb-007.{group}.log`` where ``{group}`` is an arbitrary identifier for the
+data.
+'''
+
 import logging
+from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 
 import pandas as pd
 from pandas.errors import EmptyDataError
@@ -13,15 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def interval(year=None, month=None, day=None, hour=None, minute=None):
-    '''Group a timeseries DataFrame by interval.
-
-    Example:
-        Group a DataFrame into 15 minute blocks:
-        >>> df.groupby(interval(minute=15))
-
-    Gotchas:
-        Getting the right arguments for the interval you want is subtle.
-        Read the code to see exactly how this works.
+    '''Helper function to group a timeseries DataFrame by interval.
 
     Args:
         year (int): Group by rounding the year.
@@ -31,8 +31,20 @@ def interval(year=None, month=None, day=None, hour=None, minute=None):
         minute (int): Group by rounding the minute.
 
     Returns:
-        A function that maps arbitrary datetimes to reference datetimes by
-        rounding interval properties like `second` and `minute`.
+        Callable[[datetime.datetime or pandas.Timestamp], datetime.datetime]:
+            A function that maps arbitrary datetimes to reference datetimes by
+            rounding interval properties like `second` and `minute`. The input
+            may be a :class:`datetime.datetime` from the standard library or a
+            :class:`pandas.Timestamp`. The return value is a
+            :class:`datetime.datetime`.
+
+    Examples:
+        Group a DataFrame into 15 minute blocks:
+        >>> df.groupby(interval(minute=15))
+
+    Warning:
+        Getting the right arguments for the interval you want is subtle.
+        Read the code to see exactly how this works.
     '''
     # Only one of the kwargs should be given. The rest are derived.
     # We use values that exceed the traditional range for the derived values.
@@ -86,6 +98,25 @@ def interval(year=None, month=None, day=None, hour=None, minute=None):
 
 
 def open_mb007(*cols, group=2017, data_dir='./data/GA-POWER'):
+    '''Open a Georgia Power target file.
+
+    The data must have been previously preprocessed into a CSV file named
+    ``mb-007.{group}.log`` where ``{group}`` is an arbitrary identifier for the
+    data.
+
+    Arguments:
+        *cols (str or int):
+            The columns to read from the file. These may be names or indices.
+            The reftime column (0) will always be read.
+        group (Any):
+            An identifier for the file to read.
+        data_dir (pathlib.Path or str):
+            A path to the directory containing the data.
+
+    Returns:
+        xarray.Dataset:
+            The dataset giving the targets.
+    '''
     # The data directory contains more than just the mb-007 labels.
     data_dir = Path(data_dir)
     path = data_dir / f'mb-007.{group}.log'

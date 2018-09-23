@@ -1,0 +1,942 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>apollo.datasets.loaders.nam &mdash; apollo  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> apollo
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">User Guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user-guides/getting-started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user-guides/getting-started.html#installing-conda">Installing conda</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user-guides/getting-started.html#local-vs-global-installation">Local vs global installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user-guides/getting-started.html#download-and-install">Download and install</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user-guides/getting-started.html#setting-path-and-activating-the-base-environment">Setting <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> and activating the base environment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../user-guides/getting-started.html#working-with-apollo">Working with Apollo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user-guides/getting-started.html#downloading-apollo">Downloading Apollo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../user-guides/getting-started.html#installing-and-maintaining-the-apollo-environment">Installing and maintaining the Apollo environment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">API Docs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/apollo.html">apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/apollo.datasets.html">apollo.datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/apollo.datasets.html#module-apollo.datasets.solar">apollo.datasets.solar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.solar.ATHENS_LATLON.html">apollo.datasets.solar.ATHENS_LATLON</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.solar.PLANAR_FEATURES.html">apollo.datasets.solar.PLANAR_FEATURES</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.solar.SolarDataset.html">apollo.datasets.solar.SolarDataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/apollo.datasets.html#module-apollo.datasets.loaders.nam">apollo.datasets.loaders.nam</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.loaders.nam.open.html">apollo.datasets.loaders.nam.open</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.loaders.nam.open_range.html">apollo.datasets.loaders.nam.open_range</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html">apollo.datasets.loaders.nam.NamLoader</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/apollo.datasets.html#module-apollo.datasets.loaders.ga_power">apollo.datasets.loaders.ga_power</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.loaders.ga_power.interval.html">apollo.datasets.loaders.ga_power.interval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../api/stubs/apollo.datasets.loaders.ga_power.open_mb007.html">apollo.datasets.loaders.ga_power.open_mb007</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/apollo.viz.html">apollo.viz</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/stubs/apollo.viz.date_heatmap.html">apollo.viz.date_heatmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../api/stubs/apollo.viz.date_heatmap_figure.html">apollo.viz.date_heatmap_figure</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">apollo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>apollo.datasets.loaders.nam</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for apollo.datasets.loaders.nam</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;Provides access to a subset of the NAM-NMM dataset.</span>
+
+<span class="sd">    The North American Mesoscale Forecast System (NAM) is one of the</span>
+<span class="sd">    major weather models run by the National Centers for Environmental</span>
+<span class="sd">    Prediction (NCEP) for producing weather forecasts. Dozens of weather</span>
+<span class="sd">    parameters are available from the NAM grids, from temperature and</span>
+<span class="sd">    precipitation to lightning and turbulent kinetic energy.</span>
+
+<span class="sd">    As of June 20, 2006, the NAM model has been running with a non-</span>
+<span class="sd">    hydrostatic version of the Weather Research and Forecasting (WRF)</span>
+<span class="sd">    model at its core. This version of the NAM is also known as the NAM</span>
+<span class="sd">    Non-hydrostatic Mesoscale Model (NAM-NMM).</span>
+
+<span class="sd">Most users will be interested in the :func:`open` and :func:`open_range`</span>
+<span class="sd">functions which selects forecasts by reference time. The actual data</span>
+<span class="sd">loading logic is encapsulated in the :class:`NamLoader` class.</span>
+
+<span class="sd">The dataset live remotely. A live feed is provided by NCEP and an 11</span>
+<span class="sd">month archive is provided by NCDC (both are divisions of NOAA). This</span>
+<span class="sd">module caches the data locally, allowing us to build larger archives.</span>
+<span class="sd">The remote dataset is provided in GRIB format, while this module uses</span>
+<span class="sd">the netCDF format in its internal cache.</span>
+
+<span class="sd">This module provides access to only a subset of the NAM-NMM dataset.</span>
+<span class="sd">The geographic region is reduced and centered around Georgia, and only</span>
+<span class="sd">as subset of the variables are provided.</span>
+
+<span class="sd">Queries return an instance of :class:`xarray.Dataset` where each variable</span>
+<span class="sd">has exactly five dimensions: reftime, forecast, z, y, and x. The z-axis</span>
+<span class="sd">for each variable has a different name depending on the type of index</span>
+<span class="sd">measuring the axis, e.g. ``z_ISBL`` for isobaric pressure levels.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
+
+<span class="kn">import</span> <span class="nn">cartopy.crs</span> <span class="k">as</span> <span class="nn">ccrs</span>
+<span class="kn">import</span> <span class="nn">cartopy.feature</span> <span class="k">as</span> <span class="nn">cf</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+
+
+<span class="c1"># Module level logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># URLs of remote grib files.</span>
+<span class="c1"># PROD_URL typically has the most recent 7 days.</span>
+<span class="c1"># ARCHIVE_URL typically has the most recent 11 months, about 1 week behind.</span>
+<span class="n">PROD_URL</span> <span class="o">=</span> <span class="s1">&#39;http://nomads.ncep.noaa.gov/pub/data/nccf/com/nam/prod/nam.</span><span class="si">{ref.year:04d}{ref.month:02d}{ref.day:02d}</span><span class="s1">/nam.t</span><span class="si">{ref.hour:02d}</span><span class="s1">z.awphys</span><span class="si">{forecast:02d}</span><span class="s1">.tm00.grib2&#39;</span>
+<span class="n">ARCHIVE_URL_1</span> <span class="o">=</span> <span class="s1">&#39;https://nomads.ncdc.noaa.gov/data/meso-eta-hi/</span><span class="si">{ref.year:04d}{ref.month:02d}</span><span class="s1">/</span><span class="si">{ref.year:04d}{ref.month:02d}{ref.day:02d}</span><span class="s1">/nam_218_</span><span class="si">{ref.year:04d}{ref.month:02d}{ref.day:02d}</span><span class="s1">_</span><span class="si">{ref.hour:02d}</span><span class="s1">00_</span><span class="si">{forecast:03d}</span><span class="s1">.grb&#39;</span>
+<span class="n">ARCHIVE_URL_2</span> <span class="o">=</span> <span class="s1">&#39;https://nomads.ncdc.noaa.gov/data/meso-eta-hi/</span><span class="si">{ref.year:04d}{ref.month:02d}</span><span class="s1">/</span><span class="si">{ref.year:04d}{ref.month:02d}{ref.day:02d}</span><span class="s1">/nam_218_</span><span class="si">{ref.year:04d}{ref.month:02d}{ref.day:02d}</span><span class="s1">_</span><span class="si">{ref.hour:02d}</span><span class="s1">00_</span><span class="si">{forecast:03d}</span><span class="s1">.grb2&#39;</span>
+
+
+<span class="c1"># The full forecast period of the NAM-NMM dataset: 0h to 36h by 1h and 36h to 84h by 3h</span>
+<span class="c1"># The forecast period we work with: 0h to 36h by 1h</span>
+<span class="n">FULL_FORECAST_PERIOD</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">36</span><span class="p">))</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">36</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">FORECAST_PERIOD</span> <span class="o">=</span> <span class="n">FULL_FORECAST_PERIOD</span><span class="p">[:</span><span class="mi">37</span><span class="p">]</span>
+
+
+<span class="c1"># The projection of the NAM-NMM dataset as a `cartopy.crs.CRS`.</span>
+<span class="c1"># The projection is officially called called &quot;Grid 218&quot; by NOAA.</span>
+<span class="c1"># http://www.nco.ncep.noaa.gov/pmb/docs/on388/tableb.html#GRID218</span>
+<span class="n">NAM218_PROJ</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">LambertConformal</span><span class="p">(</span>
+    <span class="n">central_latitude</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+    <span class="n">central_longitude</span><span class="o">=</span><span class="mi">265</span><span class="p">,</span>
+    <span class="n">standard_parallels</span><span class="o">=</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span>
+
+    <span class="c1"># The default cartopy globe is WGS 84, but</span>
+    <span class="c1"># NAM assumes a spherical globe with radius 6,371.229 km</span>
+    <span class="n">globe</span><span class="o">=</span><span class="n">ccrs</span><span class="o">.</span><span class="n">Globe</span><span class="p">(</span><span class="n">ellipse</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">semimajor_axis</span><span class="o">=</span><span class="mi">6371229</span><span class="p">,</span> <span class="n">semiminor_axis</span><span class="o">=</span><span class="mi">6371229</span><span class="p">),</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="open"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.open.html#apollo.datasets.loaders.nam.open">[docs]</a><span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="o">*</span><span class="n">reftimes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Load and combine forecasts for some reference times,</span>
+<span class="sd">    downloading and preprocessing GRIBs as necessary.</span>
+
+<span class="sd">    If the dataset exists as a local netCDF file, it is loaded and</span>
+<span class="sd">    returned. Otherwise, any missing GRIB files are downloaded and</span>
+<span class="sd">    preprocessed into an :class:`xarray.Dataset`. The dataset is then</span>
+<span class="sd">    saved as a netCDF file, the GRIBs are deleted, and the dataset is</span>
+<span class="sd">    returned.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        reftimes (numpy.datetime64 or str):</span>
+<span class="sd">            The reference times to open.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        xarray.Dataset:</span>
+<span class="sd">            Returns a single dataset containing all forecasts at the given</span>
+<span class="sd">            reference times. Some data may be dropped when combining forecasts.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">NamLoader</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="o">*</span><span class="n">reftimes</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="open_range"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.open_range.html#apollo.datasets.loaders.nam.open_range">[docs]</a><span class="k">def</span> <span class="nf">open_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;2017-01-01&#39;</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="s1">&#39;today&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Load and combine forecasts for a range of reference times.</span>
+
+<span class="sd">    NOTE: This method only loads data from the cache.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        start (numpy.datetime64 or str):</span>
+<span class="sd">            The first time in the range.</span>
+<span class="sd">            The default is 2017-01-01T00:00</span>
+<span class="sd">        stop (numpy.datetime64 or str):</span>
+<span class="sd">            The last time in the range.</span>
+<span class="sd">            The default is the start of the current day.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        xarray.Dataset:</span>
+<span class="sd">            Returns a single dataset containing all forecasts at the given</span>
+<span class="sd">            reference times. Some data may be dropped when combining forecasts.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">NamLoader</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">open_range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">open_gribs</span><span class="p">(</span><span class="n">reftime</span><span class="o">=</span><span class="s1">&#39;now&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Load the forecasts from GRIB, downlading if they do not exist.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        reftime (numpy.datetime64 or str):</span>
+<span class="sd">            The reference time to open.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        xarray.Dataset:</span>
+<span class="sd">            An `xarray.Dataset` describing this forecast.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">NamLoader</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">open_gribs</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">open_nc</span><span class="p">(</span><span class="n">reftime</span><span class="o">=</span><span class="s1">&#39;now&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Load the forecasts from a netCDF in the cache.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        reftime (numpy.datetime64 or str):</span>
+<span class="sd">            The reference time to open.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        xarray.Dataset:</span>
+<span class="sd">            The dataset describing this forecast.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="n">NamLoader</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">open_nc</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">normalize_reftime</span><span class="p">(</span><span class="n">reftime</span><span class="o">=</span><span class="s1">&#39;now&#39;</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="n">reftime</span><span class="p">,</span> <span class="s1">&#39;6h&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">proj_coords</span><span class="p">(</span><span class="n">lats</span><span class="p">,</span> <span class="n">lons</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Transform geographic coordinates into the NAM218 projection.</span>
+<span class="sd">    The input is a geographic area described by a pair of 2D arrays giving the</span>
+<span class="sd">    latitude and longitude of each cell. The input must map to a square area in</span>
+<span class="sd">    the projected coordinates. The values returned are 1D indices along both</span>
+<span class="sd">    the x and y axes.</span>
+
+<span class="sd">    The output is undefined if the input does not map to a square area.</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        lats (numpy.ndarray):</span>
+<span class="sd">            The latitude at each cell as a 2D array.</span>
+<span class="sd">        lons (numpy.ndarray):</span>
+<span class="sd">            The longitude at each cell as a 2D array.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        x (numpy.ndarray):</span>
+<span class="sd">            The coordinates for the x axis in meters as a 1D array.</span>
+<span class="sd">        y (numpy.ndarray):</span>
+<span class="sd">            The coordinates for the y axis in meters as a 1D array.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">unproj</span> <span class="o">=</span> <span class="n">ccrs</span><span class="o">.</span><span class="n">PlateCarree</span><span class="p">()</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">NAM218_PROJ</span><span class="o">.</span><span class="n">transform_points</span><span class="p">(</span><span class="n">unproj</span><span class="p">,</span> <span class="n">lons</span><span class="p">,</span> <span class="n">lats</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">coords</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+
+
+<div class="viewcode-block" id="NamLoader"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader">[docs]</a><span class="k">class</span> <span class="nc">NamLoader</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;A class to download, subsets, and cache NAM forecasts.</span>
+
+<span class="sd">    A `NamLoader` downloads NAM-NMM forecasts from NOAA, subsets their features</span>
+<span class="sd">    and geographic scope, converts the data to netCDF, and caches the result.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="NamLoader.CacheMiss"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.CacheMiss">[docs]</a>    <span class="k">class</span> <span class="nc">CacheMiss</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="NamLoader.__init__"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">cache_dir</span><span class="o">=</span><span class="s1">&#39;./data/NAM-NMM&#39;</span><span class="p">,</span>
+            <span class="n">fail_fast</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">save_nc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">keep_gribs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Creates a loader for NAM data.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            cache_dir (pathlib.Path or str):</span>
+<span class="sd">                The path to the cache.</span>
+<span class="sd">            fail_fast (bool):</span>
+<span class="sd">                If true, the download errors are treated as fatal.</span>
+<span class="sd">                Otherwise downloads are retried with exponential backoff.</span>
+<span class="sd">                This overrides the `max_tries` argument of the `download`</span>
+<span class="sd">                method.</span>
+<span class="sd">            save_nc (bool):</span>
+<span class="sd">                Convert the dataset to netCDF on disk.</span>
+<span class="sd">            keep_gribs (bool):</span>
+<span class="sd">                Keep the GRIB files after converting to netCDF.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fail_fast</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">fail_fast</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_nc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">save_nc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keep_gribs</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">keep_gribs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamLoader.grib_url"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.grib_url">[docs]</a>    <span class="k">def</span> <span class="nf">grib_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The URL for a specific forecast.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftime (numpy.datetime64 or str):</span>
+<span class="sd">                The reference time.</span>
+<span class="sd">            forecast (int):</span>
+<span class="sd">                The forecast hour.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str:</span>
+<span class="sd">                A URL to a GRIB file.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">reftime</span> <span class="o">=</span> <span class="n">normalize_reftime</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">reftime</span>
+        <span class="k">if</span> <span class="n">delta</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">reftime</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s1">&#39;2017-04-01&#39;</span><span class="p">):</span>
+                <span class="n">url_fmt</span> <span class="o">=</span> <span class="n">ARCHIVE_URL_1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">url_fmt</span> <span class="o">=</span> <span class="n">ARCHIVE_URL_2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">url_fmt</span> <span class="o">=</span> <span class="n">PROD_URL</span>
+        <span class="k">return</span> <span class="n">url_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="n">reftime</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">),</span> <span class="n">forecast</span><span class="o">=</span><span class="n">forecast</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamLoader.grib_path"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.grib_path">[docs]</a>    <span class="k">def</span> <span class="nf">grib_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The path for a forecast GRIB.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftime (numpy.datetime64 or str):</span>
+<span class="sd">                The reference time.</span>
+<span class="sd">            forecast (int):</span>
+<span class="sd">                The forecast hour.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pathlib.Path:</span>
+<span class="sd">                The local path for a GRIB file, which may not exist.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">reftime</span> <span class="o">=</span> <span class="n">normalize_reftime</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+        <span class="n">prefix_fmt</span> <span class="o">=</span> <span class="s1">&#39;nam.</span><span class="si">{ref.year:04d}{ref.month:02d}{ref.day:02d}</span><span class="s1">&#39;</span>
+        <span class="n">filename_fmt</span> <span class="o">=</span> <span class="s1">&#39;nam.t</span><span class="si">{ref.hour:02d}</span><span class="s1">z.awphys</span><span class="si">{forecast:02d}</span><span class="s1">.tm00.grib&#39;</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">forecast</span><span class="o">=</span><span class="n">forecast</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">reftime</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">filename_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">forecast</span><span class="o">=</span><span class="n">forecast</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">reftime</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span> <span class="o">/</span> <span class="n">prefix</span> <span class="o">/</span> <span class="n">filename</span></div>
+
+<div class="viewcode-block" id="NamLoader.nc_path"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.nc_path">[docs]</a>    <span class="k">def</span> <span class="nf">nc_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reftime</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The path to the netCDF cache for a reference time.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftime (numpy.datetime64 or str):</span>
+<span class="sd">                The reference time.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pathlib.Path:</span>
+<span class="sd">                The local path to a netCDF file, which may not exist.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">reftime</span> <span class="o">=</span> <span class="n">normalize_reftime</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;nam.</span><span class="si">{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}</span><span class="s1">&#39;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;nam.t</span><span class="si">{reftime.hour:02d}</span><span class="s1">z.awphys.tm00.nc&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_dir</span> <span class="o">/</span> <span class="n">prefix</span> <span class="o">/</span> <span class="n">filename</span></div>
+
+<div class="viewcode-block" id="NamLoader.download"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">,</span> <span class="n">max_tries</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Ensure that the GRIB for this reftime and forecast exists locally.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftime (numpy.datetime64 or str):</span>
+<span class="sd">                The reference time to download.</span>
+<span class="sd">            forecast (int):</span>
+<span class="sd">                The forecast hour to download</span>
+<span class="sd">            max_tries (int):</span>
+<span class="sd">                The maximum number of failed downloads for a single file</span>
+<span class="sd">                before raising an `IOError`. This option is ignored if</span>
+<span class="sd">                `fail_fast` is set on the NamLoader.</span>
+<span class="sd">            timeout (int):</span>
+<span class="sd">                The network timeout in seconds.</span>
+<span class="sd">                Note that the government servers can be kinda slow.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fail_fast</span><span class="p">:</span>
+            <span class="n">max_tries</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grib_url</span><span class="p">(</span><span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grib_path</span><span class="p">(</span><span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">)</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_tries</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Perform a streaming download because the files are big.</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;downloading </span><span class="si">{url}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+                        <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                <span class="k">break</span>
+
+            <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="c1"># IOError includes both system and HTTP errors.</span>
+                <span class="c1"># Retry with exponential backoff.</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+                <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">max_tries</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;download of </span><span class="si">{path.name}</span><span class="s1"> failed, giving up&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">err</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">delay</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">i</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;download of </span><span class="si">{path.name}</span><span class="s1"> failed, retrying in </span><span class="si">{delay}</span><span class="s1">s&#39;</span><span class="p">)</span>
+                    <span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
+            <span class="k">except</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">,</span> <span class="ne">KeyboardInterrupt</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="c1"># Partial files will break future downloads, must delete.</span>
+                <span class="c1"># SystemExit and KeyboardInterrupt must be caught explicitly.</span>
+                <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+                <span class="k">raise</span> <span class="n">err</span></div>
+
+<div class="viewcode-block" id="NamLoader.load_grib"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.load_grib">[docs]</a>    <span class="k">def</span> <span class="nf">load_grib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Load a forecast from GRIB.</span>
+
+<span class="sd">        This is where the bulk of the dataset normalization happens.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftime (numpy.datetime64 or str):</span>
+<span class="sd">                The reference time.</span>
+<span class="sd">            forecast (int):</span>
+<span class="sd">                The forecast hour.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            xarray.Dataset:</span>
+<span class="sd">                A dataset containing the contents of the GRIB.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">)</span>
+
+        <span class="n">reftime</span> <span class="o">=</span> <span class="n">normalize_reftime</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grib_path</span><span class="p">(</span><span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;reading </span><span class="si">{path}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;pynio&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Normalize the first format.</span>
+        <span class="c1"># This format occurs when reading a GRIB1 file with xarray and the PyNIO backend.</span>
+        <span class="c1"># Note `gridx_218` is the y coordinate, likewise `gridy_218` is the x coordinate.</span>
+        <span class="k">if</span> <span class="s1">&#39;gridx_218&#39;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;DLWRF_218_SFC&#39;</span><span class="p">:</span>  <span class="s1">&#39;DLWRF_SFC&#39;</span><span class="p">,</span>              <span class="s1">&#39;DSWRF_218_SFC&#39;</span><span class="p">:</span>  <span class="s1">&#39;DSWRF_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;PRES_218_SFC&#39;</span><span class="p">:</span>   <span class="s1">&#39;PRES_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;PRES_218_MWSL&#39;</span><span class="p">:</span>  <span class="s1">&#39;PRES_MWSL&#39;</span><span class="p">,</span>              <span class="s1">&#39;PRES_218_TRO&#39;</span><span class="p">:</span>   <span class="s1">&#39;PRES_TRO&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;T_CDC_218_EATM&#39;</span><span class="p">:</span> <span class="s1">&#39;TCC_EATM&#39;</span><span class="p">,</span>               <span class="s1">&#39;TMP_218_SPDY&#39;</span><span class="p">:</span>   <span class="s1">&#39;TMP_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;TMP_218_SFC&#39;</span><span class="p">:</span>    <span class="s1">&#39;TMP_SFC&#39;</span><span class="p">,</span>                <span class="s1">&#39;TMP_218_ISBL&#39;</span><span class="p">:</span>   <span class="s1">&#39;TMP_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;TMP_218_HTGL&#39;</span><span class="p">:</span>   <span class="s1">&#39;TMP_HTGL&#39;</span><span class="p">,</span>               <span class="s1">&#39;TMP_218_TRO&#39;</span><span class="p">:</span>    <span class="s1">&#39;TMP_TRO&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;R_H_218_SIGY&#39;</span><span class="p">:</span>   <span class="s1">&#39;RH_SIGY&#39;</span><span class="p">,</span>                <span class="s1">&#39;R_H_218_SPDY&#39;</span><span class="p">:</span>   <span class="s1">&#39;RH_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;R_H_218_ISBL&#39;</span><span class="p">:</span>   <span class="s1">&#39;RH_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;R_H_218_0DEG&#39;</span><span class="p">:</span>   <span class="s1">&#39;RH_0DEG&#39;</span><span class="p">,</span>                <span class="s1">&#39;U_GRD_218_SPDY&#39;</span><span class="p">:</span> <span class="s1">&#39;UGRD_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;U_GRD_218_ISBL&#39;</span><span class="p">:</span> <span class="s1">&#39;UGRD_ISBL&#39;</span><span class="p">,</span>              <span class="s1">&#39;U_GRD_218_HTGL&#39;</span><span class="p">:</span> <span class="s1">&#39;UGRD_HTGL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;U_GRD_218_220&#39;</span><span class="p">:</span>  <span class="s1">&#39;UGRD_TOA&#39;</span><span class="p">,</span>               <span class="s1">&#39;U_GRD_218_MWSL&#39;</span><span class="p">:</span> <span class="s1">&#39;UGRD_MWSL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;U_GRD_218_TRO&#39;</span><span class="p">:</span>  <span class="s1">&#39;UGRD_TRO&#39;</span><span class="p">,</span>               <span class="s1">&#39;V_GRD_218_SPDY&#39;</span><span class="p">:</span> <span class="s1">&#39;VGRD_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;V_GRD_218_ISBL&#39;</span><span class="p">:</span> <span class="s1">&#39;VGRD_ISBL&#39;</span><span class="p">,</span>              <span class="s1">&#39;V_GRD_218_HTGL&#39;</span><span class="p">:</span> <span class="s1">&#39;VGRD_HTGL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;V_GRD_218_220&#39;</span><span class="p">:</span>  <span class="s1">&#39;VGRD_TOA&#39;</span><span class="p">,</span>               <span class="s1">&#39;V_GRD_218_MWSL&#39;</span><span class="p">:</span> <span class="s1">&#39;VGRD_MWSL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;V_GRD_218_TRO&#39;</span><span class="p">:</span>  <span class="s1">&#39;VGRD_TRO&#39;</span><span class="p">,</span>               <span class="s1">&#39;VIS_218_SFC&#39;</span><span class="p">:</span>    <span class="s1">&#39;VIS_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;LHTFL_218_SFC&#39;</span><span class="p">:</span>  <span class="s1">&#39;LHTFL_SFC&#39;</span><span class="p">,</span>              <span class="s1">&#39;SHTFL_218_SFC&#39;</span><span class="p">:</span>  <span class="s1">&#39;SHTFL_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;REFC_218_EATM&#39;</span><span class="p">:</span>  <span class="s1">&#39;REFC_EATM&#39;</span><span class="p">,</span>              <span class="s1">&#39;REFD_218_HTGL&#39;</span><span class="p">:</span>  <span class="s1">&#39;REFD_HTGL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;REFD_218_HYBL&#39;</span><span class="p">:</span>  <span class="s1">&#39;REFD_HYBL&#39;</span><span class="p">,</span>              <span class="s1">&#39;V_VEL_218_ISBL&#39;</span><span class="p">:</span> <span class="s1">&#39;VVEL_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;HGT_218_SFC&#39;</span><span class="p">:</span>    <span class="s1">&#39;HGT_SFC&#39;</span><span class="p">,</span>                <span class="s1">&#39;HGT_218_ISBL&#39;</span><span class="p">:</span>   <span class="s1">&#39;HGT_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;HGT_218_CBL&#39;</span><span class="p">:</span>    <span class="s1">&#39;HGT_CBL&#39;</span><span class="p">,</span>                <span class="s1">&#39;HGT_218_220&#39;</span><span class="p">:</span>    <span class="s1">&#39;HGT_TOA&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;HGT_218_LLTW&#39;</span><span class="p">:</span>   <span class="s1">&#39;HGT_LLTW&#39;</span><span class="p">,</span>               <span class="s1">&#39;HGT_218_0DEG&#39;</span><span class="p">:</span>   <span class="s1">&#39;HGT_0DEG&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;P_WAT_218_EATM&#39;</span><span class="p">:</span> <span class="s1">&#39;PWAT_EATM&#39;</span><span class="p">,</span>              <span class="s1">&#39;TKE_218_ISBL&#39;</span><span class="p">:</span>   <span class="s1">&#39;TKE_ISBL&#39;</span><span class="p">,</span>
+
+                <span class="s1">&#39;lv_HTGL3&#39;</span><span class="p">:</span>       <span class="s1">&#39;z_HTGL1&#39;</span><span class="p">,</span>                <span class="s1">&#39;lv_HTGL5&#39;</span><span class="p">:</span>       <span class="s1">&#39;z_HTGL2&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;lv_HTGL9&#39;</span><span class="p">:</span>       <span class="s1">&#39;z_HTGL3&#39;</span><span class="p">,</span>                <span class="s1">&#39;lv_ISBL2&#39;</span><span class="p">:</span>       <span class="s1">&#39;z_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;lv_SPDY4&#39;</span><span class="p">:</span>       <span class="s1">&#39;z_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;gridx_218&#39;</span><span class="p">:</span>      <span class="s1">&#39;y&#39;</span><span class="p">,</span>                      <span class="s1">&#39;gridy_218&#39;</span><span class="p">:</span>      <span class="s1">&#39;x&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;gridlat_218&#39;</span><span class="p">:</span>    <span class="s1">&#39;lat&#39;</span><span class="p">,</span>                    <span class="s1">&#39;gridlon_218&#39;</span><span class="p">:</span>    <span class="s1">&#39;lon&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">unwanted</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">unwanted</span><span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;z_ISBL&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="mi">100</span>
+            <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;z_ISBL&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Pa&#39;</span>
+
+        <span class="c1"># Normalize the second format.</span>
+        <span class="c1"># This format occurs after the change from GRIB1 to GRIB2 (circa April 2017).</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;DLWRF_P0_L1_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;DLWRF_SFC&#39;</span><span class="p">,</span>          <span class="s1">&#39;DSWRF_P0_L1_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;DSWRF_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;PRES_P0_L1_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;PRES_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;PRES_P0_L6_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;PRES_MWSL&#39;</span><span class="p">,</span>          <span class="s1">&#39;PRES_P0_L7_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;PRES_TRO&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;TCDC_P0_L200_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;TCC_EATM&#39;</span><span class="p">,</span>           <span class="s1">&#39;TMP_P0_2L108_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;TMP_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;TMP_P0_L1_GLC0&#39;</span><span class="p">:</span>     <span class="s1">&#39;TMP_SFC&#39;</span><span class="p">,</span>            <span class="s1">&#39;TMP_P0_L100_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;TMP_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;TMP_P0_L103_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;TMP_HTGL&#39;</span><span class="p">,</span>           <span class="s1">&#39;TMP_P0_L7_GLC0&#39;</span><span class="p">:</span>     <span class="s1">&#39;TMP_TRO&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;RH_P0_2L104_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;RH_SIGY&#39;</span><span class="p">,</span>            <span class="s1">&#39;RH_P0_2L108_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;RH_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;RH_P0_L100_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;RH_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;RH_P0_L4_GLC0&#39;</span><span class="p">:</span>      <span class="s1">&#39;RH_0DEG&#39;</span><span class="p">,</span>            <span class="s1">&#39;UGRD_P0_2L108_GLC0&#39;</span><span class="p">:</span> <span class="s1">&#39;UGRD_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;UGRD_P0_L100_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;UGRD_ISBL&#39;</span><span class="p">,</span>          <span class="s1">&#39;UGRD_P0_L103_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;UGRD_HTGL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;UGRD_P0_L220_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;UGRD_TOA&#39;</span><span class="p">,</span>           <span class="s1">&#39;UGRD_P0_L6_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;UGRD_MWSL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;UGRD_P0_L7_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;UGRD_TRO&#39;</span><span class="p">,</span>           <span class="s1">&#39;VGRD_P0_2L108_GLC0&#39;</span><span class="p">:</span> <span class="s1">&#39;VGRD_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;VGRD_P0_L100_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;VGRD_ISBL&#39;</span><span class="p">,</span>          <span class="s1">&#39;VGRD_P0_L103_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;VGRD_HTGL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;VGRD_P0_L220_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;VGRD_TOA&#39;</span><span class="p">,</span>           <span class="s1">&#39;VGRD_P0_L6_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;VGRD_MWSL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;VGRD_P0_L7_GLC0&#39;</span><span class="p">:</span>    <span class="s1">&#39;VGRD_TRO&#39;</span><span class="p">,</span>           <span class="s1">&#39;VIS_P0_L1_GLC0&#39;</span><span class="p">:</span>     <span class="s1">&#39;VIS_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;LHTFL_P0_L1_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;LHTFL_SFC&#39;</span><span class="p">,</span>          <span class="s1">&#39;SHTFL_P0_L1_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;SHTFL_SFC&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;REFC_P0_L200_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;REFC_EATM&#39;</span><span class="p">,</span>          <span class="s1">&#39;REFD_P0_L103_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;REFD_HTGL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;REFD_P0_L105_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;REFD_HYBL&#39;</span><span class="p">,</span>          <span class="s1">&#39;VVEL_P0_L100_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;VVEL_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;HGT_P0_L1_GLC0&#39;</span><span class="p">:</span>     <span class="s1">&#39;HGT_SFC&#39;</span><span class="p">,</span>            <span class="s1">&#39;HGT_P0_L100_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;HGT_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;HGT_P0_L2_GLC0&#39;</span><span class="p">:</span>     <span class="s1">&#39;HGT_CBL&#39;</span><span class="p">,</span>            <span class="s1">&#39;HGT_P0_L220_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;HGT_TOA&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;HGT_P0_L245_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;HGT_LLTW&#39;</span><span class="p">,</span>           <span class="s1">&#39;HGT_P0_L4_GLC0&#39;</span><span class="p">:</span>     <span class="s1">&#39;HGT_0DEG&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;PWAT_P0_L200_GLC0&#39;</span><span class="p">:</span>  <span class="s1">&#39;PWAT_EATM&#39;</span><span class="p">,</span>          <span class="s1">&#39;TKE_P0_L100_GLC0&#39;</span><span class="p">:</span>   <span class="s1">&#39;TKE_ISBL&#39;</span><span class="p">,</span>
+
+                <span class="s1">&#39;lv_HTGL1&#39;</span><span class="p">:</span>           <span class="s1">&#39;z_HTGL1&#39;</span><span class="p">,</span>            <span class="s1">&#39;lv_HTGL3&#39;</span><span class="p">:</span>           <span class="s1">&#39;z_HTGL2&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;lv_HTGL6&#39;</span><span class="p">:</span>           <span class="s1">&#39;z_HTGL3&#39;</span><span class="p">,</span>            <span class="s1">&#39;lv_ISBL0&#39;</span><span class="p">:</span>           <span class="s1">&#39;z_ISBL&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;lv_SPDL2&#39;</span><span class="p">:</span>           <span class="s1">&#39;z_SPDY&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;xgrid_0&#39;</span><span class="p">:</span>            <span class="s1">&#39;x&#39;</span><span class="p">,</span>                  <span class="s1">&#39;ygrid_0&#39;</span><span class="p">:</span>            <span class="s1">&#39;y&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;gridlat_0&#39;</span><span class="p">:</span>          <span class="s1">&#39;lat&#39;</span><span class="p">,</span>                <span class="s1">&#39;gridlon_0&#39;</span><span class="p">:</span>          <span class="s1">&#39;lon&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">unwanted</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">unwanted</span><span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+
+        <span class="c1"># Subset the geographic region to a square area centered around Macon, GA.</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">223</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">x</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">355</span><span class="p">,</span> <span class="mi">515</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+        <span class="c1"># Free memory from unused features and areas.</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Compute the coordinates for x and y</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">proj_coords</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ds</span><span class="o">.</span><span class="n">lon</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># Add a z dimension to variables that don&#39;t have one.</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="o">==</span> <span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">):</span>
+                <span class="n">layer</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;z_</span><span class="si">{layer}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Create reftime and forecast dimensions.</span>
+        <span class="c1"># Both are stored as integers with appropriate units.</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span>
+            <span class="n">reftime</span><span class="o">=</span><span class="n">reftime</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;datetime64[h]&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">),</span>
+            <span class="n">forecast</span><span class="o">=</span><span class="n">forecast</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="p">:</span>
+            <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">((</span><span class="s1">&#39;reftime&#39;</span><span class="p">,</span> <span class="s1">&#39;forecast&#39;</span><span class="p">))</span>
+
+        <span class="c1"># Fix the z_SPDY coordinate.</span>
+        <span class="c1"># The layer is defined in term of bounds above and below.</span>
+        <span class="c1"># The dataset expresses this as three coordinates: the index, lower bound, and upper bound.</span>
+        <span class="c1"># We kept the index and now replace the values to be the upper bound, in Pascals</span>
+        <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;z_SPDY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;z_SPDY&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">assign_attrs</span><span class="p">(</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;The values give the upper bound of the layer, the lower bound is 3000 Pa less&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ds</span><span class="p">[</span><span class="s1">&#39;z_SPDY&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3000</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="mi">9000</span><span class="p">,</span> <span class="mi">12000</span><span class="p">,</span> <span class="mi">15000</span><span class="p">,</span> <span class="mi">18000</span><span class="p">])</span>
+
+        <span class="c1"># Set metadata according to CF conventions</span>
+        <span class="c1"># http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.html</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="c1"># Data Variables</span>
+            <span class="c1"># TODO: The wind directions may be backwards, should be confirmed with NCEP.</span>
+            <span class="s1">&#39;DLWRF_SFC&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;downwelling_longwave_flux&#39;</span><span class="p">,</span>         <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;W/m^2&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;DSWRF_SFC&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;downwelling_shortwave_flux&#39;</span><span class="p">,</span>        <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;W/m^2&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;HGT_0DEG&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;geopotential_height&#39;</span><span class="p">,</span>               <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;gpm&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;HGT_CBL&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;geopotential_height&#39;</span><span class="p">,</span>               <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;gpm&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;HGT_ISBL&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;geopotential_height&#39;</span><span class="p">,</span>               <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;gpm&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;HGT_LLTW&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;geopotential_height&#39;</span><span class="p">,</span>               <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;gpm&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;HGT_TOA&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;geopotential_height&#39;</span><span class="p">,</span>               <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;gpm&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;HGT_SFC&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;geopotential_height&#39;</span><span class="p">,</span>               <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;gpm&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;PRES_MWSL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_pressure&#39;</span><span class="p">,</span>                      <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;Pa&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;PRES_SFC&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_pressure&#39;</span><span class="p">,</span>                      <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;Pa&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;PRES_TRO&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_pressure&#39;</span><span class="p">,</span>                      <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;Pa&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;PWAT_EATM&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;atmosphere_water_vapor_content&#39;</span><span class="p">,</span>    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;kg/m^2&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;REFC_EATM&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;equivalent_reflectivity_factor&#39;</span><span class="p">,</span>    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;dBZ&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;REFD_HTGL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;equivalent_reflectivity_factor&#39;</span><span class="p">,</span>    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;dBZ&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;REFD_HYBL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;equivalent_reflectivity_factor&#39;</span><span class="p">,</span>    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;dBZ&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;RH_0DEG&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;relative_humidity&#39;</span><span class="p">,</span>                 <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;%&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;RH_ISBL&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;relative_humidity&#39;</span><span class="p">,</span>                 <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;%&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;RH_SIGY&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;relative_humidity&#39;</span><span class="p">,</span>                 <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;%&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;RH_SPDY&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;relative_humidity&#39;</span><span class="p">,</span>                 <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;%&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;LHTFL_SFC&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;upward_latent_heat_flux&#39;</span><span class="p">,</span>           <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;W/m2&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;SHTFL_SFC&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;upward_sensible_heat_flux&#39;</span><span class="p">,</span>         <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;W/m2&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;TCC_EATM&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;cloud_area_fraction&#39;</span><span class="p">,</span>               <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;%&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;TKE_ISBL&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;atmosphere_kinetic_energy_content&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;J/kg&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;TMP_HTGL&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_temperature&#39;</span><span class="p">,</span>                   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;K&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;TMP_ISBL&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_temperature&#39;</span><span class="p">,</span>                   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;K&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;TMP_SFC&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_temperature&#39;</span><span class="p">,</span>                   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;K&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;TMP_SPDY&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_temperature&#39;</span><span class="p">,</span>                   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;K&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;TMP_TRO&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;air_temperature&#39;</span><span class="p">,</span>                   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;K&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;UGRD_HTGL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;eastward_wind&#39;</span><span class="p">,</span>                     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;UGRD_ISBL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;eastward_wind&#39;</span><span class="p">,</span>                     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;UGRD_MWSL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;eastward_wind&#39;</span><span class="p">,</span>                     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;UGRD_TOA&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;eastward_wind&#39;</span><span class="p">,</span>                     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;UGRD_SPDY&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;eastward_wind&#39;</span><span class="p">,</span>                     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;UGRD_TRO&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;eastward_wind&#39;</span><span class="p">,</span>                     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VGRD_HTGL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;northward_wind&#39;</span><span class="p">,</span>                    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VGRD_ISBL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;northward_wind&#39;</span><span class="p">,</span>                    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VGRD_MWSL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;northward_wind&#39;</span><span class="p">,</span>                    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VGRD_TOA&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;northward_wind&#39;</span><span class="p">,</span>                    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VGRD_SPDY&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;northward_wind&#39;</span><span class="p">,</span>                    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VGRD_TRO&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;northward_wind&#39;</span><span class="p">,</span>                    <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m/s&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VIS_SFC&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;visibility&#39;</span><span class="p">,</span>                        <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;VVEL_ISBL&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;vertical_air_velocity_expressed_as_tendency_of_pressure&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;Pa/s&#39;</span><span class="p">},</span>
+
+            <span class="c1"># Coordinates</span>
+            <span class="c1"># I couldn&#39;t find standard names for all of the layers...</span>
+            <span class="c1"># I&#39;m not sure if both forecast and reftime should be marked as axis T...</span>
+            <span class="s1">&#39;x&#39;</span><span class="p">:</span>        <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;projection_x_coordinate&#39;</span><span class="p">,</span>   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;y&#39;</span><span class="p">:</span>        <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;projection_y_coordinate&#39;</span><span class="p">,</span>   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_CBL&#39;</span><span class="p">:</span>    <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;cloud_base&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_HYBL&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;atmosphere_hybrid_sigma_pressure_coordinate&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_TOA&#39;</span><span class="p">:</span>    <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;toa&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_SFC&#39;</span><span class="p">:</span>    <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;surface&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_SIGY&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;atmosphere_sigma_coordinate&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_TRO&#39;</span><span class="p">:</span>    <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;tropopause&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_SPDY&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;specified pressure difference&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;Pa&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_HTGL1&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;fixed_height_above_ground&#39;</span><span class="p">,</span>     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_HTGL2&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;fixed_height_above_ground&#39;</span><span class="p">,</span>     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_HTGL3&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;fixed_height_above_ground&#39;</span><span class="p">,</span>     <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;m&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_ISBL&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;isobaric_level&#39;</span><span class="p">,</span>                <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;Pa&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_0DEG&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;0_degree_C_isotherm&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_EATM&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;entire_atmosphere&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_LLTW&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;lowest_level_of_the_wet_bulb_zero&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;z_MWSL&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;long_name&#39;</span><span class="p">:</span><span class="s1">&#39;max_wind_surface_layer&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;forecast&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;forecast_period&#39;</span><span class="p">,</span>           <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;hours&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;reftime&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span><span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;forecast_reference_time&#39;</span><span class="p">,</span>   <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;hours since 1970-01-01T00:00&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;lat&#39;</span><span class="p">:</span>      <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span>  <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;degree_north&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;lon&#39;</span><span class="p">:</span>      <span class="p">{</span><span class="s1">&#39;standard_name&#39;</span><span class="p">:</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;degree_east&#39;</span><span class="p">},</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+            <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">assign_attrs</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign_attrs</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="s1">&#39;NAM-UGA, a subset of NAM-NMM for solar forecasting research in Georgia&#39;</span><span class="p">,</span>
+            <span class="n">history</span><span class="o">=</span><span class="n">f</span><span class="s1">&#39;{np.datetime64(&quot;now&quot;)}Z Initial conversion from GRIB files released by NCEP&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">decode_cf</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+    <span class="k">def</span> <span class="nf">_combine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Combine a list of datasets.</span>
+
+<span class="sd">        This is non-trivial because the old-format and the new-format are not</span>
+<span class="sd">        perfectly aligned; the x and y coordinates are offset by up to 4 km.</span>
+
+<span class="sd">        We force all to align to the final dataset&#39;s spatial coordinates.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            datasets (Sequence[xarray.Dataset]):</span>
+<span class="sd">                The datasets to combine.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            xarray.Dataset:</span>
+<span class="sd">                The combined dataset.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;x&#39;</span><span class="p">:</span>   <span class="n">datasets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+            <span class="s1">&#39;y&#39;</span><span class="p">:</span>   <span class="n">datasets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+            <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="n">datasets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lat</span><span class="p">,</span>
+            <span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="n">datasets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lon</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">drop</span><span class="p">((</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">))</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;joining datasets&#39;</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;reftime&#39;</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="o">**</span><span class="n">coords</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ds</span>
+
+<div class="viewcode-block" id="NamLoader.open_gribs"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.open_gribs">[docs]</a>    <span class="k">def</span> <span class="nf">open_gribs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reftime</span><span class="o">=</span><span class="s1">&#39;now&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Load the forecasts from GRIB, downlading if they do not exist.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftime (numpy.datetime64 or str):</span>
+<span class="sd">                The reference time to open.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            xarray.Dataset:</span>
+<span class="sd">                A dataset for the forecast at this reftime.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">load_grib</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_grib</span><span class="p">(</span><span class="n">reftime</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">load_grib</span><span class="p">,</span> <span class="n">FORECAST_PERIOD</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;forecast&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_nc</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_path</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;writing </span><span class="si">{path}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>  <span class="c1"># must be str, can&#39;t be Path, should fix in xarray</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_gribs</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;deleting local gribs&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">forecast</span> <span class="ow">in</span> <span class="n">FORECAST_PERIOD</span><span class="p">:</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grib_path</span><span class="p">(</span><span class="n">reftime</span><span class="p">,</span> <span class="n">forecast</span><span class="p">)</span>
+                    <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+<div class="viewcode-block" id="NamLoader.open_nc"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.open_nc">[docs]</a>    <span class="k">def</span> <span class="nf">open_nc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reftime</span><span class="o">=</span><span class="s1">&#39;now&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Load the forecasts from a netCDF in the cache.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftime (numpy.datetime64 or str):</span>
+<span class="sd">                The reference time to open.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            xarray.Dataset:</span>
+<span class="sd">                A dataset for the forecast at this reftime.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_path</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;reading </span><span class="si">{path}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">open_dataset</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">,</span>
+                <span class="n">autoclose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">chunks</span><span class="o">=</span><span class="p">{},</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">ds</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NamLoader</span><span class="o">.</span><span class="n">CacheMiss</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamLoader.open"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.open">[docs]</a>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">reftimes</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Load and combine forecasts for some reference times,</span>
+<span class="sd">        downloading and preprocessing GRIBs as necessary.</span>
+
+<span class="sd">        If the dataset exists as a local netCDF file, it is loaded and</span>
+<span class="sd">        returned. Otherwise, any missing GRIB files are downloaded and</span>
+<span class="sd">        preprocessed into an xarray Dataset. The dataset is then saved as a</span>
+<span class="sd">        netCDF file, the GRIBs are deleted, and the dataset is returned.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            reftimes (numpy.datetime64 or str):</span>
+<span class="sd">                The reference times to open.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            xarray.Dataset:</span>
+<span class="sd">                A single dataset containing all forecasts at the given reference</span>
+<span class="sd">                times. Some data may be dropped when combining forecasts.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">def</span> <span class="nf">_open</span><span class="p">(</span><span class="n">reftime</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_nc</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">NamLoader</span><span class="o">.</span><span class="n">CacheMiss</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_gribs</span><span class="p">(</span><span class="n">reftime</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ds</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reftimes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_open</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">datasets</span> <span class="o">=</span> <span class="p">[</span><span class="n">_open</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reftimes</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combine</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamLoader.open_range"><a class="viewcode-back" href="../../../../api/stubs/apollo.datasets.loaders.nam.NamLoader.html#apollo.datasets.loaders.nam.NamLoader.open_range">[docs]</a>    <span class="k">def</span> <span class="nf">open_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">&#39;2017-01-01&#39;</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="s1">&#39;today&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Load and combine forecasts for a range of reference times.</span>
+
+<span class="sd">        NOTE: This method only loads data from the cache.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            start (numpy.datetime64 or str):</span>
+<span class="sd">                The first time in the range.</span>
+<span class="sd">                The default is 2017-01-01T00:00</span>
+<span class="sd">            stop (numpy.datetime64 or str):</span>
+<span class="sd">                The last time in the range.</span>
+<span class="sd">                The default is the start of the current day.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            xarray.Dataset:</span>
+<span class="sd">                A single dataset containing all forecasts at the given reference</span>
+<span class="sd">                times. Some data may be dropped when combining forecasts.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">normalize_reftime</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">normalize_reftime</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
+
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="n">stop</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_nc</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+                <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;error reading forecast for </span><span class="si">{start}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">NamLoader</span><span class="o">.</span><span class="n">CacheMiss</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">start</span> <span class="o">+=</span> <span class="n">delta</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combine</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, UGA Institute for Artificial Intelligence.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
