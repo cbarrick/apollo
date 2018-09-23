@@ -1,9 +1,12 @@
 name: apollo
+
 channels:
-    - pytorch
     - conda-forge
+    - pytorch
     - defaults
+
 dependencies:
+    # Core stack
     - python>=3.6
     - numpy
     - scipy
@@ -11,9 +14,21 @@ dependencies:
     - cartopy
     - pandas
     - xarray>=0.10
-    - conda-forge/label/dev::pynio  # dev version, python 3 support
     - scikit-learn
     - xgboost
     - pytorch
+
+    # PyNio is needed for xarray to open grib files.
+    # Currently, only the dev version has python 3 support (2018-10-02).
+    - conda-forge/label/dev::pynio
+
+    # Documentation
     - sphinx
     - sphinx_rtd_theme
+
+    # There is a bug in conda's dependency resolution where indirect deps
+    # get pulled from the wrong channel. These seem to be the minimal set
+    # that must be forced to come from conda-forge in our case.
+    # https://github.com/conda/conda/issues/6065
+    - conda-forge::libgdal
+    - conda-forge::libpq
