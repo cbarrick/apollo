@@ -6,6 +6,7 @@ Apollo
     :maxdepth: 1
 
     user-guides/getting-started
+    user-guides/loading-data
 
 
 .. toctree::

@@ -23,12 +23,12 @@ For global installations, consider ``/opt/conda``::
 
     $ CONDA_PREFIX="/opt/conda"
 
-Note that installing into ``/opt`` usually requires superuser privileges. The rest of this guide assumes the ``CONDA_PREFIX`` variable is set.
+Note that installing into ``/opt`` usually requires superuser privileges. The rest of this guide assumes that the ``CONDA_PREFIX`` variable is set and that you have permission to create and write into it.
 
 Download and install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Our next step is to download the Miniconda3 installer. These can be found online at https://conda.io/miniconda.html. For a detailed list of all Miniconda versions and their MD5 checksums, see https://repo.continuum.io/miniconda/. For this guide, we will install the latest Miniconda3 on a 64-bit Linux platform.
+Our next step is to download the Miniconda3 installer. It can be found online at https://conda.io/miniconda.html. For a detailed list of all current and previous Miniconda installers and their MD5 checksums, see https://repo.continuum.io/miniconda/. For this guide, we will install the latest Miniconda3 on a 64-bit Linux platform.
 
 First, download the latest Miniconda installer::
 
@@ -44,24 +44,25 @@ If the MD5 checksum matches, we can continue to install::
     $ chmod +x ./Miniconda3-latest-Linux-x86_64.sh
     $ ./Miniconda3-latest-Linux-x86_64.sh -b -p "$CONDA_PREFIX"
 
-The ``-b`` argument tells the installer to use "batch mode". This implicitly agrees to the terms of service and installs with sane defaults. The ``-p "$CONDA_PREFIX"`` argument gives the installation directory.
+The ``-b`` argument tells the installer to use "batch mode". This implicitly agrees to the terms of service and installs with sane defaults. The argument ``-p "$CONDA_PREFIX"`` gives the installation directory.
 
-You may view additional options with ``-h``::
+.. note::
+    You can view additional installation options with ``-h``::
 
-    $ ./Miniconda3-latest-Linux-x86_64.sh -h
+        $ ./Miniconda3-latest-Linux-x86_64.sh -h
 
-    usage: ./Miniconda3-latest-Linux-x86_64.sh [options]
+        usage: ./Miniconda3-latest-Linux-x86_64.sh [options]
 
-    Installs Miniconda3 4.5.11
+        Installs Miniconda3 4.5.11
 
-    -b           run install in batch mode (without manual intervention),
-                 it is expected the license terms are agreed upon
-    -f           no error if install prefix already exists
-    -h           print this help message and exit
-    -p PREFIX    install prefix, defaults to /home/chris/miniconda3, must not contain spaces.
-    -s           skip running pre/post-link/install scripts
-    -u           update an existing installation
-    -t           run package tests after installation (may install conda-build)
+        -b           run install in batch mode (without manual intervention),
+                     it is expected the license terms are agreed upon
+        -f           no error if install prefix already exists
+        -h           print this help message and exit
+        -p PREFIX    install prefix, defaults to /home/chris/miniconda3, must not contain spaces.
+        -s           skip running pre/post-link/install scripts
+        -u           update an existing installation
+        -t           run package tests after installation (may install conda-build)
 
 
 Setting ``$PATH`` and activating the base environment
@@ -75,12 +76,21 @@ Now we can activate the base environment::
 
     $ conda activate
 
-To perform this automatically at login, you may add this line to your ``~/.bashrc``::
+To perform this automatically at login, you may add the above commands to your ``~/.bashrc`` with the following::
 
     $ echo "source '$CONDA_PREFIX/etc/profile.d/conda.sh' && conda activate" >> ~/.bashrc
 
 .. important::
     Adding this line to your ``.bashrc`` is not sufficient to make conda available in all scripts. In particular, cron jobs which require a particular conda environment should manually source the ``conda.sh`` script and activate the appropriate environment.
+
+Updating the base environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once conda is installed and the base environment active, you should update the core packages to the latest versions::
+
+    $ conda update --all
+
+In particular, this may update the ``conda`` tool itself.
 
 
 Working with Apollo
