@@ -390,7 +390,7 @@ class NamLoader:
                 'gridx_218':      'y',                      'gridy_218':      'x',
                 'gridlat_218':    'lat',                    'gridlon_218':    'lon',
             }
-            unwanted = [k for k in ds.keys() if k not in features]
+            unwanted = [k for k in ds.data_vars.keys() if k not in features]
             ds = ds.drop(unwanted)
             ds = ds.rename(features)
             ds['z_ISBL'].data *= 100
@@ -429,7 +429,7 @@ class NamLoader:
                 'xgrid_0':            'x',                  'ygrid_0':            'y',
                 'gridlat_0':          'lat',                'gridlon_0':          'lon',
             }
-            unwanted = [k for k in ds.keys() if k not in features]
+            unwanted = [k for k in ds.data_vars.keys() if k not in features]
             ds = ds.drop(unwanted)
             ds = ds.rename(features)
 
