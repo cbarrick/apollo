@@ -11,30 +11,30 @@ from xgboost import XGBRegressor
 MODELS = {
     'linreg': SKModel('linear_regression', LinearRegression, parameter_grid=None),
     'svr': SKModel('svr', SVR, {
-                'C': np.arange(0.6, 1.6, 0.2),                  # penalty parameter C of the error term
-                'epsilon': np.arange(0.1, 0.8, 0.1),            # width of the no-penalty region
-                'kernel': ['rbf', 'sigmoid'],                   # kernel function
-                'gamma': [1/500, 1/1000, 1/2000, 'auto']        # kernel coefficient
-            }),
+        'C': np.arange(0.6, 1.6, 0.2),                  # penalty parameter C of the error term
+        'epsilon': np.arange(0.1, 0.8, 0.1),            # width of the no-penalty region
+        'kernel': ['rbf', 'sigmoid'],                   # kernel function
+        'gamma': [1/500, 1/1000, 1/2000, 'auto']        # kernel coefficient
+    }),
     'knn': SKModel('knn', KNeighborsRegressor, {
-                'n_neighbors': np.arange(3, 25, 2),             # k
-                'weights': ['uniform', 'distance'],             # how are neighboring values weighted
-            }),
+        'n_neighbors': np.arange(3, 25, 2),             # k
+        'weights': ['uniform', 'distance'],             # how are neighboring values weighted
+    }),
     'dtree': SKModel('dtree', DecisionTreeRegressor, {
-                'splitter': ['best', 'random'],                 # splitting criterion
-                'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
-                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
-            }),
+        'splitter': ['best', 'random'],                 # splitting criterion
+        'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
+        'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+    }),
     'rf': SKModel('rf', RandomForestRegressor, {
-                'n_estimators': [10, 50, 100, 250],
-                'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
-                'min_impurity_decrease': np.arange(0, 0.6, 0.05)
-            }),
+        'n_estimators': [10, 50, 100, 250],
+        'max_depth': [None, 10, 20, 50, 100],           # Maximum depth of the tree. None means unbounded.
+        'min_impurity_decrease': np.arange(0, 0.6, 0.05)
+    }),
     'gbt': SKModel('gbt', XGBRegressor, {
-                'learning_rate': np.arange(0.01, 0.13, 0.02),   # learning rate
-                'n_estimators': [10, 20, 50, 100, 200],         # number of boosting stages
-                'max_depth': [3, 5, 10, 50, 100],               # Maximum depth of the tree. None means unbounded.
-            }),
+        'learning_rate': np.arange(0.01, 0.13, 0.02),   # learning rate
+        'n_estimators': [10, 20, 50, 100, 200],         # number of boosting stages
+        'max_depth': [3, 5, 10, 50, 100],               # Maximum depth of the tree. None means unbounded.
+    }),
 }
 
 
@@ -51,11 +51,11 @@ def main():
 
     parser.add_argument('--begin_date', '-b', default='2017-01-01 00:00', type=str,
                         help='The start date of the dataset that you want to use.  Any string accepted by numpy\'s '
-                        'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
+                             'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
 
     parser.add_argument('--end_date', '-e', default='2017-12-31 18:00', type=str,
                         help='The end date of the dataset that you want to use.  Any string accepted by numpy\'s '
-                        'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
+                             'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
 
     parser.add_argument('--target_hour', '-i', default=24, type=int,
                         help='The prediction hour to target.  Should be an integer between 1 and 36.')
@@ -80,7 +80,7 @@ def main():
     train.add_argument('--no_tune', '-p', action='store_true',
                        help='If set, hyperparameter tuning will NOT be performed during training.')
     train.add_argument('--num_folds', '-n', default=3, type=int,
-                       help='If `tune` is enabled, the number of folds to use during the cross-validated grid search. ' 
+                       help='If `tune` is enabled, the number of folds to use during the cross-validated grid search. '
                             'Ignored if tuning is disabled.')
 
     # evaluate
@@ -123,13 +123,13 @@ def main():
             print("Mean %s: %0.4f" % (key, scores[key]))
     elif action == 'predict':
         predictions = model.predict(begin_date=args['begin_date'], end_date=args['end_date'],
-                                         target_hour=args['target_hour'], target_var=args['target_var'],
-                                         cache_dir=args['cache_dir'], save_dir=args['save_dir'])
+                                    target_hour=args['target_hour'], target_var=args['target_var'],
+                                    cache_dir=args['cache_dir'], save_dir=args['save_dir'])
 
         summary_path, prediction_path = \
             model.write_predictions(predictions, begin_date=args['begin_date'], end_date=args['end_date'],
-                                         target_hour=args['target_hour'], target_var=args['target_var'],
-                                         summary_dir=args['summary_dir'], output_dir=args['output_dir'])
+                                    target_hour=args['target_hour'], target_var=args['target_var'],
+                                    summary_dir=args['summary_dir'], output_dir=args['output_dir'])
 
         print(f'Summary file written to {summary_path}\nPredictions written to {prediction_path}')
     else:
