@@ -3,7 +3,6 @@
 
 import os
 import numpy as np
-import pandas as pd
 from apollo.datasets.solar import SolarDataset
 from apollo.models.base import Model
 from sklearn.model_selection import GridSearchCV, KFold, cross_validate
@@ -136,8 +135,3 @@ class SKModel(Model):
             predictions.append(data_point)
 
         return predictions
-
-
-def _datestring_to_posix(date_string):
-    timestring = pd.to_datetime(date_string, utc=True).timestamp()
-    return round(timestring)
