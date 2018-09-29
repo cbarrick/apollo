@@ -57,7 +57,7 @@ class SKModel(Model):
 
     def train(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, tune=True, num_folds=3):
         dataset = SolarDataset(start=begin_date, stop=end_date,
-                               forecast=target_hour, target=target_var,
+                               target=target_var, target_hour=target_hour,
                                cache_dir=cache_dir)
         # convert dataset to tabular form accepted by scikit estimators
         x, y = dataset.tabular()
@@ -96,7 +96,7 @@ class SKModel(Model):
 
         # load dataset
         dataset = SolarDataset(start=begin_date, stop=end_date,
-                               forecast=target_hour, target=target_var,
+                               target=target_var, target_hour=target_hour,
                                cache_dir=cache_dir)
         x, y = dataset.tabular()
 
