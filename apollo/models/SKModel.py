@@ -61,6 +61,7 @@ class SKModel(Model):
                                cache_dir=cache_dir)
         # convert dataset to tabular form accepted by scikit estimators
         x, y = dataset.tabular()
+        print('Dataset Loaded')
         if tune and self.param_grid is not None:
             grid = GridSearchCV(
                 estimator=self.regressor(),
@@ -99,6 +100,7 @@ class SKModel(Model):
                                target=target_var, target_hour=target_hour,
                                cache_dir=cache_dir)
         x, y = dataset.tabular()
+        print('Dataset Loaded')
 
         # Evaluate the classifier
         model = self.regressor(**hyperparams)
@@ -124,6 +126,7 @@ class SKModel(Model):
         # load NAM data without labels
         dataset = SolarDataset(start=begin_date, stop=end_date, target=None, cache_dir=cache_dir)
         data = dataset.tabular()
+        print('Dataset Loaded')
         reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
 
         predictions = []
