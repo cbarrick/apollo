@@ -211,7 +211,7 @@ class Model(ABC):
             'source': self.name,
             'sourcelabel': self.name.replace('_', ' '),
             'site': target_var,
-            'created': round(datetime.utcnow().timestamp()),
+            'created': round(datetime.datetime.utcnow().timestamp()),
             'start': Model._datestring_to_posix(begin_date),
             'stop': Model._datestring_to_posix(end_date),
             'resource': resource_path
