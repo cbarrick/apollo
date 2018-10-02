@@ -452,7 +452,7 @@
         <span class="n">data</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">open_range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">nam_cache</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">feature_subset</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">feature_subset</span><span class="p">]</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">feature_subset</span><span class="p">)]</span>
 
         <span class="k">if</span> <span class="n">geo_shape</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">slice_xy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">geo_shape</span><span class="p">)</span>

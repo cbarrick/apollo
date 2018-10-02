@@ -97,6 +97,8 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guides/loading-data.html">Loading data</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user-guides/loading-data.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user-guides/loading-data.html#module-apollo.datasets.solar">The High-Level Data API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user-guides/loading-data.html#module-apollo.datasets.loaders">The Low-Level Data API</a></li>
 </ul>
 </li>
 </ul>
@@ -197,7 +199,7 @@
 <div class="section" id="module-apollo.datasets.solar">
 <span id="apollo-datasets-solar"></span><h2>apollo.datasets.solar<a class="headerlink" href="#module-apollo.datasets.solar" title="Permalink to this headline">¶</a></h2>
 <p>The primary dataset API in apollo.</p>
-<p>The <a class="reference internal" href="#module-apollo.datasets.solar" title="apollo.datasets.solar"><code class="xref py py-mod docutils literal notranslate"><span class="pre">apollo.datasets.solar</span></code></a> contains the primary dataset class
+<p>The <a class="reference internal" href="../user-guides/loading-data.html#module-apollo.datasets.solar" title="apollo.datasets.solar"><code class="xref py py-mod docutils literal notranslate"><span class="pre">apollo.datasets.solar</span></code></a> contains the primary dataset class
 and helper functions for apollo. It handles the joining of NAM input
 variables with Georgia Power targets along with various preprocessing.</p>
 <p>The primary class, <a class="reference internal" href="stubs/apollo.datasets.solar.SolarDataset.html#apollo.datasets.solar.SolarDataset" title="apollo.datasets.solar.SolarDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolarDataset</span></code></a>, exposes the data as a
@@ -254,7 +256,7 @@ the netCDF format in its internal cache.</p>
 <p>This module provides access to only a subset of the NAM-NMM dataset.
 The geographic region is reduced and centered around Georgia, and only
 as subset of the variables are provided.</p>
-<p>Queries return an instance of <a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v0.10.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">xarray.Dataset</span></code></a> where each variable
+<p>Queries return an instance of <a class="reference external" href="http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html#xarray.Dataset" title="(in xarray v0.10.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">xarray.Dataset</span></code></a> where each variable
 has exactly five dimensions: reftime, forecast, z, y, and x. The z-axis
 for each variable has a different name depending on the type of index
 measuring the axis, e.g. <code class="docutils literal notranslate"><span class="pre">z_ISBL</span></code> for isobaric pressure levels.</p>
