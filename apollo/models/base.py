@@ -266,4 +266,4 @@ class Model(ABC):
     @classmethod
     def _datestring_to_posix(cls, date_string):
         timestring = pd.to_datetime(date_string, utc=True).timestamp()
-        return round(timestring)
+        return round(timestring) * 1000  # convert to milliseconds
