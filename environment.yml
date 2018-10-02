@@ -19,6 +19,7 @@ dependencies:
     - scikit-learn
     - xgboost
     - pytorch
+    - requests
 
     # PyNio is needed for xarray to open grib files.
     # Currently, only the dev version has python 3 support (2018-10-02).
