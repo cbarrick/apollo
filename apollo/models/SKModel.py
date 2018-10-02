@@ -101,6 +101,7 @@ class SKModel(Model):
                                target=target_var, target_hour=target_hour,
                                cache_dir=cache_dir)
         x, y = dataset.tabular()
+        x, y = np.asarray(x), np.asarray(y)
         print('Dataset Loaded')
 
         # Evaluate the classifier
@@ -126,7 +127,7 @@ class SKModel(Model):
 
         # load NAM data without labels
         dataset = SolarDataset(start=begin_date, stop=end_date, target=None, cache_dir=cache_dir)
-        data = dataset.tabular()
+        data = np.asarray(dataset.tabular())
         print('Dataset Loaded')
         reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
 
