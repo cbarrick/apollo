@@ -5,9 +5,10 @@ import os
 import numpy as np
 from apollo.datasets.solar import SolarDataset
 from apollo.models.base import Model
-from sklearn.model_selection import GridSearchCV, KFold, cross_validate
+from sklearn.model_selection import KFold, cross_validate
 from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.externals import joblib
+from dask_ml.model_selection import GridSearchCV
 
 # scoring metrics
 _DEFAULT_METRICS = {
