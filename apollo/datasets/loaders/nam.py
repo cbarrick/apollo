@@ -333,29 +333,20 @@ class NamLoader:
                 path.unlink()
                 raise err
 
-    def load_grib(self, reftime, forecast):
-        '''Load a forecast from GRIB.
+    def normalize_grib(self, ds):
+        '''Normalize a GRIB dataset.
 
-        This is where the bulk of the dataset normalization happens.
+        The variable and coordinate names in the GRIB forecasts are dependent on
+        the library reading the file (PyNio) have changed over time as NOAA has
+        upgraded from GRIB1 to GRIB2.
+
+        This method normalize the variable and coordinate names to our
+        internal format.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
-                The reference time.
-            forecast (int):
-                The forecast hour.
-
-        Returns:
-            xarray.Dataset:
-                A dataset containing the contents of the GRIB.
+            ds (xarray.Dataset):
+                The dataset to normalize.
         '''
-        self.download(reftime, forecast)
-
-        reftime = normalize_reftime(reftime)
-        path = self.grib_path(reftime, forecast)
-        logger.info(f'reading {path}')
-
-        ds = xr.open_dataset(path, engine='pynio')
-
         # Normalize the first format.
         # This format occurs when reading a GRIB1 file with xarray and the PyNIO backend.
         # Note `gridx_218` is the y coordinate, likewise `gridy_218` is the x coordinate.
@@ -432,6 +423,42 @@ class NamLoader:
             unwanted = [k for k in ds.data_vars.keys() if k not in features]
             ds = ds.drop(unwanted)
             ds = ds.rename(features)
+
+    def load_grib(self, reftime, forecast):
+        '''Load a forecast from GRIB.
+
+        This is where the bulk of the dataset normalization happens.
+
+        Arguments:
+            reftime (numpy.datetime64 or str):
+                The reference time.
+            forecast (int):
+                The forecast hour.
+
+        Returns:
+            xarray.Dataset:
+                A dataset containing the contents of the GRIB.
+        '''
+        self.download(reftime, forecast)
+
+        reftime = normalize_reftime(reftime)
+        path = self.grib_path(reftime, forecast)
+        logger.info(f'reading {path}')
+
+        ds = xr.open_dataset(path, engine='pynio')
+
+        try:
+            self.normalize_grib(ds)
+        except Exception as err:
+            # If normalization fails, we cannot continue.
+            # This may happen when the download is corrupt.
+            # We delete the file so that the system can retry later.
+            # TODO: This logic may be better placed in the download method, but
+            # how do we check if the download is corrupt before normalizing?
+            logger.error(f'unable to normalize grib forecast {reftime}/{forecast}')
+            logger.error(f'deleting {path}')
+            path.unlink()
+            raise err
 
         # Subset the geographic region to a square area centered around Macon, GA.
         ds = ds.isel(y=slice(63, 223, None), x=slice(355, 515, None))
