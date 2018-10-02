@@ -9,4 +9,4 @@ source '/opt/conda/etc/profile.d/conda.sh'
 conda activate ./prod_env
 
 # Make sure the most recent 4 forecasts are in the cache.
-python -m bin.download -n 4 2>&1 | tee -a ./download.log
+python -m apollo.bin.download -n 4 2>&1 | tee -a ./download.log
