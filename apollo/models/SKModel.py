@@ -9,6 +9,7 @@ from sklearn.model_selection import KFold, cross_validate
 from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.externals import joblib
 from dask_ml.model_selection import GridSearchCV
+from distributed import Client
 
 # scoring metrics
 _DEFAULT_METRICS = {
@@ -57,6 +58,7 @@ class SKModel(Model):
             return None
 
     def train(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, tune=True, num_folds=3):
+        client = Client()
         dataset = SolarDataset(start=begin_date, stop=end_date,
                                target=target_var, target_hour=target_hour,
                                cache_dir=cache_dir)
@@ -71,6 +73,7 @@ class SKModel(Model):
                 scoring='neg_mean_absolute_error',
                 return_train_score=False,
                 n_jobs=-1,
+                scheduler=client
             )
             grid.fit(x, y)
             print("Grid search completed.  Best parameters found: ")
