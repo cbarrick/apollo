@@ -5,9 +5,10 @@ import os
 import numpy as np
 from apollo.datasets.solar import SolarDataset
 from apollo.models.base import Model
-from sklearn.model_selection import GridSearchCV, KFold, cross_validate
+from sklearn.model_selection import KFold, cross_validate
 from sklearn.metrics import make_scorer, mean_absolute_error, mean_squared_error, r2_score
 from sklearn.externals import joblib
+from dask_ml.model_selection import GridSearchCV
 
 # scoring metrics
 _DEFAULT_METRICS = {
@@ -100,6 +101,7 @@ class SKModel(Model):
                                target=target_var, target_hour=target_hour,
                                cache_dir=cache_dir)
         x, y = dataset.tabular()
+        x, y = np.asarray(x), np.asarray(y)
         print('Dataset Loaded')
 
         # Evaluate the classifier
@@ -125,7 +127,7 @@ class SKModel(Model):
 
         # load NAM data without labels
         dataset = SolarDataset(start=begin_date, stop=end_date, target=None, cache_dir=cache_dir)
-        data = dataset.tabular()
+        data = np.asarray(dataset.tabular())
         print('Dataset Loaded')
         reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
 
