@@ -1,6 +1,6 @@
-apollo.datasets.loaders.nam.open
+apollo.datasets.nam.open
 ================================
 
-.. currentmodule:: apollo.datasets.loaders.nam
+.. currentmodule:: apollo.datasets.nam
 
 .. autofunction:: open

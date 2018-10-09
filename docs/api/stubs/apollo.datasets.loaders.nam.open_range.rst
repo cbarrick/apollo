@@ -1,6 +1,6 @@
-apollo.datasets.loaders.nam.open\_range
+apollo.datasets.nam.open\_range
 =======================================
 
-.. currentmodule:: apollo.datasets.loaders.nam
+.. currentmodule:: apollo.datasets.nam
 
 .. autofunction:: open_range

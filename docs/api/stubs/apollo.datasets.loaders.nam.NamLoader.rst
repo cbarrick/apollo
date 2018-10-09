@@ -1,7 +1,7 @@
-apollo.datasets.loaders.nam.NamLoader
+apollo.datasets.nam.NamLoader
 =====================================
 
-.. currentmodule:: apollo.datasets.loaders.nam
+.. currentmodule:: apollo.datasets.nam
 
 .. autoclass:: NamLoader
 

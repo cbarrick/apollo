@@ -1,6 +1,6 @@
-apollo.datasets.loaders.ga\_power.interval
+apollo.datasets.ga\_power.interval
 ==========================================
 
-.. currentmodule:: apollo.datasets.loaders.ga_power
+.. currentmodule:: apollo.datasets.ga_power
 
 .. autofunction:: interval

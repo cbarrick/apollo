@@ -20,7 +20,7 @@ import xgboost
 from xgboost import XGBRegressor
 
 import apollo
-from apollo.datasets import SolarDataset
+from apollo.datasets.solar import SolarDataset
 
 
 logger = logging.getLogger(__name__)

@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-from apollo.datasets.loaders import nam
+from apollo.datasets import nam
 
 
 def xrange_inclusive(start, stop, step):
