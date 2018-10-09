@@ -32,12 +32,10 @@ measuring the axis, e.g. ``z_ISBL`` for isobaric pressure levels.
 '''
 
 import logging
-from functools import lru_cache
 from pathlib import Path
 from time import sleep
 
 import cartopy.crs as ccrs
-import cartopy.feature as cf
 import numpy as np
 import requests
 import xarray as xr
@@ -120,40 +118,6 @@ def open_range(start='2017-01-01', stop='today', **kwargs):
     return loader.open_range(start, stop)
 
 
-def open_gribs(reftime='now', **kwargs):
-    '''Load the forecasts from GRIB, downlading if they do not exist.
-
-    Arguments:
-        reftime (numpy.datetime64 or str):
-            The reference time to open.
-
-    Returns:
-        xarray.Dataset:
-            An `xarray.Dataset` describing this forecast.
-    '''
-    loader = NamLoader(**kwargs)
-    return loader.open_gribs(reftime)
-
-
-def open_nc(reftime='now', **kwargs):
-    '''Load the forecasts from a netCDF in the cache.
-
-    Arguments:
-        reftime (numpy.datetime64 or str):
-            The reference time to open.
-
-    Returns:
-        xarray.Dataset:
-            The dataset describing this forecast.
-    '''
-    loader = NamLoader(**kwargs)
-    return loader.open_nc(reftime)
-
-
-def normalize_reftime(reftime='now'):
-    return np.datetime64(reftime, '6h')
-
-
 def proj_coords(lats, lons):
     '''Transform geographic coordinates into the NAM218 projection.
     The input is a geographic area described by a pair of 2D arrays giving the
@@ -186,6 +150,7 @@ class NamLoader:
     A `NamLoader` downloads NAM-NMM forecasts from NOAA, subsets their features
     and geographic scope, converts the data to netCDF, and caches the result.
     '''
+
     class CacheMiss(Exception): pass
 
     def __init__(self,
@@ -228,7 +193,7 @@ class NamLoader:
             str:
                 A URL to a GRIB file.
         '''
-        reftime = normalize_reftime(reftime)
+        reftime = np.datetime64(reftime, '6h')
         now = np.datetime64('now')
         delta = now - reftime
         if delta > np.timedelta64(7, 'D'):
@@ -253,7 +218,7 @@ class NamLoader:
             pathlib.Path:
                 The local path for a GRIB file, which may not exist.
         '''
-        reftime = normalize_reftime(reftime).astype(object)
+        reftime = np.datetime64(reftime).astype(object, '6h')
         prefix_fmt = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'
         filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
         prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
@@ -271,7 +236,7 @@ class NamLoader:
             pathlib.Path:
                 The local path to a netCDF file, which may not exist.
         '''
-        reftime = normalize_reftime(reftime).astype(object)
+        reftime = np.datetime64(reftime).astype(object, '6h')
         prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
         filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
         return self.cache_dir / prefix / filename
@@ -441,7 +406,7 @@ class NamLoader:
         '''
         self.download(reftime, forecast)
 
-        reftime = normalize_reftime(reftime)
+        reftime = np.datetime64(reftime, '6h')
         path = self.grib_path(reftime, forecast)
         logger.info(f'reading {path}')
 
@@ -705,8 +670,8 @@ class NamLoader:
                 A single dataset containing all forecasts at the given reference
                 times. Some data may be dropped when combining forecasts.
         '''
-        start = normalize_reftime(start)
-        stop = normalize_reftime(stop)
+        start = np.datetime64(start, '6h')
+        stop = np.datetime64(stop, '6h')
 
         datasets = []
         delta = np.timedelta64(6, 'h')
