@@ -98,7 +98,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Loading data</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-apollo.datasets.solar">The High-Level Data API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-apollo.datasets.loaders">The Low-Level Data API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-apollo.datasets">The Low-Level Data API</a></li>
 </ul>
 </li>
 </ul>
@@ -106,21 +106,21 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/apollo.html">apollo</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/apollo.datasets.html">apollo.datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.nam">apollo.datasets.nam</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.nam.open.html">apollo.datasets.nam.open</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.nam.open_range.html">apollo.datasets.nam.open_range</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.nam.NamLoader.html">apollo.datasets.nam.NamLoader</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.ga_power">apollo.datasets.ga_power</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.ga_power.interval.html">apollo.datasets.ga_power.interval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.ga_power.open_mb007.html">apollo.datasets.ga_power.open_mb007</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.solar">apollo.datasets.solar</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.solar.ATHENS_LATLON.html">apollo.datasets.solar.ATHENS_LATLON</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.solar.PLANAR_FEATURES.html">apollo.datasets.solar.PLANAR_FEATURES</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.solar.SolarDataset.html">apollo.datasets.solar.SolarDataset</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.loaders.nam">apollo.datasets.loaders.nam</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.nam.open.html">apollo.datasets.loaders.nam.open</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.nam.open_range.html">apollo.datasets.loaders.nam.open_range</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.nam.NamLoader.html">apollo.datasets.loaders.nam.NamLoader</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="../api/apollo.datasets.html#module-apollo.datasets.loaders.ga_power">apollo.datasets.loaders.ga_power</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.ga_power.interval.html">apollo.datasets.loaders.ga_power.interval</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/stubs/apollo.datasets.loaders.ga_power.open_mb007.html">apollo.datasets.loaders.ga_power.open_mb007</a></li>
 </ul>
 </li>
 </ul>
@@ -200,13 +200,13 @@
 <ul class="simple">
 <li><a class="reference internal" href="#prerequisites" id="id1">Prerequisites</a></li>
 <li><a class="reference internal" href="#module-apollo.datasets.solar" id="id2">The High-Level Data API</a></li>
-<li><a class="reference internal" href="#module-apollo.datasets.loaders" id="id3">The Low-Level Data API</a></li>
+<li><a class="reference internal" href="#module-apollo.datasets" id="id3">The Low-Level Data API</a></li>
 </ul>
 </div>
 <div class="section" id="prerequisites">
 <h2><a class="toc-backref" href="#id1">Prerequisites</a><a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
 <p>This guide will walk through loading NAM weather forecasts and preparing the data for training Scikit-learn or PyTorch models. This guide assumes you have an active conda environment with the appropriate dependencies. If not, see the <a class="reference internal" href="getting-started.html"><span class="doc">Getting Started</span></a> guide.</p>
-<p>There are two APIs for loading forecast data. The high-level API at <a class="reference internal" href="#module-apollo.datasets.solar" title="apollo.datasets.solar"><code class="xref py py-mod docutils literal notranslate"><span class="pre">apollo.datasets.solar</span></code></a> provides everything you need to quickly access forecast data for training. It is built upon the low-level API at <a class="reference internal" href="#module-apollo.datasets.loaders" title="apollo.datasets.loaders"><code class="xref py py-mod docutils literal notranslate"><span class="pre">apollo.datasets.loaders</span></code></a> which provides finer grain control and is ideal for data exploration.</p>
+<p>There are two APIs for loading forecast data. The high-level API at <a class="reference internal" href="#module-apollo.datasets.solar" title="apollo.datasets.solar"><code class="xref py py-mod docutils literal notranslate"><span class="pre">apollo.datasets.solar</span></code></a> provides everything you need to quickly access forecast data for training. It is built upon the low-level API at <a class="reference internal" href="#module-apollo.datasets" title="apollo.datasets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">apollo.datasets</span></code></a> which provides finer grain control and is ideal for data exploration.</p>
 </div>
 <div class="section" id="module-apollo.datasets.solar">
 <span id="the-high-level-data-api"></span><h2><a class="toc-backref" href="#id2">The High-Level Data API</a><a class="headerlink" href="#module-apollo.datasets.solar" title="Permalink to this headline">¶</a></h2>
@@ -237,8 +237,8 @@
 </div>
 <p>The <a class="reference internal" href="../api/stubs/apollo.datasets.solar.SolarDataset.html#apollo.datasets.solar.SolarDataset" title="apollo.datasets.solar.SolarDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolarDataset</span></code></a> provides several preprocessing features. It makes it easy to select temporal, spatial, and feature subsets of the data; it can compute sine/cosine temporal features for time of day and time of year; it can generate sliding windows over the data; and it can standardize the data to center mean and unit variance. For more information, see the API docs.</p>
 </div>
-<div class="section" id="module-apollo.datasets.loaders">
-<span id="the-low-level-data-api"></span><h2><a class="toc-backref" href="#id3">The Low-Level Data API</a><a class="headerlink" href="#module-apollo.datasets.loaders" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-apollo.datasets">
+<span id="the-low-level-data-api"></span><h2><a class="toc-backref" href="#id3">The Low-Level Data API</a><a class="headerlink" href="#module-apollo.datasets" title="Permalink to this headline">¶</a></h2>
 <div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <p class="last"><strong>TODO</strong>: Document the NAM loader.</p>

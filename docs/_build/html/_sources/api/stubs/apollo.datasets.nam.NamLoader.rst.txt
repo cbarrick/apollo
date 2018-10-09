@@ -1,7 +1,7 @@
-apollo.datasets.loaders.nam.NamLoader
-=====================================
+apollo.datasets.nam.NamLoader
+=============================
 
-.. currentmodule:: apollo.datasets.loaders.nam
+.. currentmodule:: apollo.datasets.nam
 
 .. autoclass:: NamLoader
 
@@ -19,6 +19,7 @@ apollo.datasets.loaders.nam.NamLoader
       ~NamLoader.grib_url
       ~NamLoader.load_grib
       ~NamLoader.nc_path
+      ~NamLoader.normalize_grib
       ~NamLoader.open
       ~NamLoader.open_gribs
       ~NamLoader.open_nc

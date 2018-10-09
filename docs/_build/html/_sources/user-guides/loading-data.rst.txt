@@ -9,7 +9,7 @@ Prerequisites
 
 This guide will walk through loading NAM weather forecasts and preparing the data for training Scikit-learn or PyTorch models. This guide assumes you have an active conda environment with the appropriate dependencies. If not, see the :doc:`getting-started` guide.
 
-There are two APIs for loading forecast data. The high-level API at :mod:`apollo.datasets.solar` provides everything you need to quickly access forecast data for training. It is built upon the low-level API at :mod:`apollo.datasets.loaders` which provides finer grain control and is ideal for data exploration.
+There are two APIs for loading forecast data. The high-level API at :mod:`apollo.datasets.solar` provides everything you need to quickly access forecast data for training. It is built upon the low-level API at :mod:`apollo.datasets` which provides finer grain control and is ideal for data exploration.
 
 The High-Level Data API
 --------------------------------------------------
@@ -46,7 +46,7 @@ The :class:`SolarDataset` provides several preprocessing features. It makes it e
 The Low-Level Data API
 --------------------------------------------------
 
-.. module:: apollo.datasets.loaders
+.. module:: apollo.datasets
 
 .. todo::
     **TODO**: Document the NAM loader.
