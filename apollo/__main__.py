@@ -50,23 +50,18 @@ def main():
                         help='The name of the model that you would like to run.')
 
     parser.add_argument('--begin_date', '-b', default='2017-01-01 00:00', type=str,
-                        help='The start date of the dataset that you want to use.  Any string accepted by numpy\'s '
-                             'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
+                        help='The start date of the dataset that you want to use. '
+                             'Any string accepted by numpy\'s datetime64 constructor will work.')
 
     parser.add_argument('--end_date', '-e', default='2017-12-31 18:00', type=str,
-                        help='The end date of the dataset that you want to use.  Any string accepted by numpy\'s '
-                             'datetime64 constructor will work.  The data should already be downloaded to the <cache_dir>.')
+                        help='The end date of the dataset that you want to use. '
+                             'Any string accepted by numpy\'s datetime64 constructor will work.')
 
     parser.add_argument('--target_hour', '-i', default=24, type=int,
                         help='The prediction hour to target.  Should be an integer between 1 and 36.')
 
     parser.add_argument('--target_var', '-t', default='UGA-C-POA-1-IRR', type=str,
                         help='The variable from GA_POWER to target.')
-
-    parser.add_argument('--cache_dir', '-c', default='/mnt/data6tb/chris/data', type=str,
-                        help='The directory where the dataset is located.  This directory should contain a `NAM-NMM` '
-                             'subdirectory with downloaded NAM data. If training or evaluating a model, '
-                             'this directory should also contain a `GA-POWER` subdirectory with the target data.')
 
     parser.add_argument('--save_dir', '-s', default='./models', type=str,
                         help='The directory where trained models will be serialized. This directory will be created if'
@@ -124,7 +119,7 @@ def main():
     elif action == 'predict':
         predictions = model.predict(begin_date=args['begin_date'], end_date=args['end_date'],
                                     target_hour=args['target_hour'], target_var=args['target_var'],
-                                    cache_dir=args['cache_dir'], save_dir=args['save_dir'])
+                                    save_dir=args['save_dir'])
 
         summary_path, prediction_path = \
             model.write_predictions(predictions, begin_date=args['begin_date'], end_date=args['end_date'],

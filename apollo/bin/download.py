@@ -5,7 +5,7 @@ This script is intended to be run as a cron job. Note that it imports
 from `apollo.datasets`, so you have to make sure the package is in your
 PYTHONPATH. The easiest way is to `cd` into this repository.
 
-We run a cron job similar to the following to keep the cache updated:
+We run a cron job similar to the following to sync the local store:
 
     #!/bin/sh
     cd /mnt/data6tb/chris/
@@ -21,6 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
+import apollo.storage
 from apollo.datasets import nam
 
 
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download NAM forecasts between two times, inclusive.')
     parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
     parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
-    parser.add_argument('-d', '--dest', type=str, default='./data/NAM-NMM', help='Path to the data cache.')
+    parser.add_argument('-d', '--dest', type=str, help='Path to the data store, overriding the APOLLO_DATA env var.')
     parser.add_argument('-p', '--procs', type=int, default=1, help='Use this many download processes. Defaults to 1.')
     parser.add_argument('-n', '--count', type=int, help='Download this many forecasts, ending at the reftime.')
     parser.add_argument('-r', '--from', type=str, dest='start', help='Download multiple forecasts starting from this timestamp.')
@@ -58,6 +59,9 @@ if __name__ == '__main__':
     for arg, val in vars(args).items():
         logging.debug(f'  {arg}: {val}')
 
+    if args.dest:
+        apollo.storage.set_root(args.dest)
+
     step = np.timedelta64(6, 'h')
     stop = np.datetime64(args.reftime, '6h')
     if args.start:
@@ -71,12 +75,7 @@ if __name__ == '__main__':
 
     def download(reftime):
         try:
-            nam.open(
-                reftime,
-                cache_dir=args.dest,
-                fail_fast=args.fail_fast,
-                keep_gribs=args.keep_gribs,
-            )
+            nam.open(reftime, fail_fast=args.fail_fast, keep_gribs=args.keep_gribs)
         except Exception as e:
             logging.error(e)
             logging.error(f'Could not load data for {reftime}')

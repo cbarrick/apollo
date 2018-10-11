@@ -29,6 +29,7 @@ import xarray as xr
 import torch
 from torch.utils.data import Dataset as TorchDataset
 
+import apollo.storage
 from apollo.datasets import nam, ga_power
 
 
@@ -207,8 +208,7 @@ class SolarDataset(TorchDataset):
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
             geo_shape=(3, 3), center=ATHENS_LATLON, lag=1, forecast=36,
-            target='UGA-C-POA-1-IRR', target_hour=24,
-            standardize=True, cache_dir='./data'):
+            target='UGA-C-POA-1-IRR', target_hour=24, standardize=True):
         '''Initialize a SolarDataset
 
         Arguments:
@@ -246,17 +246,11 @@ class SolarDataset(TorchDataset):
             standardize (bool):
                 If true, standardize the data to center mean and unit variance.
                 Note that the target column is never standardized.
-            cache_dir (str):
-                The directory containing the data.
         '''
 
         assert 0 <= lag
 
-        cache_dir = Path(cache_dir)
-        nam_cache = cache_dir / 'NAM-NMM'
-        target_cache = cache_dir / 'GA-POWER'
-
-        data = nam.open_range(start, stop, cache_dir=nam_cache)
+        data = nam.open_range(start, stop)
 
         if feature_subset:
             data = data[list(feature_subset)]
@@ -287,7 +281,7 @@ class SolarDataset(TorchDataset):
             stop_year = np.datetime64(stop, 'Y')
             assert year == stop_year, "start and stop must be same year"
 
-            target_data = ga_power.open_mb007(target, data_dir=target_cache, group=year)
+            target_data = ga_power.open_mb007(target, group=year)
             target_data['reftime'] -= np.timedelta64(target_hour, 'h')
             data = xr.merge([data, target_data], join='inner')
             data = data.set_coords(target)  # NOTE: the target is a coordinate, not data

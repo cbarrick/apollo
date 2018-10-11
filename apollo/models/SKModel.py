@@ -57,11 +57,10 @@ class SKModel(Model):
         else:
             return None
 
-    def train(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, tune=True, num_folds=3):
+    def train(self, begin_date, end_date, target_hour, target_var, save_dir, tune=True, num_folds=3):
         client = Client()
         dataset = SolarDataset(start=begin_date, stop=end_date,
-                               target=target_var, target_hour=target_hour,
-                               cache_dir=cache_dir)
+                               target=target_var, target_hour=target_hour)
         # convert dataset to tabular form accepted by scikit estimators
         x, y = dataset.tabular()
         print('Dataset Loaded')
@@ -88,7 +87,7 @@ class SKModel(Model):
         save_location = self.save(model, save_dir, target_hour, target_var)
         return save_location
 
-    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir,
+    def evaluate(self, begin_date, end_date, target_hour, target_var, save_dir,
                  num_folds=3, metrics=_DEFAULT_METRICS):
         # load hyperparams saved in training step:
         saved_model = self.load(save_dir, target_hour, target_var)
@@ -101,8 +100,7 @@ class SKModel(Model):
 
         # load dataset
         dataset = SolarDataset(start=begin_date, stop=end_date,
-                               target=target_var, target_hour=target_hour,
-                               cache_dir=cache_dir)
+                               target=target_var, target_hour=target_hour)
         x, y = dataset.tabular()
         x, y = np.asarray(x), np.asarray(y)
         print('Dataset Loaded')
@@ -118,7 +116,7 @@ class SKModel(Model):
 
         return mean_scores
 
-    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir):
+    def predict(self, begin_date, end_date, target_hour, target_var, save_dir):
         # load the trained model
         model_name = self._generate_name(target_hour, target_var)
         path_to_model = os.path.join(save_dir, model_name)
@@ -129,7 +127,7 @@ class SKModel(Model):
             return None
 
         # load NAM data without labels
-        dataset = SolarDataset(start=begin_date, stop=end_date, target=None, cache_dir=cache_dir)
+        dataset = SolarDataset(start=begin_date, stop=end_date, target=None)
         data = np.asarray(dataset.tabular())
         print('Dataset Loaded')
         reftimes = np.arange(begin_date, end_date, dtype='datetime64[6h]')
