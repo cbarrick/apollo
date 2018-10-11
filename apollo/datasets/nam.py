@@ -218,7 +218,7 @@ class NamLoader:
             pathlib.Path:
                 The local path for a GRIB file, which may not exist.
         '''
-        reftime = np.datetime64(reftime).astype(object, '6h')
+        reftime = np.datetime64(reftime, '6h').astype(object)
         prefix_fmt = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'
         filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
         prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
@@ -236,7 +236,7 @@ class NamLoader:
             pathlib.Path:
                 The local path to a netCDF file, which may not exist.
         '''
-        reftime = np.datetime64(reftime).astype(object, '6h')
+        reftime = np.datetime64(reftime, '6h').astype(object)
         prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
         filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
         return self.cache_dir / prefix / filename
