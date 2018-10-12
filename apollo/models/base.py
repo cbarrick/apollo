@@ -69,7 +69,7 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def train(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, tune, num_folds):
+    def train(self, begin_date, end_date, target_hour, target_var, save_dir, tune, num_folds):
         """ Trains the model to predict <target_var> at time <target_hour> in the future
 
         This method will construct a SolarDataset spanning the time from begin_date to end_date and use the dataset
@@ -84,8 +84,6 @@ class Model(ABC):
                 future hour to target.
             target_var (str):
                 name of variable to target.
-            cache_dir (str):
-                directory where training data is saved.
             save_dir (str):
                 directory where the trained model should be serialized.
             tune (bool):
@@ -100,7 +98,7 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def evaluate(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir, num_folds, metrics):
+    def evaluate(self, begin_date, end_date, target_hour, target_var, save_dir, num_folds, metrics):
         """ Evaluate a trained model using cross validation
 
         Args:
@@ -112,8 +110,6 @@ class Model(ABC):
                 future hour to target.
             target_var (str):
                 name of variable to target.
-            cache_dir (str):
-                directory where training data is saved.
             save_dir (str):
                 directory where the trained model is currently serialized.
             num_folds (int):
@@ -128,7 +124,7 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def predict(self, begin_date, end_date, target_hour, target_var, cache_dir, save_dir):
+    def predict(self, begin_date, end_date, target_hour, target_var, save_dir):
         """ Predict future solar irradiance readings using a trained model
 
         Predictions are output as two json files: a summary file and a prediction file.
@@ -144,8 +140,6 @@ class Model(ABC):
                 future hour to target.
             target_var (str):
                 name of variable to target.
-            cache_dir (str):
-                directory where training data is saved.
             save_dir (str):
                 directory where the trained model is currently serialized.
 

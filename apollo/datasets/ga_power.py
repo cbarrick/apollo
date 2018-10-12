@@ -7,13 +7,12 @@ data.
 
 import logging
 from datetime import datetime
-from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
-from pandas.errors import EmptyDataError
-
 import xarray as xr
+
+import apollo.storage
 
 
 # Module level logger
@@ -97,7 +96,7 @@ def interval(year=None, month=None, day=None, hour=None, minute=None):
     return grouper
 
 
-def open_mb007(*cols, group=2017, data_dir='./data/GA-POWER'):
+def open_mb007(*cols, group=2017):
     '''Open a Georgia Power target file.
 
     The data must have been previously preprocessed into a CSV file named
@@ -110,15 +109,13 @@ def open_mb007(*cols, group=2017, data_dir='./data/GA-POWER'):
             The reftime column (0) will always be read.
         group (Any):
             An identifier for the file to read.
-        data_dir (pathlib.Path or str):
-            A path to the directory containing the data.
 
     Returns:
         xarray.Dataset:
             The dataset giving the targets.
     '''
     # The data directory contains more than just the mb-007 labels.
-    data_dir = Path(data_dir)
+    data_dir = apollo.storage.get('GA-POWER')
     path = data_dir / f'mb-007.{group}.log'
 
     # Ensure reftime is always selected and is a list.

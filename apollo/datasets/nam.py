@@ -17,9 +17,9 @@ loading logic is encapsulated in the :class:`NamLoader` class.
 
 The dataset live remotely. A live feed is provided by NCEP and an 11
 month archive is provided by NCDC (both are divisions of NOAA). This
-module caches the data locally, allowing us to build larger archives.
+module caches the data locally, allowing us to build a larger archive.
 The remote dataset is provided in GRIB format, while this module uses
-the netCDF format in its internal cache.
+the netCDF format for its local storage.
 
 This module provides access to only a subset of the NAM-NMM dataset.
 The geographic region is reduced and centered around Georgia, and only
@@ -39,6 +39,8 @@ import cartopy.crs as ccrs
 import numpy as np
 import requests
 import xarray as xr
+
+import apollo.storage
 
 
 # Module level logger
@@ -99,7 +101,7 @@ def open(*reftimes, **kwargs):
 def open_range(start='2017-01-01', stop='today', **kwargs):
     '''Load and combine forecasts for a range of reference times.
 
-    NOTE: This method only loads data from the cache.
+    NOTE: This method only loads data from the local store.
 
     Arguments:
         start (numpy.datetime64 or str):
@@ -145,24 +147,21 @@ def proj_coords(lats, lons):
 
 
 class NamLoader:
-    '''A class to download, subsets, and cache NAM forecasts.
+    '''A class to download, subsets, and store NAM forecasts.
 
     A `NamLoader` downloads NAM-NMM forecasts from NOAA, subsets their features
-    and geographic scope, converts the data to netCDF, and caches the result.
+    and geographic scope, converts the data to netCDF, and stores the result.
     '''
 
     class CacheMiss(Exception): pass
 
     def __init__(self,
-            cache_dir='./data/NAM-NMM',
             fail_fast=False,
             save_nc=True,
             keep_gribs=False):
         '''Creates a loader for NAM data.
 
         Arguments:
-            cache_dir (pathlib.Path or str):
-                The path to the cache.
             fail_fast (bool):
                 If true, the download errors are treated as fatal.
                 Otherwise downloads are retried with exponential backoff.
@@ -173,12 +172,11 @@ class NamLoader:
             keep_gribs (bool):
                 Keep the GRIB files after converting to netCDF.
         '''
-        self.cache_dir = Path(cache_dir)
         self.fail_fast = bool(fail_fast)
         self.save_nc = bool(save_nc)
         self.keep_gribs = bool(keep_gribs)
 
-        self.cache_dir.mkdir(exist_ok=True)
+        self.data_dir = apollo.storage.get('NAM-NMM')
 
     def grib_url(self, reftime, forecast):
         '''The URL for a specific forecast.
@@ -223,10 +221,10 @@ class NamLoader:
         filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
         prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
         filename = filename_fmt.format(forecast=forecast, ref=reftime)
-        return self.cache_dir / prefix / filename
+        return self.data_dir / prefix / filename
 
     def nc_path(self, reftime):
-        '''The path to the netCDF cache for a reference time.
+        '''The path to the netCDF forecast for the given reference time.
 
         Arguments:
             reftime (numpy.datetime64 or str):
@@ -239,7 +237,7 @@ class NamLoader:
         reftime = np.datetime64(reftime, '6h').astype(object)
         prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
         filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
-        return self.cache_dir / prefix / filename
+        return self.data_dir / prefix / filename
 
     def download(self, reftime, forecast, max_tries=8, timeout=10):
         '''Ensure that the GRIB for this reftime and forecast exists locally.
@@ -599,7 +597,7 @@ class NamLoader:
         return ds
 
     def open_nc(self, reftime='now'):
-        '''Load the forecasts from a netCDF in the cache.
+        '''Load the forecasts from a netCDF in the local store.
 
         Arguments:
             reftime (numpy.datetime64 or str):
@@ -655,7 +653,7 @@ class NamLoader:
     def open_range(self, start='2017-01-01', stop='today'):
         '''Load and combine forecasts for a range of reference times.
 
-        NOTE: This method only loads data from the cache.
+        NOTE: This method only loads data from the local store.
 
         Arguments:
             start (numpy.datetime64 or str):
