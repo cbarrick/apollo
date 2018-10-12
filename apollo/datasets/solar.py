@@ -176,6 +176,62 @@ def window_reftime(base, lag):
     return xr.merge(datasets, join='inner')
 
 
+def load_targets(target, start, stop, target_hours):
+    '''Load the target variable.
+
+    Arguments:
+        target (str or None):
+            The name of a variable in the GA Power dataset to include as a
+            target. If a target is given the year of the start and stop
+            timestamps must be the same (this can be improved).
+        start (timestamp):
+            The timestamp of the first reftime.
+        stop (timestamp):
+            The timestamp of the final reftime.
+        target_hours (Iterable[int]):
+            The hour offsets of the target in the reftime dimension.
+            This argument is ignored if ``target`` is None.
+
+    Returns:
+        target_data (xr.DataArray):
+            A data array for the target variable.
+            Its shape is ``(reftime, target_hour)``.
+    '''
+    # When using targets, the start and stop year must be the same.
+    # This is because the targets are broken out by year and the loader
+    # only loads one group. This can be improved...
+    year = np.datetime64(start, 'Y')
+    stop_year = np.datetime64(stop, 'Y')
+    assert year == stop_year, "start and stop must be same year"
+
+    # Normalize the target_hours to a list,
+    target_hours = list(target_hours)
+
+    # Load the raw target data, corresponding to a 0 hour prediction.
+    # Note that 'target_hour' is a non-dimension coordinate. We later
+    # use `DataArray.expan_dims` to promote it to a dimension.
+    target_data_raw = ga_power.open_mb007(target, group=year)
+    target_data_raw['target_hour'] = 0
+
+    # Create a DataArray for each target hour.
+    # They all have the same name (the value of `target`),
+    # and the same dimensions ('reftime' and 'target_hour')
+    # but the values of the dimensions may be different.
+    target_data_arrays = []
+    for hour in target_hours:
+        x = target_data_raw[target].copy()
+        x['reftime'] -= np.timedelta64(int(hour), 'h')
+        x['target_hour'] = hour
+        x = x.expand_dims('target_hour', 1)
+        target_data_arrays.append(x)
+
+    # Concat the target data arrays together along a new dim,
+    # Drop N/A values along the reftime dimension to make it an inner join.
+    target_data = xr.concat(target_data_arrays, dim='target_hour')
+    target_data = target_data.dropna('reftime')
+    return target_data
+
+
 class SolarDataset(TorchDataset):
     '''A high level interface for the solar prediction dataset.
 
@@ -215,7 +271,7 @@ class SolarDataset(TorchDataset):
             start (timestamp):
                 The timestamp of the first reftime.
             stop (timestamp):
-                The timestamp of the final reftime
+                The timestamp of the final reftime.
             feature_subset (set of str or None):
                 The set of features to select. If None, all features are used.
                 The default `PLANAR_FEATURES` is a selection of features with
@@ -239,10 +295,9 @@ class SolarDataset(TorchDataset):
                 The name of a variable in the GA Power dataset to include as a
                 target. If a target is given the year of the start and stop
                 timestamps must be the same (this can be improved).
-            target_hour (int):
-                The hour offset of the reftime in the target to predict.
-                This causes the target variable to shift along the reftime
-                axis by this many hours.
+            target_hours (Iterable[int]):
+                The hour offsets of the target in the reftime dimension.
+                This argument is ignored if ``target`` is None.
             standardize (bool):
                 If true, standardize the data to center mean and unit variance.
                 Note that the target column is never standardized.
@@ -274,17 +329,8 @@ class SolarDataset(TorchDataset):
             data = xr.merge([data, temporal_data])
 
         if target:
-            # When using targets, the start and stop year must be the same.
-            # This is because the targets are broken out by year and the loader
-            # only loads one group. This can be improved...
-            year = np.datetime64(start, 'Y')
-            stop_year = np.datetime64(stop, 'Y')
-            assert year == stop_year, "start and stop must be same year"
-
-            target_data = ga_power.open_mb007(target, group=year)
-            target_data['reftime'] -= np.timedelta64(target_hour, 'h')
+            target_data = load_targets(target, start, stop, target_hours)
             data = xr.merge([data, target_data], join='inner')
-            data = data.set_coords(target)  # NOTE: the target is a coordinate, not data
 
         self.xrds = data.persist()
         self.target = target or None
@@ -344,7 +390,13 @@ class SolarDataset(TorchDataset):
                 to the constructor.
         '''
         n = len(self.xrds['reftime'])
-        x = self.xrds.data_vars.values()
+
+        if self.target:
+            x = self.xrds.drop(self.target)
+        else:
+            x = self.xrds
+
+        x = x.data_vars.values()
         x = (a.data for a in x)
         x = (a.reshape(n, -1) for a in x)
         x = da.concatenate(list(x), axis=1)
@@ -352,7 +404,6 @@ class SolarDataset(TorchDataset):
         if self.target:
             y = self.xrds[self.target]
             y = y.data
-            assert y.shape == (n,)
             return x, y
         else:
             return x
