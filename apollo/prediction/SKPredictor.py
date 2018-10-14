@@ -65,7 +65,7 @@ class SKPredictor(Predictor):
         # load dataset
         ds = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
         x, y = ds.tabular()
-        print('Dataset Loaded')
+        print('Dataset Loaded')  # TODO: write this sort of thing to a log file instead of stdout
         if tune and self.param_grid is not None:
             grid = GridSearchCV(
                 estimator=self.regressor,
