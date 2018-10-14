@@ -14,7 +14,7 @@ import pandas as pd
 class Predictor(ABC):
 
     @abstractmethod
-    def __init__(self, name, target_hours, target_var):
+    def __init__(self, name, target, target_hours):
         """ Interface for predictors of solar radiation
 
         Args:
@@ -22,17 +22,17 @@ class Predictor(ABC):
                 A descriptive human-readable name for this predictor.
                 Typically the type of the regressor used such as "decision-tree" or "random forest".
 
-            target_hours (Iterable[int]):
-                The forecast hours to be predicted.
-
-            target_var (str):
+            target (str):
                 The name of the variable to target
+
+            target_hours (Iterable[int]):
+                The future hours to be predicted.
         """
         super().__init__()
         self.name = name
         self.target_hours = target_hours
-        self.target_var = target_var
-        self.filename = f'{self.name}_{target_hours[0]}hr-{target_hours[-1]}hr_{target_var}.model'
+        self.target = target
+        self.filename = f'{self.name}_{target_hours[0]}hr-{target_hours[-1]}hr_{target}.model'
 
     @abstractmethod
     def save(self, save_dir):
@@ -71,7 +71,7 @@ class Predictor(ABC):
     def train(self, start, stop, save_dir, tune, num_folds):
         """ Fits the predictor and saves it to disk
 
-        Trains the predictor to predict `self.target_var` at each future hour in `self.target_hours` using
+        Trains the predictor to predict `self.target` at each future hour in `self.target_hours` using
         a `SolarDataset` with reftimes between `start` and `stop`.
 
         Args:
@@ -186,7 +186,7 @@ class Predictor(ABC):
         summary_dict = {
             'source': self.name,
             'sourcelabel': self.name.replace('_', ' '),
-            'site': self.target_var,
+            'site': self.target,
             'created': round(datetime.datetime.utcnow().timestamp()),
             'start': Predictor._datestring_to_posix(start_date),
             'stop': Predictor._datestring_to_posix(stop_date),
@@ -196,7 +196,7 @@ class Predictor(ABC):
         data_dict = {
             'start': Predictor._datestring_to_posix(start_date),
             'stop': Predictor._datestring_to_posix(stop_date),
-            'site': self.target_var,
+            'site': self.target,
             'columns': [
                 {
                     'label': 'TIMESTAMP',
@@ -205,7 +205,7 @@ class Predictor(ABC):
                     'type': 'datetime'
                 },
                 {
-                    'label': self.target_var,
+                    'label': self.target,
                     'units': 'w/m2',
                     'longname': '',
                     'type': 'number'
