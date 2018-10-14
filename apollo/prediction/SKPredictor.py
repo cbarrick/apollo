@@ -98,7 +98,7 @@ class SKPredictor(Predictor):
 
         # load NAM data without labels
         dataset = SolarDataset(start=start, stop=stop, target=None)
-        reftimes = dataset.xrds['reftime'].to_array()
+        reftimes = np.asarray(dataset.xrds['reftime'].values)
         data = np.asarray(dataset.tabular())
 
         predictions = []
@@ -106,7 +106,7 @@ class SKPredictor(Predictor):
         for idx, data_point in enumerate(data):
             prediction = self.regressor.predict([data_point])
             timestamp = reftimes[idx]
-            data_point = [timestamp, prediction[0]]
+            data_point = [timestamp, prediction]
             predictions.append(data_point)
 
         return predictions
