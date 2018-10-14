@@ -66,7 +66,7 @@ def main():
                         help='The end date of the dataset that you want to use. '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
-    parser.add_argument('--target_hour', '-h', default=24, type=int,
+    parser.add_argument('--target_hours', '-f', default=24, type=int,
                         help='Generate predictions for each our up to this hour. '
                              'Should be an integer between 1 and 36.')
 
@@ -113,25 +113,48 @@ def main():
     # `args.model` will be the key name of one of the models
     model_name = args.pop('model')
     predictor = SKPredictor(name=model_name, estimator=MODELS[model_name], parameter_grid=PARAM_GRIDS[model_name],
-                            target=args['target'], target_hours=np.arange(1, args['target_hour'] + 1))
+                            target=args['target'], target_hours=np.arange(1, args['target_hours'] + 1))
 
     # do a bit of preprocessing with the tuning argument
     if 'no_tune' in args:
         args['tune'] = not args.pop('no_tune')
+    else:
+        args['tune'] = True
 
     if action == 'train':
-        save_path = predictor.train(**args)
+        save_path = predictor.train(
+            start=args['start'],
+            stop=args['stop'],
+            save_dir=args['save_dir'],
+            tune=args['tune'],
+            num_folds=args['num_folds']
+        )
         print(f'Model trained successfully.  Saved to {save_path}')
 
     elif action == 'evaluate':
-        scores = predictor.cross_validate(**args)
+        scores = predictor.cross_validate(
+            start=args['start'],
+            stop=args['stop'],
+            save_dir=args['save_dir'],
+            num_folds=args['num_folds'],
+            metrics=DEFAULT_METRICS
+        )
         # report the mean scores for each metric
         for key in scores:
             print("Mean %s: %0.4f" % (key, scores[key]))
 
     elif action == 'predict':
-        predictions = predictor.predict(**args)
-        summary_path, prediction_path = predictor.write_predictions(predictions, **args)
+        predictions = predictor.predict(
+            start=args['start'],
+            stop=args['stop'],
+            save_dir=args['save_dir']
+        )
+        print(predictions.shape)
+        summary_path, prediction_path = predictor.write_predictions(
+            predictions,
+            summary_dir=args['summary_dir'],
+            output_dir=args['output_dir']
+        )
         print(f'Summary file written to {summary_path}\nPredictions written to {prediction_path}')
 
     else:
