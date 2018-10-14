@@ -7,6 +7,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics.regression import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import make_scorer
 from xgboost import XGBRegressor
 
 MODELS = {
@@ -48,9 +49,9 @@ PARAM_GRIDS = {
 }
 
 DEFAULT_METRICS = {
-    'mse': mean_squared_error,
-    'mae': mean_absolute_error,
-    'r2': r2_score
+    'mse': make_scorer(mean_squared_error),
+    'mae': make_scorer(mean_absolute_error),
+    'r2': make_scorer(r2_score)
 }
 
 
@@ -156,7 +157,7 @@ def main():
             stop=args['stop'],
             save_dir=args['save_dir']
         )
-        print(predictions.shape)
+        print(predictions)
         summary_path, prediction_path = predictor.write_predictions(
             predictions,
             summary_dir=args['summary_dir'],
