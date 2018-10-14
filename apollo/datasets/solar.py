@@ -295,7 +295,7 @@ class SolarDataset(TorchDataset):
                 The name of a variable in the GA Power dataset to include as a
                 target. If a target is given the year of the start and stop
                 timestamps must be the same (this can be improved).
-            target_hours (Iterable[int]):
+            target_hour (int or Iterable[int]):
                 The hour offsets of the target in the reftime dimension.
                 This argument is ignored if ``target`` is None.
             standardize (bool):
@@ -329,6 +329,10 @@ class SolarDataset(TorchDataset):
             data = xr.merge([data, temporal_data])
 
         if target:
+            try:
+                target_hours = tuple(target_hour)
+            except TypeError:
+                target_hours = (target_hour,)
             target_data = load_targets(target, start, stop, target_hours)
             data = xr.merge([data, target_data], join='inner')
 
