@@ -63,7 +63,7 @@ class SKPredictor(Predictor):
     def train(self, start, stop, save_dir, tune, num_folds):
         client = Client()  # set the dask
         # load dataset
-        ds = SolarDataset(start=start, stop=stop, target=self.target, target_hours=self.target_hours)
+        ds = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
         x, y = ds.tabular()
         print('Dataset Loaded')
         if tune and self.param_grid is not None:
@@ -122,7 +122,7 @@ class SKPredictor(Predictor):
             hyperparams = saved_model.get_params()
 
         # load dataset
-        dataset = SolarDataset(start=start, stop=stop, target=self.target, target_hours=self.target_hours)
+        dataset = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
         x, y = dataset.tabular()
         x, y = np.asarray(x), np.asarray(y)
         print('Dataset Loaded')
