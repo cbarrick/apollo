@@ -21,29 +21,29 @@ MODELS = {
 PARAM_GRIDS = {
     'linreg': None,
     'svr': {
-        'C': np.arange(1.0, 1.6, 0.2),                  # penalty parameter C of the error term
-        'epsilon': np.arange(0.4, 0.8, 0.1),            # width of the no-penalty region
-        'kernel': ['rbf', 'sigmoid'],                   # kernel function
-        'gamma': [1/1000]                               # kernel coefficient
+        'estimator__C': np.arange(1.0, 1.6, 0.2),                  # penalty parameter C of the error term
+        'estimator__epsilon': np.arange(0.4, 0.8, 0.1),            # width of the no-penalty region
+        'estimator__kernel': ['rbf', 'sigmoid'],                   # kernel function
+        'estimator__gamma': [1/1000]                               # kernel coefficient
     },
     'knn': {
-        'n_neighbors': np.arange(3, 15, 2),             # k
-        'weights': ['uniform', 'distance'],             # how are neighboring values weighted
+        'estimator__n_neighbors': np.arange(3, 15, 2),             # k
+        'estimator__weights': ['uniform', 'distance'],             # how are neighboring values weighted
     },
     'dtree': {
-        'splitter': ['best', 'random'],                 # splitting criterion
-        'max_depth': [None, 10, 20, 30],                # Maximum depth of the tree. None means unbounded.
-        'min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
+        'estimator__splitter': ['best', 'random'],                 # splitting criterion
+        'estimator__max_depth': [None, 10, 20, 30],                # Maximum depth of the tree. None means unbounded.
+        'estimator__min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
     },
     'rf': {
-        'n_estimators': [10, 50, 100, 250],
-        'max_depth': [None, 10, 20, 30],                # Maximum depth of the tree. None means unbounded.
-        'min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
+        'estimator__n_estimators': [10, 50, 100, 250],
+        'estimator__max_depth': [None, 10, 20, 30],                # Maximum depth of the tree. None means unbounded.
+        'estimator__min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
     },
     'gbt': {
-        'learning_rate': np.arange(0.03, 0.07, 0.02),   # learning rate
-        'n_estimators': [50, 100, 200, 250],            # number of boosting stages
-        'max_depth': [3, 5, 10, 20],                    # Maximum depth of the tree. None means unbounded.
+        'estimator__learning_rate': np.arange(0.03, 0.07, 0.02),   # learning rate
+        'estimator__n_estimators': [50, 100, 200, 250],            # number of boosting stages
+        'estimator__max_depth': [3, 5, 10, 20],                    # Maximum depth of the tree. None means unbounded.
     }
 }
 
