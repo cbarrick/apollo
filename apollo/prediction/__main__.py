@@ -6,6 +6,7 @@ from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics.regression import mean_squared_error, mean_absolute_error, r2_score
 from xgboost import XGBRegressor
 
 MODELS = {
@@ -44,6 +45,12 @@ PARAM_GRIDS = {
         'n_estimators': [50, 100, 200, 250],            # number of boosting stages
         'max_depth': [3, 5, 10, 20],                    # Maximum depth of the tree. None means unbounded.
     }
+}
+
+DEFAULT_METRICS = {
+    'mse': mean_squared_error,
+    'mae': mean_absolute_error,
+    'r2': r2_score
 }
 
 
