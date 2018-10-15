@@ -178,6 +178,7 @@ class Predictor(ABC):
         resource_path = os.path.join(output_dir, resource_filename)
         resource_path = os.path.realpath(resource_path)
 
+        # contents of the summary file
         summary_dict = {
             'source': self.name,
             'sourcelabel': self.name.replace('_', ' '),
@@ -188,6 +189,7 @@ class Predictor(ABC):
             'resource': resource_path
         }
 
+        # contents of the prediction file
         data_dict = {
             'start': Predictor._datestring_to_posix(start_date),
             'stop': Predictor._datestring_to_posix(stop_date),
@@ -212,15 +214,17 @@ class Predictor(ABC):
         for prediction in predictions:
             reftime = prediction[0]
             for idx, hour in enumerate(self.target_hours):
+                # write a row for each hour that was predicted
                 delta = np.timedelta64(int(hour), 'h')
                 timestamp = Predictor._datestring_to_posix(reftime + delta)
-                data_dict['rows'].append([timestamp, prediction[1][idx]])
+                predicted_value = prediction[1][idx]  # prediction[1] is the array of predicted values
+                data_dict['rows'].append([timestamp, predicted_value])
 
         # write the summary file
         with open(summary_path, 'w') as summary_file:
             json.dump(summary_dict, summary_file, separators=(',', ':'))
 
-        # write the file containing the data
+        # write the prediction file
         with open(resource_path, 'w') as resource_file:
             json.dump(data_dict, resource_file, separators=(',', ':'))
 

@@ -104,9 +104,9 @@ class SKPredictor(Predictor):
         predictions = []
         # make predictions
         for idx, data_point in enumerate(data):
-            prediction = self.regressor.predict([data_point])
+            prediction = self.regressor.predict([data_point])[0]  # array of length len(self.target_hours)
             timestamp = reftimes[idx]
-            data_point = [timestamp, prediction[0]]
+            data_point = [timestamp, prediction]
             predictions.append(data_point)
 
         return predictions
