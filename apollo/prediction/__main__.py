@@ -157,7 +157,6 @@ def main():
             stop=args['stop'],
             save_dir=args['save_dir']
         )
-        print(predictions)
         summary_path, prediction_path = predictor.write_predictions(
             predictions,
             summary_dir=args['summary_dir'],
