@@ -106,7 +106,7 @@ class SKPredictor(Predictor):
         for idx, data_point in enumerate(data):
             prediction = self.regressor.predict([data_point])
             timestamp = reftimes[idx]
-            data_point = [timestamp, prediction]
+            data_point = [timestamp, prediction[0]]
             predictions.append(data_point)
 
         return predictions

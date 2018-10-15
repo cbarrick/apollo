@@ -9,6 +9,7 @@ import os
 import json
 import datetime
 import pandas as pd
+import numpy as np
 
 
 class Predictor(ABC):
@@ -148,7 +149,7 @@ class Predictor(ABC):
 
         Args:
             predictions (numpy.array):
-                An n x 2 array of [reftime, predicted_value] pairs.
+                An Iterable of predictions formatted as [reftime, [hr1, hr2, ... hrT] ].
             summary_dir (str or path):
                 The directory where the summary file should be written
             output_dir (str):
@@ -159,14 +160,6 @@ class Predictor(ABC):
 
         """
 
-        # TODO: this is very broken since predictors now predict a window of future hours
-
-        # convert string timestamps to posix time
-        formatted_predictions = list(map(
-            lambda prediction: [Predictor._datestring_to_posix(prediction[0]), prediction[1]],
-            predictions
-        ))
-
         # ensure output directories exist
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -174,12 +167,14 @@ class Predictor(ABC):
             os.makedirs(summary_dir)
 
         # create path to summary and to resource files
-        start_date, stop_date = predictions[0][0], predictions[-1][0]  # Note: assumes predictions are sorted
-        summary_filename = f'{self.filename}_{start_date}_{stop_date}.summary.json'
+        start_date, stop_date = predictions[0][0], predictions[-1][0]
+        start_date_f = Predictor._format_date(start_date)
+        stop_date_f = Predictor._format_date(stop_date)
+        summary_filename = f'{self.filename}_{start_date_f}_{stop_date_f}.summary.json'
         summary_path = os.path.join(summary_dir, summary_filename)
         summary_path = os.path.realpath(summary_path)
 
-        resource_filename = f'{self.filename}_{start_date}_{stop_date}.json'
+        resource_filename = f'{self.filename}_{start_date_f}_{stop_date_f}.json'
         resource_path = os.path.join(output_dir, resource_filename)
         resource_path = os.path.realpath(resource_path)
 
@@ -211,8 +206,15 @@ class Predictor(ABC):
                     'type': 'number'
                 },
             ],
-            'rows': formatted_predictions
+            'rows': list()
         }
+
+        for prediction in predictions:
+            reftime = prediction[0]
+            for idx, hour in enumerate(self.target_hours):
+                delta = np.timedelta64(int(hour), 'h')
+                timestamp = Predictor._datestring_to_posix(reftime + delta)
+                data_dict['rows'].append([timestamp, prediction[1][idx]])
 
         # write the summary file
         with open(summary_path, 'w') as summary_file:
@@ -227,4 +229,9 @@ class Predictor(ABC):
     @classmethod
     def _datestring_to_posix(cls, date_string):
         timestring = pd.to_datetime(date_string, utc=True).timestamp()
-        return round(timestring) * 1000  # convert to milliseconds
+        return int(timestring * 1000)  # convert to milliseconds
+
+    @classmethod
+    def _format_date(cls, date_string):
+        dt = pd.to_datetime(date_string, utc=True)
+        return f'{dt.year}-{dt.month}-{dt.day}'
