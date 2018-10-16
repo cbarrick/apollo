@@ -11,9 +11,9 @@
     model at its core. This version of the NAM is also known as the NAM
     Non-hydrostatic Mesoscale Model (NAM-NMM).
 
-Most users will be interested in the :func:`open` and :func:`open_range`
-functions which selects forecasts by reference time. The actual data
-loading logic is encapsulated in the :class:`NamLoader` class.
+Most users will be interested in the :func:`open`, :func:`open_local`, and
+:func:`open_range` functions which select forecasts by reference time. The
+actual data loading logic is encapsulated in the :class:`NamLoader` class.
 
 The dataset live remotely. A live feed is provided by NCEP and an 11
 month archive is provided by NCDC (both are divisions of NOAA). This
@@ -40,7 +40,7 @@ import numpy as np
 import requests
 import xarray as xr
 
-import apollo.storage
+from apollo import storage
 
 
 # Module level logger
@@ -86,7 +86,10 @@ def open(*reftimes, **kwargs):
 
     Arguments:
         reftimes (numpy.datetime64 or str):
-            The reference times to open.
+            The reference times to open. If none are given, the current
+            forecast period is used.
+        **kwargs:
+            Forwarded to :class:`NamLoader`.
 
     Returns:
         xarray.Dataset:
@@ -109,6 +112,8 @@ def open_range(start='2017-01-01', stop='today', **kwargs):
         stop (numpy.datetime64 or str):
             The last time in the range.
             The default is the start of the current day.
+        **kwargs:
+            Forwarded to :class:`NamLoader`.
 
     Returns:
         xarray.Dataset:
@@ -117,6 +122,26 @@ def open_range(start='2017-01-01', stop='today', **kwargs):
     '''
     loader = NamLoader(**kwargs)
     return loader.open_range(start, stop)
+
+def open_local(reftime='now', **kwargs):
+    '''Load a forecast from netCDF in the local store.
+
+    Arguments:
+        reftime (numpy.datetime64 or str):
+            The reference time to open.
+        **kwargs:
+            Forwarded to :class:`NamLoader`.
+
+    Returns:
+        ds (xarray.Dataset):
+            A dataset for the forecast at this reftime.
+
+    Raises:
+        CacheMiss:
+            An exception is raised if the forecast does not exist locally.
+    '''
+    loader = NamLoader(**kwargs)
+    return loader.open_local(reftime)
 
 
 def proj_coords(lats, lons):
@@ -145,6 +170,12 @@ def proj_coords(lats, lons):
     return x, y
 
 
+class CacheMiss(Exception):
+    '''A requested forecast does not exist in the local store.
+    '''
+    pass
+
+
 class NamLoader:
     '''A class to download, subsets, and store NAM forecasts.
 
@@ -152,12 +183,7 @@ class NamLoader:
     and geographic scope, converts the data to netCDF, and stores the result.
     '''
 
-    class CacheMiss(Exception): pass
-
-    def __init__(self,
-            fail_fast=False,
-            save_nc=True,
-            keep_gribs=False):
+    def __init__(self, fail_fast=False, save_nc=True, keep_gribs=False):
         '''Creates a loader for NAM data.
 
         Arguments:
@@ -175,7 +201,7 @@ class NamLoader:
         self.save_nc = bool(save_nc)
         self.keep_gribs = bool(keep_gribs)
 
-        self.data_dir = apollo.storage.get('NAM-NMM')
+        self.data_dir = storage.get('NAM-NMM')
 
     def grib_url(self, reftime, forecast):
         '''The URL for a specific forecast.
@@ -250,6 +276,10 @@ class NamLoader:
             timeout (int):
                 The network timeout in seconds.
                 Note that the government servers can be kinda slow.
+
+        Returns:
+            path (pathlib.Path):
+                The path to the downloaded GRIB.
         '''
         if self.fail_fast:
             max_tries = 1
@@ -258,8 +288,9 @@ class NamLoader:
         path = self.grib_path(reftime, forecast)
         path.parent.mkdir(exist_ok=True)
 
+        # TODO: We need a better heuristic than skipping if the path exists.
         if path.exists():
-            return
+            return path
 
         for i in range(max_tries):
             try:
@@ -287,34 +318,35 @@ class NamLoader:
                     continue
 
             except (Exception, SystemExit, KeyboardInterrupt) as err:
-                # Partial files will break future downloads, must delete.
+                # Partial files should be deleted
                 # SystemExit and KeyboardInterrupt must be caught explicitly.
                 path.unlink()
                 raise err
 
-    def load_grib(self, reftime, forecast):
-        '''Load a forecast from GRIB.
+        return path
 
-        This is where the bulk of the dataset normalization happens.
+    def _process_grib(self, ds, reftime, forecast):
+        '''Process a forecast loaded from GRIB.
+
+        GRIB files contain a forecast for a specific forecast hour at a specific
+        reftime, including all NAM data variables for the entire NAM 218 grid.
+
+        This method trims the dataset to the subset of variables and geographic
+        region that we are interested in, normalizes variable names and shapes
+        to a more consistent format, and adds additional metadata.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
-                The reference time.
+            ds (xarray.Dataset):
+                The dataset to process.
+            reftime (numpy.datetime64):
+                The reference time associated with the dataset.
             forecast (int):
-                The forecast hour.
+                The forecast hour associated with the dataset.
 
         Returns:
             xarray.Dataset:
-                A dataset containing the contents of the GRIB.
+                A processed dataset.
         '''
-        self.download(reftime, forecast)
-
-        reftime = np.datetime64(reftime, '6h')
-        path = self.grib_path(reftime, forecast)
-        logger.info(f'reading {path}')
-
-        ds = xr.open_dataset(path, engine='pynio')
-
         features = {
             # Data variables
             'DLWRF_P0_L1_GLC0':  'DLWRF_SFC',    'DSWRF_P0_L1_GLC0':   'DSWRF_SFC',
@@ -469,36 +501,12 @@ class NamLoader:
         ds = xr.decode_cf(ds)
         return ds
 
-    def _combine(self, datasets):
-        '''Combine a list of datasets.
+    def open_remote(self, reftime='now'):
+        '''Load a forecast from GRIBs, downlading if they do not exist.
 
-        This is non-trivial because the old-format and the new-format are not
-        perfectly aligned; the x and y coordinates are offset by up to 4 km.
-
-        We force all to align to the final dataset's spatial coordinates.
-
-        Arguments:
-            datasets (Sequence[xarray.Dataset]):
-                The datasets to combine.
-
-        Returns:
-            xarray.Dataset:
-                The combined dataset.
-        '''
-        coords = {
-            'x':   datasets[-1].x,
-            'y':   datasets[-1].y,
-            'lat': datasets[-1].lat,
-            'lon': datasets[-1].lon,
-        }
-        datasets = (ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets)
-        logger.info('joining datasets')
-        ds = xr.concat(datasets, dim='reftime')
-        ds = ds.assign_coords(**coords)
-        return ds
-
-    def open_gribs(self, reftime='now'):
-        '''Load the forecasts from GRIB, downlading if they do not exist.
+        If the loader was initialized with ``save_nc=True`` and
+        ``keep_gribs=False`` (the default), then the resulting forecast is
+        converted to a netCDF file on disk and the GRIB files are discarded.
 
         Arguments:
             reftime (numpy.datetime64 or str):
@@ -508,8 +516,13 @@ class NamLoader:
             xarray.Dataset:
                 A dataset for the forecast at this reftime.
         '''
-        load_grib = lambda f: self.load_grib(reftime, f)
-        datasets = map(load_grib, FORECAST_PERIOD)
+        datasets = []
+        for forecast in FORECAST_PERIOD:
+            path = self.download(reftime, forecast)
+            logger.info(f'reading {path}')
+            ds = xr.open_dataset(path, engine='pynio')
+            ds = self._process_grib(reftime, forecast)
+            datasets.append(ds)
         ds = xr.concat(datasets, dim='forecast')
 
         if self.save_nc:
@@ -524,16 +537,20 @@ class NamLoader:
 
         return ds
 
-    def open_nc(self, reftime='now'):
-        '''Load the forecasts from a netCDF in the local store.
+    def open_local(self, reftime='now'):
+        '''Load a forecast from netCDF in the local store.
 
         Arguments:
             reftime (numpy.datetime64 or str):
                 The reference time to open.
 
         Returns:
-            xarray.Dataset:
+            ds (xarray.Dataset):
                 A dataset for the forecast at this reftime.
+
+        Raises:
+            CacheMiss:
+                An exception is raised if the forecast does not exist locally.
         '''
         path = self.nc_path(reftime)
         if path.exists():
@@ -545,7 +562,7 @@ class NamLoader:
             )
             return ds
         else:
-            raise NamLoader.CacheMiss(reftime)
+            raise CacheMiss(reftime)
 
     def open(self, *reftimes):
         '''Load and combine forecasts for some reference times,
@@ -558,7 +575,8 @@ class NamLoader:
 
         Arguments:
             reftimes (numpy.datetime64 or str):
-                The reference times to open.
+                The reference times to open. If none are given, the current
+                forecast period is used.
 
         Returns:
             xarray.Dataset:
@@ -567,9 +585,9 @@ class NamLoader:
         '''
         def _open(reftime):
             try:
-                ds = self.open_nc(reftime)
-            except NamLoader.CacheMiss as e:
-                ds = self.open_gribs(reftime)
+                ds = self.open_local(reftime)
+            except CacheMiss:
+                ds = self.open_remote(reftime)
             return ds
 
         if len(reftimes) == 0:
@@ -603,13 +621,41 @@ class NamLoader:
         delta = np.timedelta64(6, 'h')
         while start < stop:
             try:
-                ds = self.open_nc(start)
+                ds = self.open_local(start)
                 datasets.append(ds)
             except OSError as e:
                 logger.warn(f'error reading forecast for {start}')
                 logger.warn(e)
-            except NamLoader.CacheMiss:
+            except CacheMiss:
                 pass
             start += delta
 
         return self._combine(datasets)
+
+    def _combine(self, datasets):
+        '''Combine a list of datasets.
+
+        This is non-trivial because older datasets and the newer datasets are
+        not perfectly aligned; the x and y coordinates are offset by up to 4 km.
+
+        We force all to align to the final dataset's spatial coordinates.
+
+        Arguments:
+            datasets (Sequence[xarray.Dataset]):
+                The datasets to combine.
+
+        Returns:
+            xarray.Dataset:
+                The combined dataset.
+        '''
+        coords = {
+            'x':   datasets[-1].x,
+            'y':   datasets[-1].y,
+            'lat': datasets[-1].lat,
+            'lon': datasets[-1].lon,
+        }
+        datasets = (ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets)
+        logger.info('joining datasets')
+        ds = xr.concat(datasets, dim='reftime')
+        ds = ds.assign_coords(**coords)
+        return ds
