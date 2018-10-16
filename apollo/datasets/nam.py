@@ -37,6 +37,7 @@ from time import sleep
 
 import cartopy.crs as ccrs
 import numpy as np
+import pandas as pd
 import requests
 import xarray as xr
 
@@ -85,7 +86,7 @@ def open(*reftimes, **kwargs):
     returned.
 
     Arguments:
-        reftimes (numpy.datetime64 or str):
+        *reftimes (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
             The reference times to open. If none are given, the current
             forecast period is used.
         **kwargs:
@@ -106,10 +107,10 @@ def open_range(start='2017-01-01', stop='today', **kwargs):
     NOTE: This method only loads data from the local store.
 
     Arguments:
-        start (numpy.datetime64 or str):
+        start (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
             The first time in the range.
             The default is 2017-01-01T00:00
-        stop (numpy.datetime64 or str):
+        stop (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
             The last time in the range.
             The default is the start of the current day.
         **kwargs:
@@ -127,7 +128,7 @@ def open_local(reftime='now', **kwargs):
     '''Load a forecast from netCDF in the local store.
 
     Arguments:
-        reftime (numpy.datetime64 or str):
+        reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
             The reference time to open.
         **kwargs:
             Forwarded to :class:`NamLoader`.
@@ -207,7 +208,7 @@ class NamLoader:
         '''The URL for a specific forecast.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
+            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time.
             forecast (int):
                 The forecast hour.
@@ -216,10 +217,10 @@ class NamLoader:
             str:
                 A URL to a GRIB file.
         '''
-        reftime = np.datetime64(reftime, '6h')
-        now = np.datetime64('now')
+        reftime = pd.Timestamp(reftime).floor('6h')
+        now = pd.Timestamp('now').floor('6h')
         delta = now - reftime
-        if delta > np.timedelta64(7, 'D'):
+        if pd.Timedelta(7, 'd') < delta:
             url_fmt = ARCHIVE_URL
         else:
             url_fmt = PROD_URL
@@ -229,7 +230,7 @@ class NamLoader:
         '''The path for a forecast GRIB.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
+            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time.
             forecast (int):
                 The forecast hour.
@@ -238,7 +239,7 @@ class NamLoader:
             pathlib.Path:
                 The local path for a GRIB file, which may not exist.
         '''
-        reftime = np.datetime64(reftime, '6h').astype(object)
+        reftime = pd.Timestamp(reftime).floor('6h')
         prefix_fmt = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'
         filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
         prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
@@ -249,14 +250,14 @@ class NamLoader:
         '''The path to the netCDF forecast for the given reference time.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
+            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time.
 
         Returns:
             pathlib.Path:
                 The local path to a netCDF file, which may not exist.
         '''
-        reftime = np.datetime64(reftime, '6h').astype(object)
+        reftime = reftime = pd.Timestamp(reftime).floor('6h')
         prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
         filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
         return self.data_dir / prefix / filename
@@ -265,7 +266,7 @@ class NamLoader:
         '''Ensure that the GRIB for this reftime and forecast exists locally.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
+            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time to download.
             forecast (int):
                 The forecast hour to download
@@ -338,7 +339,7 @@ class NamLoader:
         Arguments:
             ds (xarray.Dataset):
                 The dataset to process.
-            reftime (numpy.datetime64):
+            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time associated with the dataset.
             forecast (int):
                 The forecast hour associated with the dataset.
@@ -401,8 +402,14 @@ class NamLoader:
 
         # Create reftime and forecast dimensions.
         # Both are stored as integers with appropriate units.
+        # The reftime dimension is hours since the Unix epoch (1970-01-01 00:00).
+        # The forecast dimension is hours since the reftime.
+        reftime = pd.Timestamp(reftime).floor('6h')
+        epoch = pd.Timestamp('1970-01-01 00:00')
+        delta_seconds = int((reftime - epoch).total_seconds())
+        delta_hours = delta_seconds // 60 // 60
         ds = ds.assign_coords(
-            reftime=reftime.astype('datetime64[h]').astype('int'),
+            reftime=delta_hours,
             forecast=forecast,
         )
         for v in ds.data_vars:
@@ -509,7 +516,7 @@ class NamLoader:
         converted to a netCDF file on disk and the GRIB files are discarded.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
+            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time to open.
 
         Returns:
@@ -541,7 +548,7 @@ class NamLoader:
         '''Load a forecast from netCDF in the local store.
 
         Arguments:
-            reftime (numpy.datetime64 or str):
+            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time to open.
 
         Returns:
@@ -574,7 +581,7 @@ class NamLoader:
         netCDF file, the GRIBs are deleted, and the dataset is returned.
 
         Arguments:
-            reftimes (numpy.datetime64 or str):
+            *reftimes (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference times to open. If none are given, the current
                 forecast period is used.
 
@@ -602,10 +609,10 @@ class NamLoader:
         NOTE: This method only loads data from the local store.
 
         Arguments:
-            start (numpy.datetime64 or str):
+            start (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The first time in the range.
                 The default is 2017-01-01T00:00
-            stop (numpy.datetime64 or str):
+            stop (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The last time in the range.
                 The default is the start of the current day.
 
@@ -614,11 +621,11 @@ class NamLoader:
                 A single dataset containing all forecasts at the given reference
                 times. Some data may be dropped when combining forecasts.
         '''
-        start = np.datetime64(start, '6h')
-        stop = np.datetime64(stop, '6h')
+        start = pd.Timestamp(start).floor('6h')
+        stop = pd.Timestamp(stop).floor('6h')
 
         datasets = []
-        delta = np.timedelta64(6, 'h')
+        delta = pd.Timedelta(6, 'h')
         while start < stop:
             try:
                 ds = self.open_local(start)
