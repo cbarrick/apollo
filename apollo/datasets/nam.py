@@ -51,8 +51,7 @@ logger = logging.getLogger(__name__)
 # PROD_URL typically has the most recent 7 days.
 # ARCHIVE_URL typically has the most recent 11 months, about 1 week behind.
 PROD_URL = 'http://nomads.ncep.noaa.gov/pub/data/nccf/com/nam/prod/nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib2'
-ARCHIVE_URL_1 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb'
-ARCHIVE_URL_2 = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb2'
+ARCHIVE_URL = 'https://nomads.ncdc.noaa.gov/data/meso-eta-hi/{ref.year:04d}{ref.month:02d}/{ref.year:04d}{ref.month:02d}{ref.day:02d}/nam_218_{ref.year:04d}{ref.month:02d}{ref.day:02d}_{ref.hour:02d}00_{forecast:03d}.grb2'
 
 
 # The full forecast period of the NAM-NMM dataset: 0h to 36h by 1h and 36h to 84h by 3h
@@ -195,10 +194,7 @@ class NamLoader:
         now = np.datetime64('now')
         delta = now - reftime
         if delta > np.timedelta64(7, 'D'):
-            if reftime < np.datetime64('2017-04-01'):
-                url_fmt = ARCHIVE_URL_1
-            else:
-                url_fmt = ARCHIVE_URL_2
+            url_fmt = ARCHIVE_URL
         else:
             url_fmt = PROD_URL
         return url_fmt.format(ref=reftime.astype(object), forecast=forecast)
@@ -296,97 +292,6 @@ class NamLoader:
                 path.unlink()
                 raise err
 
-    def normalize_grib(self, ds):
-        '''Normalize a GRIB dataset.
-
-        The variable and coordinate names in the GRIB forecasts are dependent on
-        the library reading the file (PyNio) have changed over time as NOAA has
-        upgraded from GRIB1 to GRIB2.
-
-        This method normalize the variable and coordinate names to our
-        internal format.
-
-        Arguments:
-            ds (xarray.Dataset):
-                The dataset to normalize.
-        '''
-        # Normalize the first format.
-        # This format occurs when reading a GRIB1 file with xarray and the PyNIO backend.
-        # Note `gridx_218` is the y coordinate, likewise `gridy_218` is the x coordinate.
-        if 'gridx_218' in ds.dims:
-            features = {
-                'DLWRF_218_SFC':  'DLWRF_SFC',              'DSWRF_218_SFC':  'DSWRF_SFC',
-                'PRES_218_SFC':   'PRES_SFC',
-                'PRES_218_MWSL':  'PRES_MWSL',              'PRES_218_TRO':   'PRES_TRO',
-                'T_CDC_218_EATM': 'TCC_EATM',               'TMP_218_SPDY':   'TMP_SPDY',
-                'TMP_218_SFC':    'TMP_SFC',                'TMP_218_ISBL':   'TMP_ISBL',
-                'TMP_218_HTGL':   'TMP_HTGL',               'TMP_218_TRO':    'TMP_TRO',
-                'R_H_218_SIGY':   'RH_SIGY',                'R_H_218_SPDY':   'RH_SPDY',
-                'R_H_218_ISBL':   'RH_ISBL',
-                'R_H_218_0DEG':   'RH_0DEG',                'U_GRD_218_SPDY': 'UGRD_SPDY',
-                'U_GRD_218_ISBL': 'UGRD_ISBL',              'U_GRD_218_HTGL': 'UGRD_HTGL',
-                'U_GRD_218_220':  'UGRD_TOA',               'U_GRD_218_MWSL': 'UGRD_MWSL',
-                'U_GRD_218_TRO':  'UGRD_TRO',               'V_GRD_218_SPDY': 'VGRD_SPDY',
-                'V_GRD_218_ISBL': 'VGRD_ISBL',              'V_GRD_218_HTGL': 'VGRD_HTGL',
-                'V_GRD_218_220':  'VGRD_TOA',               'V_GRD_218_MWSL': 'VGRD_MWSL',
-                'V_GRD_218_TRO':  'VGRD_TRO',               'VIS_218_SFC':    'VIS_SFC',
-                'LHTFL_218_SFC':  'LHTFL_SFC',              'SHTFL_218_SFC':  'SHTFL_SFC',
-                'REFC_218_EATM':  'REFC_EATM',              'REFD_218_HTGL':  'REFD_HTGL',
-                'REFD_218_HYBL':  'REFD_HYBL',              'V_VEL_218_ISBL': 'VVEL_ISBL',
-                'HGT_218_SFC':    'HGT_SFC',                'HGT_218_ISBL':   'HGT_ISBL',
-                'HGT_218_CBL':    'HGT_CBL',                'HGT_218_220':    'HGT_TOA',
-                'HGT_218_LLTW':   'HGT_LLTW',               'HGT_218_0DEG':   'HGT_0DEG',
-                'P_WAT_218_EATM': 'PWAT_EATM',              'TKE_218_ISBL':   'TKE_ISBL',
-
-                'lv_HTGL3':       'z_HTGL1',                'lv_HTGL5':       'z_HTGL2',
-                'lv_HTGL9':       'z_HTGL3',                'lv_ISBL2':       'z_ISBL',
-                'lv_SPDY4':       'z_SPDY',
-                'gridx_218':      'y',                      'gridy_218':      'x',
-                'gridlat_218':    'lat',                    'gridlon_218':    'lon',
-            }
-            unwanted = [k for k in ds.data_vars.keys() if k not in features]
-            ds = ds.drop(unwanted)
-            ds = ds.rename(features)
-            ds['z_ISBL'].data *= 100
-            ds['z_ISBL'].attrs['units'] = 'Pa'
-
-        # Normalize the second format.
-        # This format occurs after the change from GRIB1 to GRIB2 (circa April 2017).
-        else:
-            features = {
-                'DLWRF_P0_L1_GLC0':   'DLWRF_SFC',          'DSWRF_P0_L1_GLC0':   'DSWRF_SFC',
-                'PRES_P0_L1_GLC0':    'PRES_SFC',
-                'PRES_P0_L6_GLC0':    'PRES_MWSL',          'PRES_P0_L7_GLC0':    'PRES_TRO',
-                'TCDC_P0_L200_GLC0':  'TCC_EATM',           'TMP_P0_2L108_GLC0':  'TMP_SPDY',
-                'TMP_P0_L1_GLC0':     'TMP_SFC',            'TMP_P0_L100_GLC0':   'TMP_ISBL',
-                'TMP_P0_L103_GLC0':   'TMP_HTGL',           'TMP_P0_L7_GLC0':     'TMP_TRO',
-                'RH_P0_2L104_GLC0':   'RH_SIGY',            'RH_P0_2L108_GLC0':   'RH_SPDY',
-                'RH_P0_L100_GLC0':    'RH_ISBL',
-                'RH_P0_L4_GLC0':      'RH_0DEG',            'UGRD_P0_2L108_GLC0': 'UGRD_SPDY',
-                'UGRD_P0_L100_GLC0':  'UGRD_ISBL',          'UGRD_P0_L103_GLC0':  'UGRD_HTGL',
-                'UGRD_P0_L220_GLC0':  'UGRD_TOA',           'UGRD_P0_L6_GLC0':    'UGRD_MWSL',
-                'UGRD_P0_L7_GLC0':    'UGRD_TRO',           'VGRD_P0_2L108_GLC0': 'VGRD_SPDY',
-                'VGRD_P0_L100_GLC0':  'VGRD_ISBL',          'VGRD_P0_L103_GLC0':  'VGRD_HTGL',
-                'VGRD_P0_L220_GLC0':  'VGRD_TOA',           'VGRD_P0_L6_GLC0':    'VGRD_MWSL',
-                'VGRD_P0_L7_GLC0':    'VGRD_TRO',           'VIS_P0_L1_GLC0':     'VIS_SFC',
-                'LHTFL_P0_L1_GLC0':   'LHTFL_SFC',          'SHTFL_P0_L1_GLC0':   'SHTFL_SFC',
-                'REFC_P0_L200_GLC0':  'REFC_EATM',          'REFD_P0_L103_GLC0':  'REFD_HTGL',
-                'REFD_P0_L105_GLC0':  'REFD_HYBL',          'VVEL_P0_L100_GLC0':  'VVEL_ISBL',
-                'HGT_P0_L1_GLC0':     'HGT_SFC',            'HGT_P0_L100_GLC0':   'HGT_ISBL',
-                'HGT_P0_L2_GLC0':     'HGT_CBL',            'HGT_P0_L220_GLC0':   'HGT_TOA',
-                'HGT_P0_L245_GLC0':   'HGT_LLTW',           'HGT_P0_L4_GLC0':     'HGT_0DEG',
-                'PWAT_P0_L200_GLC0':  'PWAT_EATM',          'TKE_P0_L100_GLC0':   'TKE_ISBL',
-
-                'lv_HTGL1':           'z_HTGL1',            'lv_HTGL3':           'z_HTGL2',
-                'lv_HTGL6':           'z_HTGL3',            'lv_ISBL0':           'z_ISBL',
-                'lv_SPDL2':           'z_SPDY',
-                'xgrid_0':            'x',                  'ygrid_0':            'y',
-                'gridlat_0':          'lat',                'gridlon_0':          'lon',
-            }
-            unwanted = [k for k in ds.data_vars.keys() if k not in features]
-            ds = ds.drop(unwanted)
-            ds = ds.rename(features)
-
     def load_grib(self, reftime, forecast):
         '''Load a forecast from GRIB.
 
@@ -410,18 +315,41 @@ class NamLoader:
 
         ds = xr.open_dataset(path, engine='pynio')
 
-        try:
-            self.normalize_grib(ds)
-        except Exception as err:
-            # If normalization fails, we cannot continue.
-            # This may happen when the download is corrupt.
-            # We delete the file so that the system can retry later.
-            # TODO: This logic may be better placed in the download method, but
-            # how do we check if the download is corrupt before normalizing?
-            logger.error(f'unable to normalize grib forecast {reftime}/{forecast}')
-            logger.error(f'deleting {path}')
-            path.unlink()
-            raise err
+        features = {
+            # Data variables
+            'DLWRF_P0_L1_GLC0':  'DLWRF_SFC',    'DSWRF_P0_L1_GLC0':   'DSWRF_SFC',
+            'PRES_P0_L1_GLC0':   'PRES_SFC',
+            'PRES_P0_L6_GLC0':   'PRES_MWSL',    'PRES_P0_L7_GLC0':    'PRES_TRO',
+            'TCDC_P0_L200_GLC0': 'TCC_EATM',     'TMP_P0_2L108_GLC0':  'TMP_SPDY',
+            'TMP_P0_L1_GLC0':    'TMP_SFC',      'TMP_P0_L100_GLC0':   'TMP_ISBL',
+            'TMP_P0_L103_GLC0':  'TMP_HTGL',     'TMP_P0_L7_GLC0':     'TMP_TRO',
+            'RH_P0_2L104_GLC0':  'RH_SIGY',      'RH_P0_2L108_GLC0':   'RH_SPDY',
+            'RH_P0_L100_GLC0':   'RH_ISBL',
+            'RH_P0_L4_GLC0':     'RH_0DEG',      'UGRD_P0_2L108_GLC0': 'UGRD_SPDY',
+            'UGRD_P0_L100_GLC0': 'UGRD_ISBL',    'UGRD_P0_L103_GLC0':  'UGRD_HTGL',
+            'UGRD_P0_L220_GLC0': 'UGRD_TOA',     'UGRD_P0_L6_GLC0':    'UGRD_MWSL',
+            'UGRD_P0_L7_GLC0':   'UGRD_TRO',     'VGRD_P0_2L108_GLC0': 'VGRD_SPDY',
+            'VGRD_P0_L100_GLC0': 'VGRD_ISBL',    'VGRD_P0_L103_GLC0':  'VGRD_HTGL',
+            'VGRD_P0_L220_GLC0': 'VGRD_TOA',     'VGRD_P0_L6_GLC0':    'VGRD_MWSL',
+            'VGRD_P0_L7_GLC0':   'VGRD_TRO',     'VIS_P0_L1_GLC0':     'VIS_SFC',
+            'LHTFL_P0_L1_GLC0':  'LHTFL_SFC',    'SHTFL_P0_L1_GLC0':   'SHTFL_SFC',
+            'REFC_P0_L200_GLC0': 'REFC_EATM',    'REFD_P0_L103_GLC0':  'REFD_HTGL',
+            'REFD_P0_L105_GLC0': 'REFD_HYBL',    'VVEL_P0_L100_GLC0':  'VVEL_ISBL',
+            'HGT_P0_L1_GLC0':    'HGT_SFC',      'HGT_P0_L100_GLC0':   'HGT_ISBL',
+            'HGT_P0_L2_GLC0':    'HGT_CBL',      'HGT_P0_L220_GLC0':   'HGT_TOA',
+            'HGT_P0_L245_GLC0':  'HGT_LLTW',     'HGT_P0_L4_GLC0':     'HGT_0DEG',
+            'PWAT_P0_L200_GLC0': 'PWAT_EATM',    'TKE_P0_L100_GLC0':   'TKE_ISBL',
+
+            # Coordinate variables
+            'lv_HTGL1':  'z_HTGL1',    'lv_HTGL3':  'z_HTGL2',
+            'lv_HTGL6':  'z_HTGL3',    'lv_ISBL0':  'z_ISBL',
+            'lv_SPDL2':  'z_SPDY',
+            'xgrid_0':   'x',          'ygrid_0':   'y',
+            'gridlat_0': 'lat',        'gridlon_0': 'lon',
+        }
+        unwanted = [k for k in ds.data_vars.keys() if k not in features]
+        ds = ds.drop(unwanted)
+        ds = ds.rename(features)
 
         # Subset the geographic region to a square area centered around Macon, GA.
         ds = ds.isel(y=slice(63, 223, None), x=slice(355, 515, None))
