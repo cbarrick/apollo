@@ -101,7 +101,7 @@ def open(*reftimes, **kwargs):
     return loader.open(*reftimes)
 
 
-def open_range(start='2017-01-01', stop='today', **kwargs):
+def open_range(start, stop, **kwargs):
     '''Load and combine forecasts for a range of reference times.
 
     NOTE: This method only loads data from the local store.
@@ -109,10 +109,8 @@ def open_range(start='2017-01-01', stop='today', **kwargs):
     Arguments:
         start (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
             The first time in the range.
-            The default is 2017-01-01T00:00
         stop (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
             The last time in the range.
-            The default is the start of the current day.
         **kwargs:
             Forwarded to :class:`NamLoader`.
 
@@ -603,7 +601,7 @@ class NamLoader:
             datasets = [_open(r) for r in reftimes]
             return self._combine(datasets)
 
-    def open_range(self, start='2017-01-01', stop='today'):
+    def open_range(self, start, stop):
         '''Load and combine forecasts for a range of reference times.
 
         NOTE: This method only loads data from the local store.
@@ -611,10 +609,8 @@ class NamLoader:
         Arguments:
             start (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The first time in the range.
-                The default is 2017-01-01T00:00
             stop (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The last time in the range.
-                The default is the start of the current day.
 
         Returns:
             xarray.Dataset:
