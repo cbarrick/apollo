@@ -153,11 +153,12 @@ class Predictor(ABC):
         # create path to summary and to resource files
         start_date, stop_date = prediction[0][0], prediction[-1][0]  # assumes the predictions are sorted
         start_date_f = Predictor._format_date(start_date)
-        summary_filename = f'{self.filename}_{start_date_f}.summary.json'
+        stop_date_f = Predictor._format_date(stop_date)
+        summary_filename = f'{self.name}_{self.target}_{start_date_f}_to_{stop_date_f}.summary.json'
         summary_path = os.path.join(summary_dir, summary_filename)
         summary_path = os.path.realpath(summary_path)
 
-        resource_filename = f'{self.filename}_{start_date_f}.json'
+        resource_filename = f'{self.name}_{self.target}_{start_date_f}_to_{stop_date_f}.prediction.json'
         resource_path = os.path.join(output_dir, resource_filename)
         resource_path = os.path.realpath(resource_path)
 
@@ -213,4 +214,4 @@ class Predictor(ABC):
     @classmethod
     def _format_date(cls, date_string):
         dt = pd.to_datetime(date_string, utc=True)
-        return f'{dt.year}-{dt.month}-{dt.day}'
+        return dt.strftime('%Y-%m-%dT%X')
