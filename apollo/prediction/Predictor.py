@@ -153,12 +153,11 @@ class Predictor(ABC):
         # create path to summary and to resource files
         start_date, stop_date = prediction[0][0], prediction[-1][0]  # assumes the predictions are sorted
         start_date_f = Predictor._format_date(start_date)
-        stop_date_f = Predictor._format_date(stop_date)
-        summary_filename = f'{self.filename}_{start_date_f}_{stop_date_f}.summary.json'
+        summary_filename = f'{self.filename}_{start_date_f}.summary.json'
         summary_path = os.path.join(summary_dir, summary_filename)
         summary_path = os.path.realpath(summary_path)
 
-        resource_filename = f'{self.filename}_{start_date_f}_{stop_date_f}.json'
+        resource_filename = f'{self.filename}_{start_date_f}.json'
         resource_path = os.path.join(output_dir, resource_filename)
         resource_path = os.path.realpath(resource_path)
 
