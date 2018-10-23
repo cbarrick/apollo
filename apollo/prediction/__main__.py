@@ -1,6 +1,7 @@
 import argparse
 import logging
 import numpy as np
+import pandas as pd
 
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
@@ -123,7 +124,12 @@ def main():
 
     predict.add_argument('--reftime', '-r', default='2018-01-01 00:00', type=str,
                         help='The reftime for which predictions should be made.  '
-                             'Any string accepted by numpy\'s datetime64 constructor will work.')
+                             'Any string accepted by numpy\'s datetime64 constructor will work.  '
+                             'Ignored if the `latest` flag is set.')
+
+    predict.add_argument('--latest', '-l', action='store_true',
+                       help='If set, a prediction will be generated for the past reftime which is closest to the '
+                            'current datetime.')
 
     predict.add_argument('--summary_dir', '-z', default='./summaries', type=str,
                          help='The directory where summary files will be written.')
@@ -169,8 +175,11 @@ def main():
             print("Mean %s: %0.4f" % (key, scores[key]))
 
     elif action == 'predict':
+        reftime = args['reftime']
+        if 'latest' in args:
+            reftime = pd.Timestamp('now').floor('6h')
         predictions = predictor.predict(
-            reftime=args['reftime'],
+            reftime=reftime,
         )
         summary_path, prediction_path = predictor.write_prediction(
             predictions,
