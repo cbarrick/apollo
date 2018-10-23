@@ -98,8 +98,8 @@ class SKPredictor(Predictor):
             return None
 
         # load NAM data for the reftime
-        previous_reftime = reftime - np.timedelta64(6, 'h')
-        next_reftime = reftime + np.timedelta64(6, 'h')
+        previous_reftime = np.datetime64(reftime) - np.timedelta64(6, 'h')
+        next_reftime = np.datetime64(reftime) + np.timedelta64(6, 'h')
         try:
             dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
         except nam.CacheMiss:
@@ -112,8 +112,8 @@ class SKPredictor(Predictor):
 
         # prediction will have one predicted value for every hour in target_hours
         prediction_tuples = list()
-        for idx, hour in self.target_hours:
-            timestamp = np.datetime64(reftime) + np.timedelta64(hour, 'h')
+        for idx, hour in enumerate(self.target_hours):
+            timestamp = np.datetime64(reftime) + np.timedelta64(int(hour), 'h')
             predicted_val = prediction[idx]
             prediction_tuples.append((timestamp, predicted_val))
 
