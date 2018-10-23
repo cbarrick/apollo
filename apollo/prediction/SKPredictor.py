@@ -64,7 +64,7 @@ class SKPredictor(Predictor):
     def train(self, start, stop, tune, num_folds):
         client = Client()  # dask scheduler
         # load dataset
-        ds = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
+        ds = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
         x, y = ds.tabular()
         print('Dataset Loaded')  # TODO: write this sort of thing to a log file instead of stdout
         if tune and self.param_grid is not None:
@@ -101,11 +101,11 @@ class SKPredictor(Predictor):
         previous_reftime = reftime - np.timedelta64(6, 'h')
         next_reftime = reftime + np.timedelta64(6, 'h')
         try:
-            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, target=None)
+            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
         except nam.CacheMiss:
             print(f'NAM data for reftime {reftime} not cached locally.  Attempting to download it...')
             nam.open(reftime)
-            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, target=None)
+            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
 
         data = np.asarray(dataset.tabular())[0]  # the dataset will be of length 1
         prediction = self.regressor.predict([data])[0]
@@ -130,7 +130,7 @@ class SKPredictor(Predictor):
             hyperparams = saved_model.get_params()
 
         # load dataset
-        dataset = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
+        dataset = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
         x, y = dataset.tabular()
         x, y = np.asarray(x), np.asarray(y)
         print('Dataset Loaded')
