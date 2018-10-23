@@ -166,7 +166,7 @@ class Predictor(ABC):
             'source': self.name,
             'sourcelabel': self.name.replace('_', ' '),
             'site': self.target,
-            'created': round(datetime.datetime.utcnow().timestamp()),
+            'created': round(datetime.datetime.utcnow().timestamp())*1000,  # converted to ms
             'start': Predictor._datestring_to_posix(start_date),
             'stop': Predictor._datestring_to_posix(stop_date),
             'resource': resource_path
