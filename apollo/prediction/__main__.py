@@ -66,14 +66,6 @@ def main():
     parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(MODELS.keys()),
                         help='The name of the model that you would like to run.')
 
-    parser.add_argument('--start', '-b', default='2017-01-01 00:00', type=str,
-                        help='The start date of the dataset that you want to use. '
-                             'Any string accepted by numpy\'s datetime64 constructor will work.')
-
-    parser.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
-                        help='The end date of the dataset that you want to use. '
-                             'Any string accepted by numpy\'s datetime64 constructor will work.')
-
     parser.add_argument('--target_hours', '-f', default=24, type=int,
                         help='Generate predictions for each our up to this hour. '
                              'Should be an integer between 1 and 36.')
@@ -81,17 +73,23 @@ def main():
     parser.add_argument('--target', '-t', default='UGA-C-POA-1-IRR', type=str,
                         help='The variable from GA_POWER to target.')
 
-    parser.add_argument('--save_dir', '-s', default='./models', type=str,
-                        help='The directory where trained models will be serialized. This directory will be created if'
-                             ' it does not exist.')
-
     subcommands = parser.add_subparsers()
 
     # train
     train = subcommands.add_parser('train', argument_default=argparse.SUPPRESS, description='Train a model.')
     train.set_defaults(action='train')
+
+    parser.add_argument('--start', '-b', default='2017-01-01 00:00', type=str,
+                        help='The first reftime in the dataset to be used for training.  '
+                             'Any string accepted by numpy\'s datetime64 constructor will work.')
+
+    parser.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
+                        help='The final reftime in the dataset to be used for training. '
+                             'Any string accepted by numpy\'s datetime64 constructor will work.')
+
     train.add_argument('--no_tune', '-p', action='store_true',
                        help='If set, hyperparameter tuning will NOT be performed during training.')
+
     train.add_argument('--num_folds', '-n', default=3, type=int,
                        help='If `tune` is enabled, the number of folds to use during the cross-validated grid search. '
                             'Ignored if tuning is disabled.')
@@ -100,6 +98,15 @@ def main():
     evaluate = subcommands.add_parser('evaluate', argument_default=argparse.SUPPRESS,
                                       description='Evaluate a model using n-fold cross-validation')
     evaluate.set_defaults(action='evaluate')
+
+    parser.add_argument('--start', '-b', default='2017-12-01 00:00', type=str,
+                        help='The first reftime in the dataset to be used for evaluation.  '
+                             'Any string accepted by numpy\'s datetime64 constructor will work.')
+
+    parser.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
+                        help='The final reftime in the dataset to be used for evaluation. '
+                             'Any string accepted by numpy\'s datetime64 constructor will work.')
+
     evaluate.add_argument('--num_folds', '-n', default=3, type=int,
                           help='The number of folds to use when computing cross-validated accuracy.')
 
@@ -107,8 +114,14 @@ def main():
     predict = subcommands.add_parser('predict', argument_default=argparse.SUPPRESS,
                                      description='Make predictions using a trained model.')
     predict.set_defaults(action='predict')
+
+    parser.add_argument('--reftime', '-b', default='2018-01-01 00:00', type=str,
+                        help='The reftime for which predictions should be made.  '
+                             'Any string accepted by numpy\'s datetime64 constructor will work.')
+
     predict.add_argument('--summary_dir', '-z', default='./summaries', type=str,
                          help='The directory where summary files will be written.')
+
     predict.add_argument('--output_dir', '-o', default='./predictions', type=str,
                          help='The directory where predictions will be written.')
 
@@ -133,7 +146,6 @@ def main():
         save_path = predictor.train(
             start=args['start'],
             stop=args['stop'],
-            save_dir=args['save_dir'],
             tune=args['tune'],
             num_folds=args['num_folds']
         )
@@ -143,7 +155,6 @@ def main():
         scores = predictor.cross_validate(
             start=args['start'],
             stop=args['stop'],
-            save_dir=args['save_dir'],
             num_folds=args['num_folds'],
             metrics=DEFAULT_METRICS
         )
@@ -153,11 +164,9 @@ def main():
 
     elif action == 'predict':
         predictions = predictor.predict(
-            start=args['start'],
-            stop=args['stop'],
-            save_dir=args['save_dir']
+            reftime=args['reftime'],
         )
-        summary_path, prediction_path = predictor.write_predictions(
+        summary_path, prediction_path = predictor.write_prediction(
             predictions,
             summary_dir=args['summary_dir'],
             output_dir=args['output_dir']
