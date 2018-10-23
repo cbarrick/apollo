@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import logging
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.model_selection import KFold, cross_validate
 from sklearn.externals import joblib
@@ -8,6 +9,9 @@ from distributed import Client
 
 from apollo.prediction.Predictor import Predictor
 from apollo.datasets.solar import SolarDataset
+from apollo.datasets import nam
+
+logger = logging.getLogger(__name__)  # logger for the prediction module
 
 
 class SKPredictor(Predictor):
@@ -42,30 +46,28 @@ class SKPredictor(Predictor):
         self.regressor = MultiOutputRegressor(estimator=estimator, n_jobs=1)
         self.param_grid = parameter_grid
 
-    def save(self, save_dir):
+    def save(self):
         # serialize the trained model
-        path = os.path.join(save_dir, self.filename)
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        path = os.path.join(self.models_dir, self.filename)
         joblib.dump(self.regressor, path)
 
         return path
 
-    def load(self, save_dir):
+    def load(self):
         # deserialize a saved model
-        path_to_model = os.path.join(save_dir, self.filename)
+        path_to_model = os.path.join(self.models_dir, self.filename)
         if os.path.exists(path_to_model):
             self.regressor = joblib.load(path_to_model)
             return self.regressor
         else:
             return None
 
-    def train(self, start, stop, save_dir, tune, num_folds):
-        client = Client()  # set the dask
+    def train(self, start, stop, tune, num_folds):
+        client = Client()  # dask scheduler
         # load dataset
-        ds = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
+        ds = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
         x, y = ds.tabular()
-        print('Dataset Loaded')  # TODO: write this sort of thing to a log file instead of stdout
+        logger.debug('Dataset Loaded')
         if tune and self.param_grid is not None:
             grid = GridSearchCV(
                 estimator=self.regressor,
@@ -77,55 +79,31 @@ class SKPredictor(Predictor):
                 scheduler=client
             )
             grid.fit(x, y)
-            print("Grid search completed.  Best parameters found: ")
-            print(grid.best_params_)
+            logger.info(f'Grid search completed.  Best parameters found: \n{grid.best_params_}')
             # save the estimator with the best parameters
             self.regressor = grid.best_estimator_
         else:
             # if a grid search is not performed, then we use default parameter values
             self.regressor.fit(x, y)
 
-        save_location = self.save(save_dir)
+        save_location = self.save()
         return save_location
 
-    def predict(self, start, stop, save_dir):
-        # load the trained regressor
-        self.load(save_dir)
-        if self.regressor is None:
-            print("You must train the model before making predictions!"
-                  "\nNo serialized model found at '%s'" % os.path.join(save_dir, self.filename))
-            return None
-
-        # load NAM data without labels
-        dataset = SolarDataset(start=start, stop=stop, target=None)
-        reftimes = np.asarray(dataset.xrds['reftime'].values)
-        data = np.asarray(dataset.tabular())
-
-        predictions = []
-        # make predictions
-        for idx, data_point in enumerate(data):
-            prediction = self.regressor.predict([data_point])[0]  # array of length len(self.target_hours)
-            timestamp = reftimes[idx]
-            data_point = [timestamp, prediction]
-            predictions.append(data_point)
-
-        return predictions
-
-    def cross_validate(self, start, stop, save_dir, num_folds, metrics):
+    def cross_validate(self, start, stop, num_folds, metrics):
         # load hyperparams saved in training step:
-        saved_model = self.load(save_dir)
+        saved_model = self.load()
         if saved_model is None:
-            print('WARNING: Evaluating model using default hyperparameters.  '
-                  'Run `train` before calling `evaluate` to find optimal hyperparameters.')
+            logger.warning(f'Evaluating model using default hyperparameters. '
+                           f'Run `train` before calling `evaluate` to find optimal hyperparameters.')
             hyperparams = dict()
         else:
             hyperparams = saved_model.get_params()
 
         # load dataset
-        dataset = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
+        dataset = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
         x, y = dataset.tabular()
         x, y = np.asarray(x), np.asarray(y)
-        print('Dataset Loaded')
+        logger.debug('Dataset Loaded')
 
         # Evaluate the classifier
         self.regressor.set_params(**hyperparams)
@@ -137,3 +115,33 @@ class SKPredictor(Predictor):
             mean_scores[metric_name] = np.mean(scores['test_' + metric_name])
 
         return mean_scores
+
+    def predict(self, reftime):
+        # load the trained regressor
+        self.load()
+        if self.regressor is None:
+            logger.error(f'You must train the model before making predictions!\n'
+                         f'No serialize model found at {os.path.join(self.models_dir, self.filename)}')
+            return None
+
+        # load NAM data for the reftime
+        previous_reftime = np.datetime64(reftime) - np.timedelta64(6, 'h')
+        next_reftime = np.datetime64(reftime) + np.timedelta64(6, 'h')
+        try:
+            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
+        except nam.CacheMiss:
+            logger.info(f'NAM data for reftime {reftime} not cached locally.  Attempting to download it...')
+            nam.open(reftime)
+            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
+
+        data = np.asarray(dataset.tabular())[0]  # the dataset will be of length 1
+        prediction = self.regressor.predict([data])[0]
+
+        # prediction will have one predicted value for every hour in target_hours
+        prediction_tuples = list()
+        for idx, hour in enumerate(self.target_hours):
+            timestamp = np.datetime64(reftime) + np.timedelta64(int(hour), 'h')
+            predicted_val = prediction[idx]
+            prediction_tuples.append((timestamp, predicted_val))
+
+        return prediction_tuples
