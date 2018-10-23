@@ -45,26 +45,24 @@ class SKPredictor(Predictor):
         self.regressor = MultiOutputRegressor(estimator=estimator, n_jobs=1)
         self.param_grid = parameter_grid
 
-    def save(self, save_dir):
+    def save(self):
         # serialize the trained model
-        path = os.path.join(save_dir, self.filename)
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        path = os.path.join(self.models_dir, self.filename)
         joblib.dump(self.regressor, path)
 
         return path
 
-    def load(self, save_dir):
+    def load(self):
         # deserialize a saved model
-        path_to_model = os.path.join(save_dir, self.filename)
+        path_to_model = os.path.join(self.models_dir, self.filename)
         if os.path.exists(path_to_model):
             self.regressor = joblib.load(path_to_model)
             return self.regressor
         else:
             return None
 
-    def train(self, start, stop, save_dir, tune, num_folds):
-        client = Client()  # set the dask
+    def train(self, start, stop, tune, num_folds):
+        client = Client()  # dask scheduler
         # load dataset
         ds = SolarDataset(start=start, stop=stop, target=self.target, target_hour=self.target_hours)
         x, y = ds.tabular()
@@ -88,15 +86,15 @@ class SKPredictor(Predictor):
             # if a grid search is not performed, then we use default parameter values
             self.regressor.fit(x, y)
 
-        save_location = self.save(save_dir)
+        save_location = self.save()
         return save_location
 
-    def predict(self, reftime, save_dir):
+    def predict(self, reftime):
         # load the trained regressor
-        self.load(save_dir)
+        self.load()
         if self.regressor is None:
             print("You must train the model before making predictions!"
-                  "\nNo serialized model found at '%s'" % os.path.join(save_dir, self.filename))
+                  "\nNo serialized model found at '%s'" % os.path.join(self.models_dir, self.filename))
             return None
 
         # load NAM data for the reftime
@@ -121,9 +119,9 @@ class SKPredictor(Predictor):
 
             return prediction_tuples
 
-    def cross_validate(self, start, stop, save_dir, num_folds, metrics):
+    def cross_validate(self, start, stop, num_folds, metrics):
         # load hyperparams saved in training step:
-        saved_model = self.load(save_dir)
+        saved_model = self.load()
         if saved_model is None:
             print('WARNING: Evaluating model using default hyperparameters.  '
                   'Run `train` before calling `evaluate` to find optimal hyperparameters.')

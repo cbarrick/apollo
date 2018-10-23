@@ -9,7 +9,8 @@ import os
 import json
 import datetime
 import pandas as pd
-import numpy as np
+
+from apollo import storage
 
 
 class Predictor(ABC):
@@ -34,19 +35,16 @@ class Predictor(ABC):
         self.target_hours = target_hours
         self.target = target
         self.filename = f'{self.name}_{target_hours[0]}hr-{target_hours[-1]}hr_{target}.model'
+        self.models_dir = storage.get('trained_models')
 
     @abstractmethod
-    def save(self, save_dir):
+    def save(self):
         """ Serializes this regressor backing this predictor to a file
 
         Serialization/deserialization are abstract methods because each Predictor might serialize regressors
         differently.
         For example, scikit-learn recommends using joblib to dump trained regressors, whereas most NN packages like
         TF and PyTorch have built-in serialization mechanisms.
-
-        Args:
-            save_dir (str):
-                Directory where the regressor should be saved.
 
         Returns:
             str: location of the serialized regressor.
@@ -55,12 +53,8 @@ class Predictor(ABC):
         pass
 
     @abstractmethod
-    def load(self, save_dir):
+    def load(self):
         """ Deserializes a regressor from a file
-
-        Args:
-            save_dir (str):
-                The directory where the serialized regressor is saved.
 
         Returns:
             object or None: deserialized regressor if a saved regressor is found.  Otherwise, None.
@@ -69,7 +63,7 @@ class Predictor(ABC):
         pass
 
     @abstractmethod
-    def train(self, start, stop, save_dir, tune, num_folds):
+    def train(self, start, stop, tune, num_folds):
         """ Fits the predictor and saves it to disk
 
         Trains the predictor to predict `self.target` at each future hour in `self.target_hours` using
@@ -80,8 +74,6 @@ class Predictor(ABC):
                 Timestamp corresponding to the reftime of the first training instance.
             stop (str):
                 Timestamp corresponding to the reftime of the final training instance.
-            save_dir (str):
-                The directory where the trained model should be saved.
             tune (bool):
                 If true, perform cross-validated parameter tuning before training.
             num_folds (int):
@@ -94,7 +86,7 @@ class Predictor(ABC):
         pass
 
     @abstractmethod
-    def cross_validate(self, start, stop, save_dir, num_folds, metrics):
+    def cross_validate(self, start, stop, num_folds, metrics):
         """ Evaluate this predictor using cross validation
 
         Args:
@@ -102,8 +94,6 @@ class Predictor(ABC):
                 Timestamp corresponding to the first reftime of the validation set.
             stop (str):
                 Timestamp corresponding to the final reftime of the validation set.
-            save_dir (str):
-                The directory where the trained predictor is saved.
             num_folds (int):
                 The number of folds to use.
             metrics (dict):
@@ -116,7 +106,7 @@ class Predictor(ABC):
         pass
 
     @abstractmethod
-    def predict(self, reftime, save_dir):
+    def predict(self, reftime):
         """ Predict future solar irradiance values starting at a given reftime
 
         The NAM data for the given reftime will be downloaded if it is not cached locally.
@@ -124,8 +114,6 @@ class Predictor(ABC):
         Args:
             reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
                 The reference time where the prediction will begin
-            save_dir (str):
-                The directory where the trained predictor is saved.
 
         Returns:
             list: (timestamp, predicted_irradiance) tuple for each hour in `self.target_hours`
