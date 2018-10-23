@@ -79,11 +79,11 @@ def main():
     train = subcommands.add_parser('train', argument_default=argparse.SUPPRESS, description='Train a model.')
     train.set_defaults(action='train')
 
-    parser.add_argument('--start', '-b', default='2017-01-01 00:00', type=str,
+    train.add_argument('--start', '-b', default='2017-01-01 00:00', type=str,
                         help='The first reftime in the dataset to be used for training.  '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
-    parser.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
+    train.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
                         help='The final reftime in the dataset to be used for training. '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
@@ -99,11 +99,11 @@ def main():
                                       description='Evaluate a model using n-fold cross-validation')
     evaluate.set_defaults(action='evaluate')
 
-    parser.add_argument('--start', '-b', default='2017-12-01 00:00', type=str,
+    evaluate.add_argument('--start', '-b', default='2017-12-01 00:00', type=str,
                         help='The first reftime in the dataset to be used for evaluation.  '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
-    parser.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
+    evaluate.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
                         help='The final reftime in the dataset to be used for evaluation. '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
@@ -115,7 +115,7 @@ def main():
                                      description='Make predictions using a trained model.')
     predict.set_defaults(action='predict')
 
-    parser.add_argument('--reftime', '-b', default='2018-01-01 00:00', type=str,
+    predict.add_argument('--reftime', '-r', default='2018-01-01 00:00', type=str,
                         help='The reftime for which predictions should be made.  '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
