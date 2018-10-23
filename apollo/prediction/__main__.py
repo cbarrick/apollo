@@ -1,6 +1,7 @@
 import argparse
+import logging
 import numpy as np
-from apollo.prediction.SKPredictor import SKPredictor
+
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
@@ -9,6 +10,11 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics.regression import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.metrics import make_scorer
 from xgboost import XGBRegressor
+
+from apollo.prediction.SKPredictor import SKPredictor
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 MODELS = {
     'linreg': LinearRegression(),
