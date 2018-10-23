@@ -117,7 +117,7 @@ class SKPredictor(Predictor):
             predicted_val = prediction[idx]
             prediction_tuples.append((timestamp, predicted_val))
 
-            return prediction_tuples
+        return prediction_tuples
 
     def cross_validate(self, start, stop, num_folds, metrics):
         # load hyperparams saved in training step:
