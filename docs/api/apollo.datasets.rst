@@ -13,8 +13,10 @@ apollo.datasets.nam
 	:toctree: stubs
 
 	open
+	open_local
 	open_range
 	NamLoader
+	CacheMiss
 
 
 apollo.datasets.ga_power
