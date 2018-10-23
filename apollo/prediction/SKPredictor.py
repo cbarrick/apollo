@@ -8,6 +8,9 @@ from distributed import Client
 
 from apollo.prediction.Predictor import Predictor
 from apollo.datasets.solar import SolarDataset
+from apollo.datasets import nam
+
+# TODO: using logging instead of printing to stdout
 
 
 class SKPredictor(Predictor):
@@ -88,7 +91,7 @@ class SKPredictor(Predictor):
         save_location = self.save(save_dir)
         return save_location
 
-    def predict(self, start, stop, save_dir):
+    def predict(self, reftime, save_dir):
         # load the trained regressor
         self.load(save_dir)
         if self.regressor is None:
@@ -96,20 +99,27 @@ class SKPredictor(Predictor):
                   "\nNo serialized model found at '%s'" % os.path.join(save_dir, self.filename))
             return None
 
-        # load NAM data without labels
-        dataset = SolarDataset(start=start, stop=stop, target=None)
-        reftimes = np.asarray(dataset.xrds['reftime'].values)
-        data = np.asarray(dataset.tabular())
+        # load NAM data for the reftime
+        previous_reftime = reftime - np.timedelta64(6, 'h')
+        next_reftime = reftime + np.timedelta64(6, 'h')
+        try:
+            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, target=None)
+        except nam.CacheMiss:
+            print(f'NAM data for reftime {reftime} not cached locally.  Attempting to download it...')
+            nam.open(reftime)
+            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, target=None)
 
-        predictions = []
-        # make predictions
-        for idx, data_point in enumerate(data):
-            prediction = self.regressor.predict([data_point])[0]  # array of length len(self.target_hours)
-            timestamp = reftimes[idx]
-            data_point = [timestamp, prediction]
-            predictions.append(data_point)
+        data = np.asarray(dataset.tabular())[0]  # the dataset will be of length 1
+        prediction = self.regressor.predict([data])[0]
 
-        return predictions
+        # prediction will have one predicted value for every hour in target_hours
+        prediction_tuples = list()
+        for idx, hour in self.target_hours:
+            timestamp = np.datetime64(reftime) + np.timedelta64(hour, 'h')
+            predicted_val = prediction[idx]
+            prediction_tuples.append((timestamp, predicted_val))
+
+            return prediction_tuples
 
     def cross_validate(self, start, stop, save_dir, num_folds, metrics):
         # load hyperparams saved in training step:
