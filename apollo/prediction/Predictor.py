@@ -163,7 +163,7 @@ class Predictor(ABC):
             os.makedirs(summary_dir)
 
         # create path to summary and to resource files
-        start_date, stop_date = predictions[0][0], predictions[-1][0]
+        start_date, stop_date = prediction[0][0], prediction[-1][0]  # assumes the predictions are sorted
         start_date_f = Predictor._format_date(start_date)
         stop_date_f = Predictor._format_date(stop_date)
         summary_filename = f'{self.filename}_{start_date_f}_{stop_date_f}.summary.json'
@@ -186,6 +186,7 @@ class Predictor(ABC):
         }
 
         # contents of the prediction file
+        data = [(Predictor._datestring_to_posix(time), value) for time, value in prediction]
         data_dict = {
             'start': Predictor._datestring_to_posix(start_date),
             'stop': Predictor._datestring_to_posix(stop_date),
@@ -204,17 +205,8 @@ class Predictor(ABC):
                     'type': 'number'
                 },
             ],
-            'rows': list()
+            'rows': data
         }
-
-        for prediction in predictions:
-            reftime = prediction[0]
-            for idx, hour in enumerate(self.target_hours):
-                # write a row for each hour that was predicted
-                delta = np.timedelta64(int(hour), 'h')
-                timestamp = Predictor._datestring_to_posix(reftime + delta)
-                predicted_value = prediction[1][idx]  # prediction[1] is the array of predicted values
-                data_dict['rows'].append([timestamp, predicted_value])
 
         # write the summary file
         with open(summary_path, 'w') as summary_file:
