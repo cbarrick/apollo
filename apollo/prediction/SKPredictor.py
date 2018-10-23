@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import logging
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.model_selection import KFold, cross_validate
 from sklearn.externals import joblib
@@ -10,7 +11,7 @@ from apollo.prediction.Predictor import Predictor
 from apollo.datasets.solar import SolarDataset
 from apollo.datasets import nam
 
-# TODO: using logging instead of printing to stdout
+logger = logging.getLogger(__name__)  # logger for the prediction module
 
 
 class SKPredictor(Predictor):
@@ -66,7 +67,7 @@ class SKPredictor(Predictor):
         # load dataset
         ds = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
         x, y = ds.tabular()
-        print('Dataset Loaded')  # TODO: write this sort of thing to a log file instead of stdout
+        logger.debug('Dataset Loaded')
         if tune and self.param_grid is not None:
             grid = GridSearchCV(
                 estimator=self.regressor,
@@ -78,8 +79,7 @@ class SKPredictor(Predictor):
                 scheduler=client
             )
             grid.fit(x, y)
-            print("Grid search completed.  Best parameters found: ")
-            print(grid.best_params_)
+            logger.info(f'Grid search completed.  Best parameters found: \n{grid.best_params_}')
             # save the estimator with the best parameters
             self.regressor = grid.best_estimator_
         else:
@@ -93,8 +93,8 @@ class SKPredictor(Predictor):
         # load the trained regressor
         self.load()
         if self.regressor is None:
-            print("You must train the model before making predictions!"
-                  "\nNo serialized model found at '%s'" % os.path.join(self.models_dir, self.filename))
+            logger.error(f'You must train the model before making predictions!\n'
+                         f'No serialize model found at {os.path.join(self.models_dir, self.filename)}')
             return None
 
         # load NAM data for the reftime
@@ -103,7 +103,7 @@ class SKPredictor(Predictor):
         try:
             dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
         except nam.CacheMiss:
-            print(f'NAM data for reftime {reftime} not cached locally.  Attempting to download it...')
+            logger.info(f'NAM data for reftime {reftime} not cached locally.  Attempting to download it...')
             nam.open(reftime)
             dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
 
@@ -123,8 +123,8 @@ class SKPredictor(Predictor):
         # load hyperparams saved in training step:
         saved_model = self.load()
         if saved_model is None:
-            print('WARNING: Evaluating model using default hyperparameters.  '
-                  'Run `train` before calling `evaluate` to find optimal hyperparameters.')
+            logger.warning(f'Evaluating model using default hyperparameters. '
+                           f'Run `train` before calling `evaluate` to find optimal hyperparameters.')
             hyperparams = dict()
         else:
             hyperparams = saved_model.get_params()
@@ -133,7 +133,7 @@ class SKPredictor(Predictor):
         dataset = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
         x, y = dataset.tabular()
         x, y = np.asarray(x), np.asarray(y)
-        print('Dataset Loaded')
+        logger.debug('Dataset Loaded')
 
         # Evaluate the classifier
         self.regressor.set_params(**hyperparams)
