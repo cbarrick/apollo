@@ -89,6 +89,33 @@ class SKPredictor(Predictor):
         save_location = self.save()
         return save_location
 
+    def cross_validate(self, start, stop, num_folds, metrics):
+        # load hyperparams saved in training step:
+        saved_model = self.load()
+        if saved_model is None:
+            logger.warning(f'Evaluating model using default hyperparameters. '
+                           f'Run `train` before calling `evaluate` to find optimal hyperparameters.')
+            hyperparams = dict()
+        else:
+            hyperparams = saved_model.get_params()
+
+        # load dataset
+        dataset = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
+        x, y = dataset.tabular()
+        x, y = np.asarray(x), np.asarray(y)
+        logger.debug('Dataset Loaded')
+
+        # Evaluate the classifier
+        self.regressor.set_params(**hyperparams)
+        scores = cross_validate(self.regressor, x, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
+
+        # scores is dictionary with keys "test_<metric_name> for each metric"
+        mean_scores = dict()
+        for metric_name in metrics:
+            mean_scores[metric_name] = np.mean(scores['test_' + metric_name])
+
+        return mean_scores
+
     def predict(self, reftime):
         # load the trained regressor
         self.load()
@@ -118,30 +145,3 @@ class SKPredictor(Predictor):
             prediction_tuples.append((timestamp, predicted_val))
 
         return prediction_tuples
-
-    def cross_validate(self, start, stop, num_folds, metrics):
-        # load hyperparams saved in training step:
-        saved_model = self.load()
-        if saved_model is None:
-            logger.warning(f'Evaluating model using default hyperparameters. '
-                           f'Run `train` before calling `evaluate` to find optimal hyperparameters.')
-            hyperparams = dict()
-        else:
-            hyperparams = saved_model.get_params()
-
-        # load dataset
-        dataset = SolarDataset(start=start, stop=stop, lag=1, target=self.target, target_hour=self.target_hours)
-        x, y = dataset.tabular()
-        x, y = np.asarray(x), np.asarray(y)
-        logger.debug('Dataset Loaded')
-
-        # Evaluate the classifier
-        self.regressor.set_params(**hyperparams)
-        scores = cross_validate(self.regressor, x, y, scoring=metrics, cv=num_folds, return_train_score=False, n_jobs=-1)
-
-        # scores is dictionary with keys "test_<metric_name> for each metric"
-        mean_scores = dict()
-        for metric_name in metrics:
-            mean_scores[metric_name] = np.mean(scores['test_' + metric_name])
-
-        return mean_scores
