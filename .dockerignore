@@ -1,0 +1,8 @@
+# We use a whitelist, by blacklisting everything (*) and using exceptions (!)
+*
+!apollo
+!docs
+!environment.yml
+!README.md
+!scripts
+!setup.py
