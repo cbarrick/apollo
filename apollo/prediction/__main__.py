@@ -106,11 +106,11 @@ def main():
                                       description='Evaluate a model using n-fold cross-validation')
     evaluate.set_defaults(action='evaluate')
 
-    evaluate.add_argument('--start', '-b', default='2017-12-01 00:00', type=str,
+    evaluate.add_argument('--start', '-b', default='2017-05-01 00:00', type=str,
                         help='The first reftime in the dataset to be used for evaluation.  '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
-    evaluate.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
+    evaluate.add_argument('--stop', '-e', default='2017-05-30 18:00', type=str,
                         help='The final reftime in the dataset to be used for evaluation. '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
