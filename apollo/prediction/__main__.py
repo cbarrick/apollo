@@ -54,8 +54,8 @@ def main():
                         help='The final reftime in the dataset to be used for training. '
                              'Any string accepted by numpy\'s datetime64 constructor will work.')
 
-    train.add_argument('--no_tune', '-p', action='store_true',
-                       help='If set, hyperparameter tuning will NOT be performed during training.')
+    train.add_argument('--tune', '-p', action='store_true',
+                       help='If set, hyperparameter tuning will be performed during training.')
 
     train.add_argument('--num_folds', '-n', default=3, type=int,
                        help='If `tune` is enabled, the number of folds to use during the cross-validated grid search. '
@@ -103,22 +103,16 @@ def main():
 
     # every subparser has an action arg specifying which action to perform
     action = args.pop('action')
-    # `args.model` will be the key name of one of the models
-    model_name = args.pop('model')
-    PredictorClass = PREDICTORS[model_name]
+    # `args.model` will be the key from the PREDICTORS dict
+    predictor_name = args.pop('model')
+    PredictorClass = PREDICTORS[predictor_name]
     predictor = PredictorClass(target=args['target'], target_hours=np.arange(1, args['target_hours'] + 1))
-
-    # do a bit of preprocessing with the tuning argument
-    if 'no_tune' in args:
-        args['tune'] = not args.pop('no_tune')
-    else:
-        args['tune'] = True
 
     if action == 'train':
         save_path = predictor.train(
             start=args['start'],
             stop=args['stop'],
-            tune=args['tune'],
+            tune=('tune' in args),
             num_folds=args['num_folds']
         )
         print(f'Model trained successfully.  Saved to {save_path}')
