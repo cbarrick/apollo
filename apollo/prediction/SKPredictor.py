@@ -19,7 +19,7 @@ from apollo.prediction.Predictor import Predictor
 from apollo.datasets.solar import SolarDataset
 from apollo.datasets import nam
 
-logger = logging.getLogger(__name__)  # logger for the prediction module
+logger = logging.getLogger('prediction')
 
 
 class SKPredictor(Predictor):

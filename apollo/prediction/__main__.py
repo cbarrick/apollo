@@ -8,8 +8,9 @@ from sklearn.metrics import make_scorer
 
 from apollo.prediction.SKPredictor import SKPredictor
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('prediction')
 logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.FileHandler('prediction.log'))
 
 PREDICTORS = dict()
 for predictor_class in SKPredictor.__subclasses__():
