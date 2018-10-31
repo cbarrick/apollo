@@ -24,7 +24,11 @@ logger = logging.getLogger(__name__)  # logger for the prediction module
 
 class SKPredictor(Predictor):
 
-    def __init__(self, name, estimator, parameter_grid, default_params, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+    @classmethod
+    def get_name(cls):
+        return 'skpredictor'
+
+    def __init__(self, estimator, parameter_grid, default_params, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         """ Predictor that works with any scikit-learn estimator
 
         The `sklearn.multioutput.MultiOutputRegressor` API allows this predictor to make windowed predictions with any
@@ -53,7 +57,7 @@ class SKPredictor(Predictor):
             target_hours (Iterable[int]):
                 The future hours to be predicted.
         """
-        super().__init__(name, target=target, target_hours=target_hours)
+        super().__init__(target=target, target_hours=target_hours)
         self.regressor = MultiOutputRegressor(estimator=estimator, n_jobs=1)
         self.param_grid = parameter_grid
         self.default_params = default_params
@@ -162,9 +166,12 @@ class SKPredictor(Predictor):
 # define scikit predictors
 
 class LinearRegressionPredictor(SKPredictor):
+    @classmethod
+    def get_name(cls):
+        return 'linreg'
+
     def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         super().__init__(
-            name='linreg',
             estimator=LinearRegression(),
             parameter_grid=None,
             default_params=None,
@@ -173,9 +180,12 @@ class LinearRegressionPredictor(SKPredictor):
 
 
 class KNearestPredictor(SKPredictor):
+    @classmethod
+    def get_name(cls):
+        return 'knn'
+
     def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         super().__init__(
-            name='knn',
             estimator=KNeighborsRegressor(),
             parameter_grid={
                 'estimator__n_neighbors': np.arange(3, 15, 2),             # k
@@ -190,9 +200,12 @@ class KNearestPredictor(SKPredictor):
 
 
 class SupportVectorPredictor(SKPredictor):
+    @classmethod
+    def get_name(cls):
+        return 'svr'
+
     def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         super().__init__(
-            name='svr',
             estimator=SVR(),
             parameter_grid={
                 'estimator__C': np.arange(1.0, 1.6, 0.2),                  # penalty parameter C of the error term
@@ -211,9 +224,12 @@ class SupportVectorPredictor(SKPredictor):
 
 
 class DTreePredictor(SKPredictor):
+    @classmethod
+    def get_name(cls):
+        return 'dtree'
+
     def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         super().__init__(
-            name='dtree',
             estimator=DecisionTreeRegressor(),
             parameter_grid={
                 'estimator__splitter': ['best', 'random'],         # splitting criterion
@@ -230,9 +246,12 @@ class DTreePredictor(SKPredictor):
 
 
 class RandomForestPredictor(SKPredictor):
+    @classmethod
+    def get_name(cls):
+        return 'rf'
+
     def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         super().__init__(
-            name='rf',
             estimator=RandomForestRegressor(),
             parameter_grid={
                 'estimator__n_estimators': [10, 50, 100, 250],
@@ -249,9 +268,12 @@ class RandomForestPredictor(SKPredictor):
 
 
 class GradientBoostedPredictor(SKPredictor):
+    @classmethod
+    def get_name(cls):
+        return 'gbt'
+
     def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         super().__init__(
-            name='gbt',
             estimator=XGBRegressor(),
             parameter_grid={
                 'estimator__learning_rate': np.arange(0.03, 0.07, 0.02),   # learning rate
