@@ -3,57 +3,17 @@ import logging
 import numpy as np
 import pandas as pd
 
-from sklearn.linear_model import LinearRegression
-from sklearn.svm import SVR
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics.regression import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.metrics import make_scorer
-from xgboost import XGBRegressor
 
 from apollo.prediction.SKPredictor import SKPredictor
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-MODELS = {
-    'linreg': LinearRegression(),
-    'svr': SVR(),
-    'knn': KNeighborsRegressor(),
-    'dtree': DecisionTreeRegressor(),
-    'rf': RandomForestRegressor(),
-    'gbt': XGBRegressor()
-}
-
-PARAM_GRIDS = {
-    'linreg': None,
-    'svr': {
-        'estimator__C': np.arange(1.0, 1.6, 0.2),                  # penalty parameter C of the error term
-        'estimator__epsilon': np.arange(0.4, 0.8, 0.1),            # width of the no-penalty region
-        'estimator__kernel': ['rbf', 'sigmoid'],                   # kernel function
-        'estimator__gamma': [1/1000]                               # kernel coefficient
-    },
-    'knn': {
-        'estimator__n_neighbors': np.arange(3, 15, 2),             # k
-        'estimator__weights': ['uniform', 'distance'],             # how are neighboring values weighted
-    },
-    'dtree': {
-        'estimator__splitter': ['best', 'random'],                 # splitting criterion
-        'estimator__max_depth': [None, 10, 20, 30],                # Maximum depth of the tree. None means unbounded.
-        'estimator__min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
-    },
-    'rf': {
-        'estimator__n_estimators': [10, 50, 100, 250],
-        'estimator__max_depth': [None, 10, 20, 30],                # Maximum depth of the tree. None means unbounded.
-        'estimator__min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
-    },
-    'gbt': {
-        'estimator__learning_rate': np.arange(0.03, 0.07, 0.02),   # learning rate
-        'estimator__n_estimators': [50, 100, 200, 250],            # number of boosting stages
-        'estimator__max_depth': [3, 5, 10, 20],                    # Maximum depth of the tree. None means unbounded.
-    }
-}
+PREDICTORS = dict()
+for predictor_class in SKPredictor.__subclasses__():
+    PREDICTORS[predictor_class.get_name()] = predictor_class
 
 DEFAULT_METRICS = {
     'mse': make_scorer(mean_squared_error),
@@ -145,8 +105,8 @@ def main():
     action = args.pop('action')
     # `args.model` will be the key name of one of the models
     model_name = args.pop('model')
-    predictor = SKPredictor(name=model_name, estimator=MODELS[model_name], parameter_grid=PARAM_GRIDS[model_name],
-                            target=args['target'], target_hours=np.arange(1, args['target_hours'] + 1))
+    PredictorClass = PREDICTORS[model_name]
+    predictor = PredictorClass(target=args['target'], target_hours=np.arange(1, args['target_hours'] + 1))
 
     # do a bit of preprocessing with the tuning argument
     if 'no_tune' in args:
