@@ -1,11 +1,19 @@
-import os
-import numpy as np
 import logging
-from sklearn.multioutput import MultiOutputRegressor
-from sklearn.model_selection import KFold, cross_validate
-from sklearn.externals import joblib
+import numpy as np
+import os
+
 from dask_ml.model_selection import GridSearchCV
 from distributed import Client
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.externals import joblib
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold, cross_validate
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
+from xgboost import XGBRegressor
 
 from apollo.prediction.Predictor import Predictor
 from apollo.datasets.solar import SolarDataset
@@ -16,7 +24,7 @@ logger = logging.getLogger(__name__)  # logger for the prediction module
 
 class SKPredictor(Predictor):
 
-    def __init__(self, name, estimator, parameter_grid, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+    def __init__(self, name, estimator, parameter_grid, default_params, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
         """ Predictor that works with any scikit-learn estimator
 
         The `sklearn.multioutput.MultiOutputRegressor` API allows this predictor to make windowed predictions with any
@@ -36,6 +44,9 @@ class SKPredictor(Predictor):
             parameter_grid (dict or None):
                 The parameter grid to be explored during parameter tuning.
 
+            good_params (dict or None):
+                Hyperparameters that should be used as a default
+
             target (str):
                 The name of the target variable in the GA_POWER data.
 
@@ -45,6 +56,7 @@ class SKPredictor(Predictor):
         super().__init__(name, target=target, target_hours=target_hours)
         self.regressor = MultiOutputRegressor(estimator=estimator, n_jobs=1)
         self.param_grid = parameter_grid
+        self.default_params = default_params
 
     def save(self):
         # serialize the trained model
@@ -145,3 +157,111 @@ class SKPredictor(Predictor):
             prediction_tuples.append((timestamp, predicted_val))
 
         return prediction_tuples
+
+
+# define scikit predictors
+
+class LinearRegressionPredictor(SKPredictor):
+    def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+        super().__init__(
+            name='linreg',
+            estimator=LinearRegression(),
+            parameter_grid=None,
+            default_params=None,
+            target=target,
+            target_hours=target_hours)
+
+
+class KNearestPredictor(SKPredictor):
+    def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+        super().__init__(
+            name='knn',
+            estimator=KNeighborsRegressor(),
+            parameter_grid={
+                'estimator__n_neighbors': np.arange(3, 15, 2),             # k
+                'estimator__weights': ['uniform', 'distance'],             # how are neighboring values weighted
+            },
+            default_params={
+                'estimator__n_neighbors': 5,
+                'estimator__weights': 'distance',
+            },
+            target=target,
+            target_hours=target_hours)
+
+
+class SupportVectorPredictor(SKPredictor):
+    def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+        super().__init__(
+            name='svr',
+            estimator=SVR(),
+            parameter_grid={
+                'estimator__C': np.arange(1.0, 1.6, 0.2),                  # penalty parameter C of the error term
+                'estimator__epsilon': np.arange(0.4, 0.8, 0.1),            # width of the no-penalty region
+                'estimator__kernel': ['rbf', 'sigmoid'],                   # kernel function
+                'estimator__gamma': [0.001, 0.0025, 0.005]                 # kernel coefficient
+            },
+            default_params={
+                'estimator__C': 1.4,
+                'estimator__epsilon': 0.6,
+                'estimator__kernel': 'sigmoid',
+                'estimator__gamma': 0.001
+            },
+            target=target,
+            target_hours=target_hours)
+
+
+class DTreePredictor(SKPredictor):
+    def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+        super().__init__(
+            name='dtree',
+            estimator=DecisionTreeRegressor(),
+            parameter_grid={
+                'estimator__splitter': ['best', 'random'],         # splitting criterion
+                'estimator__max_depth': [None, 10, 20, 30],        # Maximum depth of the tree. None means unbounded.
+                'estimator__min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
+            },
+            default_params={
+                'estimator__splitter': 'best',
+                'estimator__max_depth': 20,
+                'estimator__min_impurity_decrease': 0.25
+            },
+            target=target,
+            target_hours=target_hours)
+
+
+class RandomForestPredictor(SKPredictor):
+    def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+        super().__init__(
+            name='rf',
+            estimator=RandomForestRegressor(),
+            parameter_grid={
+                'estimator__n_estimators': [10, 50, 100, 250],
+                'estimator__max_depth': [None, 10, 20, 30],
+                'estimator__min_impurity_decrease': np.arange(0.15, 0.40, 0.05)
+            },
+            default_params={
+                'estimator__n_estimators': 100,
+                'estimator__max_depth': 50,
+                'estimator__min_impurity_decrease': 0.30
+            },
+            target=target,
+            target_hours=target_hours)
+
+
+class GradientBoostedPredictor(SKPredictor):
+    def __init__(self, target='UGA-C-POA-1-IRR', target_hours=tuple(np.arange(1, 25))):
+        super().__init__(
+            name='gbt',
+            estimator=XGBRegressor(),
+            parameter_grid={
+                'estimator__learning_rate': np.arange(0.03, 0.07, 0.02),   # learning rate
+                'estimator__n_estimators': [50, 100, 200, 250],            # number of boosting stages
+                'estimator__max_depth': [3, 5, 10, 20],
+            },
+            default_params={
+                'estimator__learning_rate': 0.05,
+                'estimator__n_estimators': 200,
+                'estimator__max_depth': 5,
+            },
+            target=target,
+            target_hours=target_hours)
