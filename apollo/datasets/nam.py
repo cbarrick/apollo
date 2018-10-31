@@ -526,7 +526,7 @@ class NamLoader:
             path = self.download(reftime, forecast)
             logger.info(f'reading {path}')
             ds = xr.open_dataset(path, engine='pynio')
-            ds = self._process_grib(reftime, forecast)
+            ds = self._process_grib(ds, reftime, forecast)
             datasets.append(ds)
         ds = xr.concat(datasets, dim='forecast')
 
