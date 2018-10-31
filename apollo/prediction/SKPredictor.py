@@ -143,14 +143,9 @@ class SKPredictor(Predictor):
         # get small window around reftime (since lag is nonzero)
         previous_reftime = np.datetime64(reftime) - np.timedelta64(6, 'h')
         next_reftime = np.datetime64(reftime) + np.timedelta64(6, 'h')
-        # ensure data is downloaded
+        # ensure NAM data is cached localled before making prediction
         nam.open(previous_reftime, reftime)
-        try:
-            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
-        except nam.CacheMiss:
-            logger.info(f'NAM data for reftime {reftime} not cached locally.  Attempting to download it...')
-            nam.open(reftime)
-            dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
+        dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
 
         data = np.asarray(dataset.tabular())[0]  # the dataset will be of length 1
         prediction = self.regressor.predict([data])[0]
