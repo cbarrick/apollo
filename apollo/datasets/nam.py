@@ -222,7 +222,7 @@ class NamLoader:
             url_fmt = ARCHIVE_URL
         else:
             url_fmt = PROD_URL
-        return url_fmt.format(ref=reftime.astype(object), forecast=forecast)
+        return url_fmt.format(ref=reftime, forecast=forecast)
 
     def grib_path(self, reftime, forecast):
         '''The path for a forecast GRIB.
