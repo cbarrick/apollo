@@ -140,9 +140,11 @@ class SKPredictor(Predictor):
                          f'No serialize model found at {os.path.join(self.models_dir, self.filename)}')
             return None
 
-        # load NAM data for the reftime
+        # get small window around reftime (since lag is nonzero)
         previous_reftime = np.datetime64(reftime) - np.timedelta64(6, 'h')
         next_reftime = np.datetime64(reftime) + np.timedelta64(6, 'h')
+        # ensure data is downloaded
+        nam.open(previous_reftime, reftime)
         try:
             dataset = SolarDataset(start=previous_reftime, stop=next_reftime, lag=1, target=None)
         except nam.CacheMiss:
