@@ -30,7 +30,7 @@ def main():
 
     # arguments that are common across all sub-commands
 
-    parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(MODELS.keys()),
+    parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(PREDICTORS.keys()),
                         help='The name of the model that you would like to run.')
 
     parser.add_argument('--target_hours', '-f', default=24, type=int,
