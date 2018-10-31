@@ -263,7 +263,7 @@ class SolarDataset(TorchDataset):
 
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
-            geo_shape=(3, 3), center=ATHENS_LATLON, lag=1, forecast=36,
+            geo_shape=(3, 3), center=ATHENS_LATLON, lag=0, forecast=36,
             target='UGA-C-POA-1-IRR', target_hour=24, standardize=True):
         '''Initialize a SolarDataset
 
@@ -287,7 +287,7 @@ class SolarDataset(TorchDataset):
                 The latitude and longitude of the center geographic slice.
                 This only applies when ``geo_shape`` is not None.
             lag (int):
-                If greater than 1, create a sliding window over the reftime
+                If greater than 0, create a sliding window over the reftime
                 axis for data variables at the 0-hour forecast.
             forecast (int):
                 The maximum forecast hour to include.
