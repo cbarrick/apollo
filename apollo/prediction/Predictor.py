@@ -15,13 +15,8 @@ from apollo import storage
 
 class Predictor(ABC):
 
-    @classmethod
     @abstractmethod
-    def get_name(cls):
-        pass
-
-    @abstractmethod
-    def __init__(self, target, target_hours):
+    def __init__(self, name, target, target_hours):
         """ Interface for predictors of solar radiation
 
         Args:
@@ -34,7 +29,8 @@ class Predictor(ABC):
         super().__init__()
         self.target_hours = target_hours
         self.target = target
-        self.filename = f'{self.get_name()}_{target_hours[0]}hr-{target_hours[-1]}hr_{target}.model'
+        self.name = name
+        self.filename = f'{name}_{target_hours[0]}hr-{target_hours[-1]}hr_{target}.model'
         self.models_dir = storage.get('trained_models')
 
     @abstractmethod
@@ -154,18 +150,18 @@ class Predictor(ABC):
         start_date, stop_date = prediction[0][0], prediction[-1][0]  # assumes the predictions are sorted
         start_date_f = Predictor._format_date(start_date)
         stop_date_f = Predictor._format_date(stop_date)
-        summary_filename = f'{self.get_name()}_{self.target}_{start_date_f}_to_{stop_date_f}.summary.json'
+        summary_filename = f'{self.name}_{self.target}_{start_date_f}_to_{stop_date_f}.summary.json'
         summary_path = os.path.join(summary_dir, summary_filename)
         summary_path = os.path.realpath(summary_path)
 
-        resource_filename = f'{self.get_name()}_{self.target}_{start_date_f}_to_{stop_date_f}.prediction.json'
+        resource_filename = f'{self.name}_{self.target}_{start_date_f}_to_{stop_date_f}.prediction.json'
         resource_path = os.path.join(output_dir, resource_filename)
         resource_path = os.path.realpath(resource_path)
 
         # contents of the summary file
         summary_dict = {
-            'source': self.get_name(),
-            'sourcelabel': self.get_name().replace('_', ' '),
+            'source': self.name,
+            'sourcelabel': self.name.replace('_', ' '),
             'site': self.target,
             'created': round(datetime.datetime.utcnow().timestamp())*1000,  # converted to ms
             'start': Predictor._datestring_to_posix(start_date),

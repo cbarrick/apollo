@@ -7,7 +7,8 @@ import sys
 from sklearn.metrics.regression import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.metrics import make_scorer
 
-from apollo.prediction.SKPredictor import SKPredictor
+from apollo.prediction.SKPredictor import LinearRegressionPredictor, KNearestPredictor, SupportVectorPredictor, \
+    DTreePredictor, RandomForestPredictor, GradientBoostedPredictor
 
 main_logger = logging.getLogger(__name__)
 main_logger.setLevel(logging.INFO)
@@ -17,9 +18,14 @@ sk_logger = logging.getLogger('apollo.prediction.SKPredictor')
 sk_logger.setLevel(logging.DEBUG)
 sk_logger.addHandler(logging.FileHandler('prediction.log'))
 
-PREDICTORS = dict()
-for predictor_class in SKPredictor.__subclasses__():
-    PREDICTORS[predictor_class.get_name()] = predictor_class
+PREDICTORS = {
+    'linreg': LinearRegressionPredictor,
+    'knn': KNearestPredictor,
+    'svr': SupportVectorPredictor,
+    'dtree': DTreePredictor,
+    'rf': RandomForestPredictor,
+    'gbt': GradientBoostedPredictor
+}
 
 DEFAULT_METRICS = {
     'mse': make_scorer(mean_squared_error),
@@ -38,6 +44,8 @@ def main():
 
     parser.add_argument('--model', '-m', default='dtree', type=str, choices=list(PREDICTORS.keys()),
                         help='The name of the model that you would like to run.')
+
+    parser.add_argument('--name', type=str,  help='Human-readable name for the model.')
 
     parser.add_argument('--target_hours', '-f', default=24, type=int,
                         help='Generate predictions for each our up to this hour. '
@@ -109,10 +117,12 @@ def main():
 
     # every subparser has an action arg specifying which action to perform
     action = args.pop('action')
+    predictor_name = args['name'] if 'name' in args else args['model']
     # `args.model` will be the key from the PREDICTORS dict
-    predictor_name = args.pop('model')
-    PredictorClass = PREDICTORS[predictor_name]
-    predictor = PredictorClass(target=args['target'], target_hours=np.arange(1, args['target_hours'] + 1))
+    predictor_classname = args.pop('model')
+    PredictorClass = PREDICTORS[predictor_classname]
+    predictor = PredictorClass(name=predictor_name, target=args['target'],
+                               target_hours=np.arange(1, args['target_hours'] + 1))
 
     if action == 'train':
         save_path = predictor.train(
