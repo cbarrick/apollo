@@ -2,15 +2,20 @@ import argparse
 import logging
 import numpy as np
 import pandas as pd
+import sys
 
 from sklearn.metrics.regression import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.metrics import make_scorer
 
 from apollo.prediction.SKPredictor import SKPredictor
 
-logger = logging.getLogger('prediction')
-logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.FileHandler('prediction.log'))
+main_logger = logging.getLogger(__name__)
+main_logger.setLevel(logging.INFO)
+main_logger.addHandler(logging.StreamHandler(sys.stdout))
+
+sk_logger = logging.getLogger('apollo.prediction.SKPredictor')
+sk_logger.setLevel(logging.DEBUG)
+sk_logger.addHandler(logging.FileHandler('prediction.log'))
 
 PREDICTORS = dict()
 for predictor_class in SKPredictor.__subclasses__():
@@ -116,7 +121,7 @@ def main():
             tune=('tune' in args),
             num_folds=args['num_folds']
         )
-        print(f'Model trained successfully.  Saved to {save_path}')
+        main_logger.info(f'Model trained successfully.  Saved to {save_path}')
 
     elif action == 'evaluate':
         scores = predictor.cross_validate(
@@ -127,7 +132,7 @@ def main():
         )
         # report the mean scores for each metric
         for key in scores:
-            print("Mean %s: %0.4f" % (key, scores[key]))
+            main_logger.info("Mean %s: %0.4f" % (key, scores[key]))
 
     elif action == 'predict':
         reftime = args['reftime']
@@ -141,10 +146,10 @@ def main():
             summary_dir=args['summary_dir'],
             output_dir=args['output_dir']
         )
-        print(f'Summary file written to {summary_path}\nPredictions written to {prediction_path}')
+        main_logger.info(f'Summary file written to {summary_path}\nPredictions written to {prediction_path}')
 
     else:
-        print(f'ERROR: Action {action} is not defined for model {model_name}')
+        main_logger.error(f'Action {action} is not defined for model {predictor_name}')
         parser.print_help()
 
 
