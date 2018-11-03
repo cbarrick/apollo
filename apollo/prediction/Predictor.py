@@ -20,10 +20,6 @@ class Predictor(ABC):
         """ Interface for predictors of solar radiation
 
         Args:
-            name (str):
-                A descriptive human-readable name for this predictor.
-                Typically the type of the regressor used such as "decision-tree" or "random forest".
-
             target (str):
                 The name of the variable to target
 
@@ -31,10 +27,10 @@ class Predictor(ABC):
                 The future hours to be predicted.
         """
         super().__init__()
-        self.name = name
         self.target_hours = target_hours
         self.target = target
-        self.filename = f'{self.name}_{target_hours[0]}hr-{target_hours[-1]}hr_{target}.model'
+        self.name = name
+        self.filename = f'{name}_{target_hours[0]}hr-{target_hours[-1]}hr_{target}.model'
         self.models_dir = storage.get('trained_models')
 
     @abstractmethod
