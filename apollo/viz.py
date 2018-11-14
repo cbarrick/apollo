@@ -4,6 +4,11 @@
 import numpy as np
 import pandas as pd
 
+import cartopy
+import cartopy.crs as ccrs
+import cartopy.feature
+import cartopy.mpl.geoaxes
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
@@ -45,7 +50,7 @@ def date_heatmap(series, start=None, end=None, mean=False, edgecolor='black',
 
     Returns:
         matplotlib.axes.Axes:
-            The axes on which the heatmap was drawn. This is set as the current
+            The axes on which the heatmap was drawn. It is set as the current
             axes in the :mod:`~matplotlib.pyplot` API.
 
     Example:
@@ -197,5 +202,94 @@ def date_heatmap_figure(series, cmap=None, bad_color=None, scale=1,
     # image like PNG. PDFs can be used as images in LaTeX with `graphicx`.
     if savefig is not None:
         fig.savefig(savefig, bbox_inches='tight')
+
+    return fig
+
+
+MAP_FEATURES = {
+    'coastlines': cartopy.feature.NaturalEarthFeature('physical', 'coastline', '110m'),
+    'countries': cartopy.feature.NaturalEarthFeature('cultural', 'admin_0_countries', '110m'),
+    'states': cartopy.feature.NaturalEarthFeature('cultural', 'admin_1_states_provinces', '110m'),
+}
+
+
+def nam_map(xrds, feature, reftime=0, forecast=0, level=0, title=None,
+        detail='states', scale='10m', cmap='viridis', **kwargs):
+    '''Plot NAM data as a map on a new figure.
+
+    This function downloads shape files to draw the map. This may take a while
+    the first time you use a specific combination of ``detail`` and ``scale``.
+
+    Arguments:
+        xrds (xarray.Dataset):
+            The dataset of NAM data containing the feature to plot.
+        feature (str):
+            The name pf the feature being plotted.
+        reftime (int or timestamp):
+            The reference time of the data being plotted. If given as an
+            integer, it is interpreted as an index along the reftime axis.
+            Otherwise, it is interpreted as a :class:`pandas.Timestamp` naming
+            the reftime.
+        forecast (int):
+            The forecast hour of the data being plotted.
+        level (int):
+            The index along the z-axis of the data to plot.
+        title (str or None):
+            The title of the figure. The default title combines the reftime and
+            forecast hour.
+        detail (str):
+            The level of detail of the map. Recognized values from most to least
+            detailed include ``'states'``, ``'countries'``, ``'coastlines'``.
+        scale (str):
+            The scale of the map details. The value ``'110m'`` means a scale of
+            1:110,000,000 thus smaller values yield greater detail. Recognized
+            values from most to least detailed include ``'10m'``, ``'50m'``,
+            and ``'110m'``.
+        cmap (matplotlib.colors.Colormap or str or None):
+            The colormap for the plot.
+        **kwargs:
+            Forwarded to :meth:`xarray.DataArray.plot.contourf`.
+
+
+    Returns:
+        matplotlib.figure.Figure:
+            The figure that was drawn.
+    '''
+    from apollo.datasets import nam
+
+    # Select the feature
+    data = xrds[feature]
+
+    # Select along the reftime, forecast, and z dimensions.
+    if 'forecast' in data.dims:
+        data = data.isel(forecast=forecast)
+    if 'reftime' in data.dims:
+        if isinstance(reftime, int):
+            data = data.isel(reftime=reftime)
+        else:
+            data = data.sel(reftime=reftime)
+    if len(data.dims) == 3:
+        z_dim = data.dims[0]
+        data = data.isel({z_dim: level})
+
+    # Get the axes.
+    fig = plt.figure()
+    ax = plt.axes(projection=nam.NAM218_PROJ)
+
+    # Plot the data.
+    contours = data.plot.contourf(ax=ax, transform=nam.NAM218_PROJ, cmap=cmap)
+
+    # Draw the map.
+    feature = MAP_FEATURES[detail].with_scale(scale)
+    ax.add_feature(feature, edgecolor='black', facecolor='none')
+    ax.set_global()
+    ax.autoscale()
+
+    # Set the title.
+    if title is None:
+        reftime_iso = pd.Timestamp(data.reftime.data).isoformat()
+        plt.title(f'{reftime_iso}Z + {forecast} hours')
+    else:
+        plt.title(title)
 
     return fig
