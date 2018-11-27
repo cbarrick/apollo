@@ -22,6 +22,7 @@ from pathlib import Path
 
 import dask.array as da
 import numpy as np
+import pandas as pd
 import scipy as sp
 import scipy.spatial
 import xarray as xr
@@ -306,9 +307,10 @@ class SolarDataset(TorchDataset):
                 use the given ``(mean, std)``. Do nothing if false. Note that
                 the target column is never standardized.
         '''
-
         assert 0 <= lag
 
+        start = pd.Timestamp(start) - pd.Timedelta(6, 'h') * lag
+        stop = pd.Timestamp(stop)
         data = nam.open_range(start, stop)
 
         if feature_subset:
