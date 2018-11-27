@@ -253,6 +253,8 @@ class SolarDataset(TorchDataset):
             The name of the target variable.
         labels (tuple of str):
             Labels for each feature column.
+        standardized (bool):
+            A flag indicating if the data is standardized.
         mean (xarray.Dataset or float):
             If the data is standardized, a dataset containing the mean
             values used to center the data variables, or 0 otherwise.
@@ -298,9 +300,11 @@ class SolarDataset(TorchDataset):
             target_hour (int or Iterable[int]):
                 The hour offsets of the target in the reftime dimension.
                 This argument is ignored if ``target`` is None.
-            standardize (bool):
-                If true, standardize the data to center mean and unit variance.
-                Note that the target column is never standardized.
+            standardize (bool or Tuple[xarray.Dataset, xarray.Dataset]):
+                If true, standardize the data to center mean and unit standard
+                deviation. If a tuple of datasets (or floats), standardize using
+                use the given ``(mean, std)``. Do nothing if false. Note that
+                the target column is never standardized.
         '''
 
         assert 0 <= lag
@@ -316,9 +320,15 @@ class SolarDataset(TorchDataset):
         if forecast is not None:
             data = data.isel(forecast=slice(0, forecast+1))
 
-        if standardize:
+        if bool(standardize) is False:
+            mean = 0.0
+            std = 1.0
+        elif standardize is True:
             mean = data.mean()
             std = data.std()
+            data = (data - mean) / std
+        else:
+            mean, std = standardize
             data = (data - mean) / std
 
         if 0 < lag:
@@ -338,8 +348,9 @@ class SolarDataset(TorchDataset):
 
         self.xrds = data.persist()
         self.target = target or None
-        self.mean = mean if standardize else 0.0
-        self.std = std if standardize else 1.0
+        self.standardized = bool(standardize)
+        self.mean = mean
+        self.std = std
 
     def __len__(self):
         return len(self.xrds['reftime'])
