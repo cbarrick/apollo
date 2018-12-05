@@ -1,7 +1,9 @@
+import abc
 import numpy as np
 import pandas as pd
 import pathlib
 import pickle
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.externals import joblib
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -10,8 +12,7 @@ from apollo.datasets.solar import SolarDataset
 from apollo.models.base import Model
 
 
-class DecisionTree(Model):
-
+class TreeModel(Model, abc.ABC):
     def __init__(self, name=None, data_kwargs=None, **kwargs):
         ts = pd.Timestamp('now')
         self._name = name or f'dtree@{ts.isoformat()}'
@@ -25,15 +26,23 @@ class DecisionTree(Model):
         # self.data_kwargs will be a merged dictionary with values from `data_kwargs` replacing default values
         self.data_kwargs = {**default_data_kwargs, **data_kwargs}
 
-        default_model_kwargs = {
-            'splitter': 'best',
-            'max_depth': 20,
-            'min_impurity_decrease': 0.25
-        }
         # self.model_kwargs will be a merged dictionary with values from `kwargs` replacing default values
-        self.estimator = DecisionTreeRegressor()
-        self.model_kwargs = {**default_model_kwargs, **kwargs}
+        self.model_kwargs = {**self.default_hyperparams, **kwargs}
         self.model = None
+
+    @property
+    @abc.abstractmethod
+    def estimator(self):
+        ''' Estimator that conforms to the scikit-learn API
+        '''
+        pass
+
+    @property
+    @abc.abstractmethod
+    def default_hyperparams(self):
+        ''' Default hyperparameters to use with this model's estimator
+        '''
+        pass
 
     @property
     def name(self):
@@ -46,7 +55,7 @@ class DecisionTree(Model):
             data_kwargs = pickle.load(data_args_file)
         with open(path / 'model_args.pickle', 'rb') as model_args_file:
             model_kwargs = pickle.load(model_args_file)
-        model = DecisionTree(name=name, data_kwargs=data_kwargs, **model_kwargs)
+        model = cls(name=name, data_kwargs=data_kwargs, **model_kwargs)
         model.model = joblib.load(path / 'regressor.joblib')
 
         return model
@@ -90,3 +99,17 @@ class DecisionTree(Model):
         index = [reftime + pd.Timedelta(1, 'h') * n for n in data_kwargs['target_hours']]
         series = pd.Series(y, index, name='predictions')
         return series
+
+
+class DecisionTree(TreeModel):
+    @property
+    def estimator(self):
+        return DecisionTreeRegressor()
+
+    @property
+    def default_hyperparams(self):
+        return {
+            'splitter': 'best',
+            'max_depth': 20,
+            'min_impurity_decrease': 0.25
+        }
