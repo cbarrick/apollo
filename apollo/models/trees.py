@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.externals import joblib
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.tree import DecisionTreeRegressor
+from xgboost import XGBRegressor
 
 from apollo.datasets.solar import SolarDataset
 from apollo.models.base import Model
@@ -112,4 +113,32 @@ class DecisionTree(TreeModel):
             'splitter': 'best',
             'max_depth': 20,
             'min_impurity_decrease': 0.25
+        }
+
+
+class RandomForest(TreeModel):
+    @property
+    def estimator(self):
+        return RandomForestRegressor()
+
+    @property
+    def default_hyperparams(self):
+        return {
+            'n_estimators': 100,
+            'max_depth': 50,
+            'min_impurity_decrease': 0.30
+        }
+
+
+class GradientBoostedTrees(TreeModel):
+    @property
+    def estimator(self):
+        return XGBRegressor()
+
+    @property
+    def default_hyperparams(self):
+        return {
+            'learning_rate': 0.05,
+            'n_estimators': 200,
+            'max_depth': 5,
         }
