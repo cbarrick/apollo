@@ -22,6 +22,7 @@ from pathlib import Path
 
 import dask.array as da
 import numpy as np
+import pandas as pd
 import scipy as sp
 import scipy.spatial
 import xarray as xr
@@ -253,18 +254,22 @@ class SolarDataset(TorchDataset):
             The name of the target variable.
         labels (tuple of str):
             Labels for each feature column.
+        standardized (bool):
+            A flag indicating if the data is standardized.
         mean (xarray.Dataset or float):
             If the data is standardized, a dataset containing the mean
             values used to center the data variables, or 0 otherwise.
         std (xarray.Dataset or float):
             If the data is standardized, a dataset containing the standard
             deviations used to scale the data variables, or 1 otherwise.
+        target_hours (Tuple[int]):
+            The target hours of the labels.
     '''
 
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
             geo_shape=(3, 3), center=ATHENS_LATLON, lag=0, forecast=36,
-            target='UGA-C-POA-1-IRR', target_hour=24, standardize=True):
+            target='UGA-C-POA-1-IRR', target_hours=24, standardize=True):
         '''Initialize a SolarDataset
 
         Arguments:
@@ -295,16 +300,19 @@ class SolarDataset(TorchDataset):
                 The name of a variable in the GA Power dataset to include as a
                 target. If a target is given the year of the start and stop
                 timestamps must be the same (this can be improved).
-            target_hour (int or Iterable[int]):
+            target_hours (int or Iterable[int]):
                 The hour offsets of the target in the reftime dimension.
                 This argument is ignored if ``target`` is None.
-            standardize (bool):
-                If true, standardize the data to center mean and unit variance.
-                Note that the target column is never standardized.
+            standardize (bool or Tuple[xarray.Dataset, xarray.Dataset]):
+                If true, standardize the data to center mean and unit standard
+                deviation. If a tuple of datasets (or floats), standardize using
+                use the given ``(mean, std)``. Do nothing if false. Note that
+                the target column is never standardized.
         '''
-
         assert 0 <= lag
 
+        start = pd.Timestamp(start) - pd.Timedelta(6, 'h') * lag
+        stop = pd.Timestamp(stop)
         data = nam.open_range(start, stop)
 
         if feature_subset:
@@ -316,9 +324,15 @@ class SolarDataset(TorchDataset):
         if forecast is not None:
             data = data.isel(forecast=slice(0, forecast+1))
 
-        if standardize:
+        if bool(standardize) is False:
+            mean = 0.0
+            std = 1.0
+        elif standardize is True:
             mean = data.mean()
             std = data.std()
+            data = (data - mean) / std
+        else:
+            mean, std = standardize
             data = (data - mean) / std
 
         if 0 < lag:
@@ -330,16 +344,20 @@ class SolarDataset(TorchDataset):
 
         if target:
             try:
-                target_hours = tuple(target_hour)
+                target_hours = tuple(target_hours)
             except TypeError:
-                target_hours = (target_hour,)
+                target_hours = (target_hours,)
             target_data = load_targets(target, start, stop, target_hours)
             data = xr.merge([data, target_data], join='inner')
+        else:
+            target_hours = ()
 
         self.xrds = data.persist()
         self.target = target or None
-        self.mean = mean if standardize else 0.0
-        self.std = std if standardize else 1.0
+        self.standardized = bool(standardize)
+        self.mean = mean
+        self.std = std
+        self.target_hours = target_hours
 
     def __len__(self):
         return len(self.xrds['reftime'])
