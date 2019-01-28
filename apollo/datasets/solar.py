@@ -221,7 +221,9 @@ def load_targets(target, start, stop, target_hours):
     # but the values of the dimensions may be different.
     target_data_arrays = []
     for hour in target_hours:
-        # deep copy target values
+        # The deep copy in xarray does not copy coordinates or attributes, so we do it manually.
+        # See https://github.com/pydata/xarray/issues/1463
+        # and https://github.com/cbarrick/apollo/issues/39
         x = target_data_raw[target].copy(deep=True)
         # xarray's deep copy does not copy coordinates or attributes, so we do it manually
         for coord in x.coords:
