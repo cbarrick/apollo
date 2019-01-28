@@ -29,6 +29,7 @@ import xarray as xr
 
 import torch
 from torch.utils.data import Dataset as TorchDataset
+from copy import deepcopy
 
 import apollo.storage
 from apollo.datasets import nam, ga_power
@@ -220,7 +221,17 @@ def load_targets(target, start, stop, target_hours):
     # but the values of the dimensions may be different.
     target_data_arrays = []
     for hour in target_hours:
-        x = target_data_raw[target].copy()
+        # The deep copy in xarray does not copy coordinates or attributes, so we do it manually.
+        # See https://github.com/pydata/xarray/issues/1463
+        # and https://github.com/cbarrick/apollo/issues/39
+        x = target_data_raw[target].copy(deep=True)
+        for coord in x.coords:
+            x.coords[coord].data = np.copy(x.coords[coord].data)
+        x.attrs = deepcopy(x.attrs)
+        for attr in x.attrs:
+            x.attrs[attr] = deepcopy(x.attrs[attr])
+
+        # lag target values
         x['reftime'] -= np.timedelta64(int(hour), 'h')
         x['target_hour'] = hour
         x = x.expand_dims('target_hour', 1)
