@@ -3,6 +3,7 @@ import json
 import logging
 
 from apollo import storage
+from apollo.utils import get_concrete_subclasses
 
 
 logger = logging.getLogger(__name__)
@@ -140,17 +141,15 @@ def load(name):
     manifest_json = json.loads(manifest_text)
     cls_name = manifest_json.get(name)
 
-    # Search for a subclass of ``Model`` with the same name.
-    # This performs a breadth-first search of the subclass DAG.
-    subclasses = Model.__subclasses__()
-    for cls in subclasses:
-        if cls.__name__ == cls_name:
-            break
-        subclasses.extend(cls.__subclasses__())
-    else:
+    # Find all subclasses of Model
+    subclass_list = get_concrete_subclasses(Model)
+    subclasses = {model.__name__: model for model in subclass_list}
+
+    # Ensure there is a subclass of ``Model`` with the same name
+    if cls_name not in subclasses:
         raise ValueError(
             f'Cannot find model class {cls_name}.\n'
-            f'Available classes are {subclasses}.'
+            f'Available classes are {subclasses.keys()}.'
         )
 
     # Load the model.
