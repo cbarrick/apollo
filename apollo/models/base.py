@@ -109,7 +109,7 @@ def save(model):
 
     # Save the model under a directory with a matching name.
     path = root / model.name
-    path.mkdir(parents=True, exists_ok=True)
+    path.mkdir(parents=True, exist_ok=True)
     model.save(path)
 
 
