@@ -73,6 +73,7 @@ def main():
     model = ModelClass(name=model_name)
     model.fit(first=args['start'], last=args['stop'])
     save_model(model)
+    print(f'Model saved under name "{model_name}"')
 
 
 if __name__ == '__main__':
