@@ -5,6 +5,7 @@ import apollo.datasets.nam as nam
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.models import *
+from apollo.output import SummaryResourceWriter
 
 
 def main():
@@ -33,16 +34,19 @@ def main():
     reftime = pd.Timestamp(args['reftime'])
     if 'latest' in args:
         reftime = pd.Timestamp('now').floor('6h')
+    formatted_reftime = reftime.strftime('%Y_%m_%d-%H:%M')
 
     # ensure data for the requested reftime is cached
     print(f'Caching NAM data for reftime {reftime}...')
     nam.open(reftime - pd.Timedelta(6, 'h'), reftime)
     print('Done.')
 
-    model = load_model(args['name'])
+    model_name = args['name']
+    model = load_model(model_name)
     forecast = model.forecast(reftime)
 
-    # TODO - write predictions to a file
+    forecast_writer = SummaryResourceWriter(source=model_name)
+    forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}')
 
 
 if __name__ == '__main__':
