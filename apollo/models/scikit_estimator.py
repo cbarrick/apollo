@@ -98,5 +98,5 @@ class ScikitModel(Model, abc.ABC):
 
         y = self.model.predict(x)[0]
         index = [reftime + pd.Timedelta(1, 'h') * n for n in data_kwargs['target_hours']]
-        series = pd.Series(y, index, name='predictions')
-        return series
+        df = pd.DataFrame(y, index=pd.DatetimeIndex(index), columns=[self.data_kwargs['target']])
+        return df
