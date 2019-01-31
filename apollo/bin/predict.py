@@ -39,14 +39,19 @@ def main():
     # ensure data for the requested reftime is cached
     print(f'Caching NAM data for reftime {reftime}...')
     nam.open(reftime - pd.Timedelta(6, 'h'), reftime)
-    print('Done.')
 
+    print('Generating predictions...')
     model_name = args['name']
     model = load_model(model_name)
     forecast = model.forecast(reftime)
 
+    print('Writing predictions to disk...')
     forecast_writer = SummaryResourceWriter(source=model_name)
-    forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}')
+    output_files = forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}')
+    for filename in output_files:
+        print(f'Wrote {filename}')
+    
+    print('Done.')
 
 
 if __name__ == '__main__':
