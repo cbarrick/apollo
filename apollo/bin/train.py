@@ -1,7 +1,5 @@
 import argparse
 import functools
-import logging
-import sys
 
 from datetime import datetime
 
@@ -38,10 +36,6 @@ def _get_concrete_subclasses(base_class):
 
 
 def main():
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
-
     MODELS = {model.__name__: model for model in _get_concrete_subclasses(Model)}
 
     parser = argparse.ArgumentParser(
