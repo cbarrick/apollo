@@ -158,3 +158,20 @@ def load(name):
     path.mkdir(parents=True, exist_ok=True)
     model = cls.load(path)
     return model
+
+
+def list_trained_models():
+    ''' Lists the names of models which have been saved to the manifest file
+
+    Returns:
+        list of str:
+            List of the names of models found in the manifest
+    '''
+    root = storage.get('models')
+    manifest = root / 'manifest.json'
+    if not manifest.exists():
+        return []
+    else:
+        manifest_text = manifest.read_text()
+        manifest_json = json.loads(manifest_text)
+        return list(manifest_json.keys())
