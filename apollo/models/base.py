@@ -152,7 +152,8 @@ def load(name):
             f'Available classes are {subclasses.keys()}.'
         )
 
-    # Load the model.
+    # Load the model
+    cls = subclasses[cls_name]
     path = root / name
     path.mkdir(parents=True, exist_ok=True)
     model = cls.load(path)
