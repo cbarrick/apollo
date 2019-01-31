@@ -7,10 +7,7 @@ from datetime import datetime
 
 from apollo.models.base import Model
 from apollo.models.base import save as save_model
-import apollo.models.scikit_estimator
-import apollo.models.linear
-import apollo.models.neighbors
-import apollo.models.trees
+from apollo.models import *
 
 
 def is_abstract(cls):
