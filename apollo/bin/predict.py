@@ -5,7 +5,7 @@ import apollo.datasets.nam as nam
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.models import *
-from apollo.serialization import SummaryResourceWriter
+from apollo.serialization import SummaryResourceWriter, CommaSeparatedWriter
 
 
 def main():
@@ -30,6 +30,10 @@ def main():
     parser.add_argument('--out_path', '-o', default=None, type=str,
                         help='The directory where predictions should be written.')
 
+    parser.add_argument('--csv', '-c', action='store_true',
+                        help='If set, predictions will be written as CSV files instead of the JSON-formatted '
+                             'summary & resource files.')
+
     # parse args
     args = parser.parse_args()
     args = vars(args)
@@ -50,7 +54,11 @@ def main():
 
     print('Writing predictions to disk...')
     out_path = args['out_path']
-    forecast_writer = SummaryResourceWriter(source=model_name)
+    if 'csv' in args:
+        forecast_writer = CommaSeparatedWriter()
+    else:
+        forecast_writer = SummaryResourceWriter(source=model_name)
+
     output_files = forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}', out_path=out_path)
     for filename in output_files:
         print(f'Wrote {filename}')
