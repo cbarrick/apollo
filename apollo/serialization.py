@@ -118,3 +118,19 @@ class SummaryResourceWriter(ForecastWriter):
             json.dump(data_dict, resource_file, separators=(',', ':'))
 
         return summary_filename, resource_filename
+
+
+class CommaSeparatedWriter(ForecastWriter):
+    ''' ForecastWriter which dumps forecast data to a CSV file '''
+    def write(self, forecast, name, out_path=None):
+        if out_path is not None:
+            output_path = pathlib.Path(out_path).resolve()
+            output_path.mkdir(parents=True, exist_ok=True)
+        else:
+            # get output path from the storage module
+            output_path = storage.get(pathlib.Path('predictions/csv'))
+
+        output_filename = output_path / f'{name}.csv'
+        forecast.to_csv(output_filename, index_label='reftime')
+
+        return output_filename,
