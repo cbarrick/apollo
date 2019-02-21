@@ -42,7 +42,7 @@ class ForecastWriter(abc.ABC):
 
 class SummaryResourceWriter(ForecastWriter):
     def __init__(self, source):
-        ''' Forecast Writer which writes a metadata (summary) file and a data (resource) file
+        ''' ForecastWriter which writes a metadata (summary) file and a data (resource) file
 
         Args:
             source (str):

@@ -5,7 +5,7 @@ import apollo.datasets.nam as nam
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.models import *
-from apollo.output import SummaryResourceWriter
+from apollo.serialization import SummaryResourceWriter
 
 
 def main():
