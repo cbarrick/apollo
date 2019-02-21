@@ -20,7 +20,7 @@ class ForecastWriter(abc.ABC):
     ''' Abstract base class for objects capable of serializing Apollo forecasts to a file
     '''
     @abc.abstractmethod
-    def write(self, forecast, name):
+    def write(self, forecast, name, out_path=None):
         ''' Write a forecast
 
         Args:
@@ -31,6 +31,10 @@ class ForecastWriter(abc.ABC):
 
             name (str):
                 A descriptive name for the forecast being written
+
+            out_path (str):
+                A destination path for the serialized predictions.
+                If None, defaults to the path specified by the APOLLO_DATA environment variable.
 
         Returns:
             tuple of str:
@@ -51,10 +55,17 @@ class SummaryResourceWriter(ForecastWriter):
 
         self.source = source
 
-    def write(self, forecast, name):
-        # get output paths
-        summary_path = storage.get(pathlib.Path('predictions/summaries'))
-        resource_path = storage.get(pathlib.Path('predictions/resources'))
+    def write(self, forecast, name, out_path=None):
+        if out_path:
+            summary_path = pathlib.Path(out_path) / pathlib.Path('summaries')
+            resource_path = pathlib.Path(out_path) / pathlib.Path('resources')
+            summary_path, resource_path = summary_path.resolve(), resource_path.resolve()
+            summary_path.mkdir(parents=True, exist_ok=True)
+            resource_path.mkdir(parents=True, exist_ok=True)
+        else:
+            # get output paths from storage module
+            summary_path = storage.get(pathlib.Path('predictions/summaries'))
+            resource_path = storage.get(pathlib.Path('predictions/resources'))
 
         summary_filename = summary_path / f'{name}.summary'
         resource_filename = resource_path / f'{name}.resource'

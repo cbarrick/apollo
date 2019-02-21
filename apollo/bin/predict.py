@@ -27,6 +27,9 @@ def main():
                         help='If set, a prediction will be generated for the past reftime which is closest to the '
                              'current datetime.')
 
+    parser.add_argument('--out_path', '-o', default=None, type=str,
+                        help='The directory where predictions should be written.')
+
     # parse args
     args = parser.parse_args()
     args = vars(args)
@@ -46,8 +49,9 @@ def main():
     forecast = model.forecast(reftime)
 
     print('Writing predictions to disk...')
+    out_path = args['out_path']
     forecast_writer = SummaryResourceWriter(source=model_name)
-    output_files = forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}')
+    output_files = forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}', out_path=out_path)
     for filename in output_files:
         print(f'Wrote {filename}')
     
