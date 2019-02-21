@@ -56,9 +56,9 @@ class SummaryResourceWriter(ForecastWriter):
         self.source = source
 
     def write(self, forecast, name, out_path=None):
-        if out_path:
-            summary_path = pathlib.Path(out_path) / pathlib.Path('summaries')
-            resource_path = pathlib.Path(out_path) / pathlib.Path('resources')
+        if out_path is not None:
+            summary_path = pathlib.Path(out_path)
+            resource_path = pathlib.Path(out_path)
             summary_path, resource_path = summary_path.resolve(), resource_path.resolve()
             summary_path.mkdir(parents=True, exist_ok=True)
             resource_path.mkdir(parents=True, exist_ok=True)
