@@ -29,7 +29,7 @@ class ScikitModel(Model, abc.ABC):
         # grab kwargs used to load data
         self.data_kwargs = {
             'lag': 0,
-            'target': 'UGA-C-POA-1-IRR',
+            'target': 'UGABPOA1IRR',
             'target_hours': tuple(np.arange(1, 25)),
             'standardize': True
         }

@@ -270,7 +270,7 @@ class SolarDataset(TorchDataset):
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
             geo_shape=(3, 3), center=ATHENS_LATLON, lag=0, forecast=36,
-            target='UGA-C-POA-1-IRR', target_hours=24, standardize=True):
+            target='UGABPOA1IRR', target_hours=24, standardize=True):
         '''Initialize a SolarDataset
 
         Arguments:
