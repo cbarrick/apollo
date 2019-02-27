@@ -11,10 +11,10 @@ from apollo.output import JsonWriter, CommaSeparatedWriter
 def main():
     model_names = list_trained_models()
     parser = argparse.ArgumentParser(
-        description='Apollo Machine Learning Model Trainer',
+        description='Apollo Model Prediction Tool',
         argument_default=argparse.SUPPRESS,
     )
-    # specify the type of model and give it a name
+    # specify the model used to make predictions
     parser.add_argument('name', type=str, choices=model_names,
                         help='The name of the saved model used to make prediction.')
 
