@@ -81,6 +81,33 @@ class Model(abc.ABC):
         pass
 
 
+class ValidatableModel(Model, abc.ABC):
+    @property
+    @abc.abstractmethod
+    def target(self):
+        ''' The name of the variable that this model targets.
+
+        This is used with one of the loaders in apollo.datasets.ga_power to load
+        true values of predicted solar irradiance.  It should match the name of
+        one of the variables in the ga_power dataset.
+
+        Returns:
+            str: name of the target variable
+
+        '''
+        pass
+
+    @property
+    @abc.abstractmethod
+    def target_hours(self):
+        ''' Hours for which this model makes predictions
+
+        Returns:
+            tuple: hours targeted by this model0.
+        '''
+        pass
+
+
 def save(model):
     '''Save a model to the managed storage.
 
