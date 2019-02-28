@@ -14,9 +14,18 @@ from apollo.models.base import Model
 class ScikitModel(Model, abc.ABC):
     ''' Abstract base class for models that use estimators conforming to the scikit-learn API
     '''
-    def __init__(self, name=None, data_kwargs=None, **kwargs):
+    def __init__(self, data_kwargs=None, model_kwargs=None, **kwargs):
+        ''' Initialize a ScikitModel
+
+        Args:
+            data_kwargs (dict or None):
+                kwargs to be passed to the SolarDataset constructor
+            model_kwargs (dict or None:
+                kwargs to be passed to the scikit-learn estimator constructor
+            **kwargs:
+                other kwargs used for model initialization, such as model name
+        '''
         ts = pd.Timestamp('now')
-        self._name = name or f'scikit-model@{ts.isoformat()}'
         data_kwargs = data_kwargs or {}
         default_data_kwargs = {
             'lag': 0,
@@ -28,8 +37,13 @@ class ScikitModel(Model, abc.ABC):
         self.data_kwargs = {**default_data_kwargs, **data_kwargs}
 
         # self.model_kwargs will be a merged dictionary with values from `kwargs` replacing default values
-        self.model_kwargs = {**self.default_hyperparams, **kwargs}
+        model_kwargs = model_kwargs or {}
+        self.model_kwargs = {**self.default_hyperparams, **model_kwargs}
         self.model = None
+
+        self._name = f'{self.__class__.__name__}@{ts.isoformat()}'
+        if 'name' in kwargs:
+            self._name = kwargs['name']
 
     @property
     @abc.abstractmethod
