@@ -1,15 +1,20 @@
 import argparse
-
 from datetime import datetime
 
-from apollo.models.base import Model
-from apollo.models.base import save as save_model
-from apollo.models import *
-from apollo.utils import get_concrete_subclasses
+from apollo.models.base import save as save_model, list_known_models
+
+
+def _is_abstract(cls):
+    if not hasattr(cls, "__abstractmethods__"):
+        return False  # an ordinary class
+    elif len(cls.__abstractmethods__) == 0:
+        return False  # a concrete implementation of an abstract class
+    else:
+        return True  # an abstract class
 
 
 def main():
-    MODELS = {model.__name__: model for model in get_concrete_subclasses(Model)}
+    MODELS = {model.__name__: model for model in list_known_models() if not _is_abstract(model)}
 
     parser = argparse.ArgumentParser(
         description='Apollo Machine Learning Model Trainer',
