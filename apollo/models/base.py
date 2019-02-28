@@ -3,7 +3,6 @@ import json
 import logging
 
 from apollo import storage
-from apollo.utils import get_concrete_subclasses
 
 
 logger = logging.getLogger(__name__)
@@ -141,23 +140,32 @@ def load(name):
     manifest_json = json.loads(manifest_text)
     cls_name = manifest_json.get(name)
 
-    # Find all subclasses of Model
-    subclass_list = get_concrete_subclasses(Model)
-    subclasses = {model.__name__: model for model in subclass_list}
+    if cls_name is None:
+        raise ValueError(f'Cannot find trained model with name `{name}`.')
 
-    # Ensure there is a subclass of ``Model`` with the same name
-    if cls_name not in subclasses:
-        raise ValueError(
-            f'Cannot find model class {cls_name}.\n'
-            f'Available classes are {subclasses.keys()}.'
-        )
-
-    # Load the model
-    cls = subclasses[cls_name]
     path = root / name
-    path.mkdir(parents=True, exist_ok=True)
-    model = cls.load(path)
-    return model
+
+    # Search for a subclass of ``Model`` with the same name.
+    for cls in list_known_models():
+        if cls.__name__ == cls_name:
+            model = cls.load(path)
+            return model
+    else:
+        raise ValueError(f'Cannot find model of type {cls_name}.\n')
+
+
+def list_known_models():
+    ''' Lists the subclasses of Model
+
+    Returns:
+        list of cls:
+            List of Model classes
+    '''
+    subclasses = Model.__subclasses__()
+    for cls in subclasses:
+        subclasses.extend(cls.__subclasses__())
+
+    return subclasses
 
 
 def list_trained_models():
