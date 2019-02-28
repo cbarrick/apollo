@@ -1,23 +1,23 @@
-from sklearn.svm import SVR
-from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR as scikit_SVR
+from sklearn.linear_model import LinearRegression as scikit_LinearRegression
 
 from apollo.models.scikit_estimator import ScikitModel
 
 
-class LinReg(ScikitModel):
+class LinearRegression(ScikitModel):
     @property
     def estimator(self):
-        return LinearRegression()
+        return scikit_LinearRegression()
 
     @property
     def default_hyperparams(self):
         return {}
 
 
-class RandomForest(ScikitModel):
+class SVR(ScikitModel):
     @property
     def estimator(self):
-        return SVR()
+        return scikit_SVR()
 
     @property
     def default_hyperparams(self):
