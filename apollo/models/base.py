@@ -3,6 +3,7 @@ import json
 import logging
 
 from apollo import storage
+import apollo.models  # makes model subclasses discoverable
 
 
 logger = logging.getLogger(__name__)
