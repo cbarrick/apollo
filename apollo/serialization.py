@@ -2,6 +2,7 @@ import abc
 import json
 import pandas as pd
 import pathlib
+import numpy as np
 
 import apollo.storage as storage
 
@@ -122,7 +123,8 @@ class JsonWriter(ForecastWriter):
         raw_data = []
         for timestamp, series in forecast.iterrows():
             # add tuple (idx, val_1, val_2, . . ., val_n)
-            raw_data.append((str(timestamp), *series.values))
+            formatted_timestamp = _datestring_to_posix(str(timestamp))
+            raw_data.append((formatted_timestamp, *series.values))
 
         # contents of the output file
         output_dict = {
@@ -146,6 +148,12 @@ class JsonWriter(ForecastWriter):
 class CommaSeparatedWriter(ForecastWriter):
     ''' ForecastWriter which dumps forecast data to a CSV file '''
     def write(self, forecast, name, out_path=None):
+        # add column for unix timestamps (instead of the forecast's DateTimeIndex)
+        unix_timestamps = forecast.index.astype(np.int64) // 10 ** 6
+        forecast['timestamp'] = unix_timestamps
+        # reorder so that timestamp is always the first output column
+        reordered_cols = ['timestamp'] + [col for col in forecast.columns if not col == 'timestamp']
+        forecast = forecast.reindex(columns=reordered_cols)
         if out_path is not None:
             output_path = pathlib.Path(out_path).resolve()
             output_path.mkdir(parents=True, exist_ok=True)
@@ -154,6 +162,6 @@ class CommaSeparatedWriter(ForecastWriter):
             output_path = storage.get(pathlib.Path('predictions/csv'))
 
         output_filename = output_path / f'{name}.csv'
-        forecast.to_csv(output_filename, index_label='reftime')
+        forecast.to_csv(output_filename, index=False)
 
         return output_filename,
