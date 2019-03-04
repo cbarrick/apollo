@@ -120,6 +120,105 @@ class SummaryResourceWriter(ForecastWriter):
         return summary_filename, resource_filename
 
 
+class JsonWriter(ForecastWriter):
+    def __init__(self, source):
+        ''' ForecastWriter which writes a JSON file including both metadata and forecasted values
+
+        The output file has the following format:
+
+        {
+           "source":"rf_test",
+           "sourcelabel":"rf test",
+           "site":"UGABPAO1IRR",
+           "created":1550736650906,
+           "start":1510142400000,
+           "stop":1510228800000,
+           "columns":[
+              {
+                 "label":"TIMESTAMP",
+                 "units":"",
+                 "longname":"",
+                 "type":"datetime"
+              },
+              {
+                 "label":"UGA-C-POA-1-IRR",
+                 "units":"w/m2",
+                 "longname":"",
+                 "type":"number"
+              }
+           ],
+           "rows":[
+              [
+                 "2017-11-08 12:00:00",
+                 6.065183055555549
+              ],
+              ...
+              [
+                 "2017-12-31 18:00:00",
+                 0.41544999999999954
+              ]
+           ]
+        }
+
+        There may an arbitrary number of columns
+
+        Args:
+            source (str):
+                A descriptive name for the source of the forecast.  This is often a model name or description.
+        '''
+
+        self.source = source
+
+    def write(self, forecast, name, out_path=None):
+        if out_path is not None:
+            output_path = pathlib.Path(out_path).resolve()
+            output_path.mkdir(parents=True, exist_ok=True)
+        else:
+            # get output paths from storage module
+            output_path = storage.get(pathlib.Path('predictions/json'))
+
+        output_filename = output_path / f'{name}.json'
+
+        # build output file
+        columns = [{
+            'label': 'TIMESTAMP',
+            'units': '',
+            'longname': '',
+            'type': 'datetime'
+        }]
+        # add a column for each forecasted variable
+        for column in list(forecast.columns.values):
+            columns.append({
+                'label': column,
+                'units': 'w/m2',
+                'longname': '',
+                'type': 'number'
+            })
+
+        raw_data = []
+        for timestamp, series in forecast.iterrows():
+            # add tuple (idx, val_1, val_2, . . ., val_n)
+            raw_data.append((str(timestamp), *series.values))
+
+        # contents of the output file
+        output_dict = {
+            'source': self.source,
+            'sourcelabel': self.source.replace('_', ' '),
+            'site': ','.join(forecast.columns),
+            'created': _datestring_to_posix('now'),
+            'start': _datestring_to_posix(forecast.first_valid_index()),
+            'stop': _datestring_to_posix(forecast.last_valid_index()),
+            'columns': columns,
+            'rows': raw_data
+        }
+
+        # write the file
+        with open(output_filename, 'w') as out_file:
+            json.dump(output_dict, out_file, separators=(',', ':'))
+
+        return output_filename,
+
+
 class CommaSeparatedWriter(ForecastWriter):
     ''' ForecastWriter which dumps forecast data to a CSV file '''
     def write(self, forecast, name, out_path=None):
