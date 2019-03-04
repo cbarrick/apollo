@@ -41,6 +41,8 @@ class ScikitModel(Model, abc.ABC):
         self.model_kwargs = {**self.default_hyperparams, **model_kwargs}
         self.model = None
 
+        self.kwargs = kwargs
+
         self._name = f'{self.__class__.__name__}@{ts.isoformat()}'
         if 'name' in kwargs:
             self._name = kwargs['name']
@@ -70,7 +72,9 @@ class ScikitModel(Model, abc.ABC):
             data_kwargs = pickle.load(data_args_file)
         with open(path / 'model_args.pickle', 'rb') as model_args_file:
             model_kwargs = pickle.load(model_args_file)
-        model = cls(name=name, data_kwargs=data_kwargs, **model_kwargs)
+        with open(path / 'kwargs.pickle', 'rb') as kwargs_file:
+            kwargs = pickle.load(kwargs_file)
+        model = cls(name=name, data_kwargs=data_kwargs, model_kwargs=model_kwargs, **kwargs)
         model.model = joblib.load(path / 'regressor.joblib')
 
         return model
@@ -87,6 +91,8 @@ class ScikitModel(Model, abc.ABC):
             pickle.dump(self.data_kwargs, outfile)
         with open(path / 'model_args.pickle', 'wb') as outfile:
             pickle.dump(self.model_kwargs, outfile)
+        with open(path / 'kwargs.pickle', 'wb') as outfile:
+            pickle.dump(self.kwargs, outfile)
 
     def fit(self, first, last):
         ds = SolarDataset(first, last, **self.data_kwargs)
