@@ -560,11 +560,7 @@ class NamLoader:
         path = self.nc_path(reftime)
         if path.exists():
             logger.info(f'reading {path}')
-            ds = xr.open_dataset(
-                path,
-                autoclose=True,
-                chunks={},
-            )
+            ds = xr.open_dataset(path, chunks={})
             return ds
         else:
             raise CacheMiss(reftime)
