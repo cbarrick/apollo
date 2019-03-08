@@ -500,7 +500,7 @@ class NamLoader:
             ds[v] = ds[v].assign_attrs(metadata[v])
         ds = ds.assign_attrs(
             title='NAM-UGA, a subset of NAM-NMM for solar forecasting research in Georgia',
-            history=f'{np.datetime64("now")}Z Initial conversion from GRIB files released by NCEP',
+            history=f'{pd.Timestamp("now").isoformat()}Z Initial conversion from GRIB files released by NCEP',
         )
 
         ds = xr.decode_cf(ds)
