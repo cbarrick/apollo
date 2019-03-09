@@ -533,12 +533,13 @@ class NamLoader:
         if self.save_nc:
             path = self.nc_path(reftime)
             logger.info(f'writing {path}')
-            ds.to_netcdf(str(path))  # must be str, can't be Path, should fix in xarray
+            ds.to_netcdf(path)
             if not self.keep_gribs:
                 logger.info('deleting local gribs')
                 for forecast in FORECAST_PERIOD:
                     path = self.grib_path(reftime, forecast)
                     path.unlink()
+            ds = self.open_local(reftime)
 
         return ds
 
