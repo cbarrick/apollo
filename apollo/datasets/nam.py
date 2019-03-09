@@ -32,6 +32,7 @@ measuring the axis, e.g. ``z_ISBL`` for isobaric pressure levels.
 '''
 
 import logging
+from functools import reduce
 from pathlib import Path
 from time import sleep
 
@@ -648,13 +649,23 @@ class NamLoader:
             xarray.Dataset:
                 The combined dataset.
         '''
-        coords = {
-            'x':   datasets[-1].x,
-            'y':   datasets[-1].y,
-            'lat': datasets[-1].lat,
-            'lon': datasets[-1].lon,
-        }
+        # Check for spurious coordinates that should be ignored.
+        # This is due to a regression: #53
+        k = set(datasets[0].coords.keys())
+        coords = (set(ds.coords.keys()) for ds in datasets)
+        coords = (c ^ k for c in coords)
+        coords = reduce(set.union, coords)
+        if len(coords) != 0:
+            logger.warning('spurious coordinates detected; ignoring them')
+            logger.warning(f'    {coords}')
+            datasets = (ds.drop(coords) for ds in datasets)
+
+        # Drop geographic coordinates since they might not align.
+        # We use the last dataset's coordinates for the final dataset.
+        tail = datasets[-1]
+        coords = {'x': tail.x, 'y': tail.y, 'lat': tail.lat, 'lon': tail.lon}
         datasets = (ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets)
+
         logger.info('joining datasets')
         ds = xr.concat(datasets, dim='reftime')
         ds = ds.assign_coords(**coords)
