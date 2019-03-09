@@ -26,3 +26,6 @@ dependencies:
     # Documentation
     - sphinx
     - sphinx_rtd_theme
+
+    # Dev tooling
+    - ipython
