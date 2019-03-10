@@ -14,7 +14,7 @@ from apollo.models.base import Model
 class ScikitModel(Model, abc.ABC):
     ''' Abstract base class for models that use estimators conforming to the scikit-learn API
     '''
-    def __init__(self, data_kwargs=None, model_kwargs=None, **kwargs):
+    def __init__(self, name=None, **kwargs):
         ''' Initialize a ScikitModel
 
         Args:
@@ -26,26 +26,26 @@ class ScikitModel(Model, abc.ABC):
                 other kwargs used for model initialization, such as model name
         '''
         ts = pd.Timestamp('now')
-        data_kwargs = data_kwargs or {}
-        default_data_kwargs = {
+        # grab kwargs used to load data
+        self.data_kwargs = {
             'lag': 0,
             'target': 'UGA-C-POA-1-IRR',
             'target_hours': tuple(np.arange(1, 25)),
             'standardize': True
         }
-        # self.data_kwargs will be a merged dictionary with values from `data_kwargs` replacing default values
-        self.data_kwargs = {**default_data_kwargs, **data_kwargs}
+        for key in self.data_kwargs:
+            if key in kwargs:
+                self.data_kwargs[key] = kwargs[key]
 
-        # self.model_kwargs will be a merged dictionary with values from `kwargs` replacing default values
-        model_kwargs = model_kwargs or {}
-        self.model_kwargs = {**self.default_hyperparams, **model_kwargs}
+        # grab kwargs corresponding to model hyperparams
+        self.model_kwargs = self.default_hyperparams
+        for key in self.model_kwargs:
+            if key in kwargs:
+                self.model_kwargs[key] = kwargs[key]
+
         self.model = None
 
-        self.kwargs = kwargs
-
-        self._name = f'{self.__class__.__name__}@{ts.isoformat()}'
-        if 'name' in kwargs:
-            self._name = kwargs['name']
+        self._name = name or f'{self.__class__.__name__}@{ts.isoformat()}'
 
     @property
     @abc.abstractmethod
@@ -67,14 +67,9 @@ class ScikitModel(Model, abc.ABC):
 
     @classmethod
     def load(cls, path):
-        name = path.name
-        with open(path / 'data_args.pickle', 'rb') as data_args_file:
-            data_kwargs = pickle.load(data_args_file)
-        with open(path / 'model_args.pickle', 'rb') as model_args_file:
-            model_kwargs = pickle.load(model_args_file)
-        with open(path / 'kwargs.pickle', 'rb') as kwargs_file:
-            kwargs = pickle.load(kwargs_file)
-        model = cls(name=name, data_kwargs=data_kwargs, model_kwargs=model_kwargs, **kwargs)
+        with open(path / 'kwargs.pickle', 'rb') as args_file:
+            kwargs = pickle.load(args_file)
+        model = cls(**kwargs)
         model.model = joblib.load(path / 'regressor.joblib')
 
         return model
@@ -83,16 +78,17 @@ class ScikitModel(Model, abc.ABC):
         if not self.model:
             raise ValueError('Model has not been trained.  Ensure `model.fit` is called before `model.save`.')
 
-        # serialize the trained model
+        # serialize the trained scikit-learn model
         joblib.dump(self.model, path / 'regressor.joblib')
 
         # serialize kwargs
-        with open(path / 'data_args.pickle', 'wb') as outfile:
-            pickle.dump(self.data_kwargs, outfile)
-        with open(path / 'model_args.pickle', 'wb') as outfile:
-            pickle.dump(self.model_kwargs, outfile)
+        args = {
+            'name': self.name
+        }
+        args = dict(args, **self.data_kwargs)
+        args = dict(args, **self.model_kwargs)
         with open(path / 'kwargs.pickle', 'wb') as outfile:
-            pickle.dump(self.kwargs, outfile)
+            pickle.dump(args, outfile)
 
     def fit(self, first, last):
         ds = SolarDataset(first, last, **self.data_kwargs)
