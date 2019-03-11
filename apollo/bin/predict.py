@@ -5,7 +5,7 @@ import apollo.datasets.nam as nam
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.models import *
-from apollo.serialization import SummaryResourceWriter
+from apollo.output import JsonWriter, CommaSeparatedWriter
 
 
 def main():
@@ -27,6 +27,12 @@ def main():
                         help='If set, a prediction will be generated for the past reftime which is closest to the '
                              'current datetime.')
 
+    parser.add_argument('--out_path', '-o', default=None, type=str,
+                        help='The directory where predictions should be written.')
+
+    parser.add_argument('--csv', '-c', action='store_true',
+                        help='If set, predictions will be written as a CSV file instead of JSON.')
+
     # parse args
     args = parser.parse_args()
     args = vars(args)
@@ -46,8 +52,13 @@ def main():
     forecast = model.forecast(reftime)
 
     print('Writing predictions to disk...')
-    forecast_writer = SummaryResourceWriter(source=model_name)
-    output_files = forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}')
+    out_path = args['out_path']
+    if 'csv' in args:
+        forecast_writer = CommaSeparatedWriter()
+    else:
+        forecast_writer = JsonWriter(source=model_name)
+
+    output_files = forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}', out_path=out_path)
     for filename in output_files:
         print(f'Wrote {filename}')
     
