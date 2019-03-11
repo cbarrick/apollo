@@ -3,6 +3,7 @@ import json
 import logging
 
 from apollo import storage
+import apollo.models  # makes model subclasses discoverable
 
 
 logger = logging.getLogger(__name__)
@@ -140,21 +141,46 @@ def load(name):
     manifest_json = json.loads(manifest_text)
     cls_name = manifest_json.get(name)
 
+    if cls_name is None:
+        raise ValueError(f'Cannot find trained model with name `{name}`.')
+
+    path = root / name
+
     # Search for a subclass of ``Model`` with the same name.
-    # This performs a breadth-first search of the subclass DAG.
+    for cls in list_known_models():
+        if cls.__name__ == cls_name:
+            model = cls.load(path)
+            return model
+    else:
+        raise ValueError(f'Cannot find model of type {cls_name}.\n')
+
+
+def list_known_models():
+    ''' Lists the subclasses of Model
+
+    Returns:
+        list of cls:
+            List of Model classes
+    '''
     subclasses = Model.__subclasses__()
     for cls in subclasses:
-        if cls.__name__ == cls_name:
-            break
         subclasses.extend(cls.__subclasses__())
-    else:
-        raise ValueError(
-            f'Cannot find model class {cls_name}.\n'
-            f'Available classes are {subclasses}.'
-        )
 
-    # Load the model.
-    path = root / name
-    path.mkdir(parents=True, exist_ok=True)
-    model = cls.load(path)
-    return model
+    return subclasses
+
+
+def list_trained_models():
+    ''' Lists the names of models which have been saved to the manifest file
+
+    Returns:
+        list of str:
+            List of the names of models found in the manifest
+    '''
+    root = storage.get('models')
+    manifest = root / 'manifest.json'
+    if not manifest.exists():
+        return []
+    else:
+        manifest_text = manifest.read_text()
+        manifest_json = json.loads(manifest_text)
+        return list(manifest_json.keys())
