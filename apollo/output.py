@@ -44,7 +44,7 @@ def write_json(forecast, source, name, out_path=None):
         output_path.mkdir(parents=True, exist_ok=True)
     else:
         # get output paths from storage module
-        output_path = storage.get(pathlib.Path('predictions/json'))
+        output_path = storage.get('output/json')
 
     output_filename = output_path / f'{name}.json'
 
@@ -120,7 +120,7 @@ def write_csv(forecast, name, out_path=None):
         output_path.mkdir(parents=True, exist_ok=True)
     else:
         # get output path from the storage module
-        output_path = storage.get(pathlib.Path('predictions/csv'))
+        output_path = storage.get('output/csv')
 
     output_filename = output_path / f'{name}.csv'
     forecast.to_csv(output_filename, index=False)

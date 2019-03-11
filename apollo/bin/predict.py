@@ -5,7 +5,7 @@ import apollo.datasets.nam as nam
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.models import *
-from apollo.serialization import JsonWriter, CommaSeparatedWriter
+from apollo.output import JsonWriter, CommaSeparatedWriter
 
 
 def main():
