@@ -191,7 +191,8 @@ def open_sqlite(*cols, start, stop):
     df = df[start:stop]
 
     # take one-hour averages
-    df = df.groupby(interval(hour=1)).mean()
+    if len(df.index) > 0:
+        df = df.groupby(interval(hour=1)).mean()
 
     # most of apollo assumes the index name will be `reftime`
     df.index.name = 'reftime'
