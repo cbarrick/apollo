@@ -631,7 +631,10 @@ class NamLoader:
                 pass
             start += delta
 
-        return self._combine(datasets)
+        if len(datasets) > 0:
+            return self._combine(datasets)
+        else:
+            raise CacheMiss(f'{start} through {stop}')
 
     def _combine(self, datasets):
         '''Combine a list of datasets.
