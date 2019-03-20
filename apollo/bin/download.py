@@ -19,7 +19,7 @@ import multiprocessing as mp
 import sys
 from pathlib import Path
 
-import numpy as np
+import pandas as pd
 
 import apollo.storage
 from apollo.datasets import nam
@@ -62,10 +62,10 @@ if __name__ == '__main__':
     if args.dest:
         apollo.storage.set_root(args.dest)
 
-    step = np.timedelta64(6, 'h')
-    stop = np.datetime64(args.reftime, '6h')
+    step = pd.Timedelta(6, 'h')
+    stop = pd.Timestamp(args.reftime).floor('6h')
     if args.start:
-        start = np.datetime64(args.start, '6h')
+        start = pd.Timestamp(args.start).floor('6h')
     elif args.count:
         start = stop - (args.count - 1) * step
     else:
