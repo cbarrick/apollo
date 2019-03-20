@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 import xarray as xr
+import sqlite3
 
 import apollo.storage
 
@@ -136,4 +137,66 @@ def open_mb007(*cols, group=2017):
     # In apollo, all datasets should be presented as xarray.
     df = df.to_xarray()
 
+    return df
+
+
+def open_sqlite(*cols, start, stop):
+    ''' Open Georgia Power irradiance data from a sqlite database
+
+    The data must be stored in a sqlite database named solar_farm.sqlite in the <APOLLO_DATA>/GA-POWER directory.
+    The database should include a table named "IRRADIANCE" storing irradiance readings indexed by a integer column
+    named "TIMESTAMP".
+
+    The range defined by the `start` and `stop` arguments is inclusive.
+    If data is not present for a portion of the requested range, then it will be silently excluded.
+
+
+    Args:
+        *cols (str):
+            The column names to read from the database.
+            The TIMESTAMP column will always be read.
+        start (str or Timestamp:
+            The Timestamp of the first reftime which should be read.
+        stop:
+            The Timestamp of the last reftime which will be read.
+
+    Returns:
+
+    '''
+    data_dir = apollo.storage.get('GA-POWER')
+    path = data_dir / 'solar_farm.sqlite'
+    connection = sqlite3.connect(str(path))
+
+    start, stop = pd.Timestamp(start), pd.Timestamp(stop)
+
+    # convert start and stop timestamps to unix epoch in seconds
+    unix_start = start.value // 10**9
+    unix_stop = stop.value / 10**9
+
+    # Ensure that `cols` is a list
+    cols = list(cols)
+
+    # build the query
+    query = f'SELECT TIMESTAMP as reftime' + (', ' if len(cols) > 0 else '')
+    query += ','.join(cols)
+    query += ' FROM IRRADIANCE WHERE reftime BETWEEN ? AND ?;'
+    params = [unix_start, unix_stop]
+
+    # load data and aggregate by hour
+    df = pd.read_sql_query(sql=query, con=connection, params=params, index_col='reftime', parse_dates=['reftime'])
+    df = df.dropna()
+    df.index = pd.to_datetime(df.index, unit='s')  # timestamp index is unix epoch (in seconds)
+
+    # clip into selected date range
+    df = df[start:stop]
+
+    # take one-hour averages
+    if len(df.index) > 0:
+        df = df.groupby(interval(hour=1)).mean()
+
+    # most of apollo assumes the index name will be `reftime`
+    df.index.name = 'reftime'
+
+    # In apollo, all datasets should be presented as xarray
+    df = df.to_xarray()
     return df

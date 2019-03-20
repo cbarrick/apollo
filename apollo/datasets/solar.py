@@ -182,37 +182,27 @@ def load_targets(target, start, stop, target_hours):
     '''Load the target variable.
 
     Arguments:
-        target (str or None):
-            The name of a variable in the GA Power dataset to include as a
-            target. If a target is given the year of the start and stop
-            timestamps must be the same (this can be improved).
+        target (str):
+            The name of a variable in the GA Power dataset to include as a target.
         start (timestamp):
             The timestamp of the first reftime.
         stop (timestamp):
             The timestamp of the final reftime.
         target_hours (Iterable[int]):
             The hour offsets of the target in the reftime dimension.
-            This argument is ignored if ``target`` is None.
 
     Returns:
         target_data (xr.DataArray):
             A data array for the target variable.
             Its shape is ``(reftime, target_hour)``.
     '''
-    # When using targets, the start and stop year must be the same.
-    # This is because the targets are broken out by year and the loader
-    # only loads one group. This can be improved...
-    year = np.datetime64(start, 'Y')
-    stop_year = np.datetime64(stop, 'Y')
-    assert year == stop_year, "start and stop must be same year"
-
     # Normalize the target_hours to a list,
     target_hours = list(target_hours)
 
     # Load the raw target data, corresponding to a 0 hour prediction.
     # Note that 'target_hour' is a non-dimension coordinate. We later
     # use `DataArray.expan_dims` to promote it to a dimension.
-    target_data_raw = ga_power.open_mb007(target, group=year)
+    target_data_raw = ga_power.open_sqlite(target, start=start, stop=stop)
     target_data_raw['target_hour'] = 0
 
     # Create a DataArray for each target hour.
@@ -280,7 +270,7 @@ class SolarDataset(TorchDataset):
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
             feature_subset=PLANAR_FEATURES, temporal_features=True,
             geo_shape=(3, 3), center=ATHENS_LATLON, lag=0, forecast=36,
-            target='UGA-C-POA-1-IRR', target_hours=24, standardize=True):
+            target='UGABPOA1IRR', target_hours=24, standardize=True):
         '''Initialize a SolarDataset
 
         Arguments:
