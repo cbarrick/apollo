@@ -1,6 +1,7 @@
 import abc
 import json
 import logging
+import shutil
 
 from apollo import storage
 import apollo.models  # makes model subclasses discoverable
@@ -44,6 +45,9 @@ class Model(abc.ABC):
                 The directory in which to store model.
         '''
         pass
+
+    def delete(self):
+        delete(self.name)
 
     @abc.abstractmethod
     def fit(self, first, last):
@@ -142,7 +146,7 @@ def load(name):
     cls_name = manifest_json.get(name)
 
     if cls_name is None:
-        raise ValueError(f'Cannot find trained model with name `{name}`.')
+        raise ValueError(f'Cannot find saved model with name `{name}`.')
 
     path = root / name
 
@@ -153,6 +157,38 @@ def load(name):
             return model
     else:
         raise ValueError(f'Cannot find model of type {cls_name}.\n')
+
+
+def delete(name):
+    ''' Remove a model from managed storage given its name.
+
+    The model must have previously been saved with `save`.
+
+    Args:
+        name (str):
+            The name of a previously saved model
+
+    Returns:
+        None
+    '''
+    root = storage.get('models')
+
+    # Read ``manifest.json`` to figure out which class to use.
+    manifest_path = root / 'manifest.json'
+    if not manifest_path.exists(): manifest_path.write_text('{}')
+    manifest_text = manifest_path.read_text()
+    manifest = json.loads(manifest_text)
+    if name in manifest:
+        # remove the files saved by the model
+        model_dir = root / name
+        shutil.rmtree(model_dir)
+
+        # remove the entry from the manifest
+        del manifest[name]
+        with open(manifest_path, 'w') as manifest_file:
+            json.dump(manifest, manifest_file)
+    else:
+        raise ValueError(f'Cannot find saved model with name `{name}`.')
 
 
 def list_known_models():
