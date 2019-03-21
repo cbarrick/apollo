@@ -23,12 +23,14 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
         last (str or pd.Timestamp):
             The timestamp of the last data point to use for cross-validation
         metrics (Iterable<function>):
-            Set of evaluation metrics to apply.  Each metric should have the signature metric_name(y_true, y_predicted)
+            Set of evaluation metrics to apply.  Each metric should have
+            a signature like metric_name(y_true, y_predicted)
         k (int):
             Number of folds to use
 
     Returns:
-        DataFrame: dataframe indexed by target hour with a column for each metric
+        DataFrame:
+            A dataframe indexed by target hour with a column for each metric
 
     '''
 
@@ -46,14 +48,19 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
     #     },
     #     . . .
     # }
-    records = {i: {'y_true': list(), 'y_pred': list()} for i in model.target_hours}
+    records = {i: {'y_true': list(), 'y_pred': list()}
+               for i in model.target_hours}
 
     first = pd.Timestamp(first).round(freq='6h')
     last = pd.Timestamp(last).round(freq='6h')
     reftimes = pd.date_range(first, last, freq='6h')
 
-    true_values = ga_power.open_sqlite(model.target, start=first, stop=(last + pd.Timedelta(48, 'h'))).to_dataframe()
-    true_values.rename(columns={true_values.columns[0]: 'true_val'}, inplace=True)
+    true_values = ga_power.open_sqlite(model.target, start=first,
+        stop=(last + pd.Timedelta(48, 'h'))).to_dataframe()
+
+    true_values.rename(
+        columns={true_values.columns[0]: 'true_val'},
+        inplace=True)
 
     time_series_splitter = TimeSeriesSplit(n_splits=k)
 
@@ -64,15 +71,18 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
         # train the model using the training set
         model.fit(train_reftimes[0], train_reftimes[-1])
 
-        # make predictions for each reftime in the testing set, and record the results
+        # make predictions for each reftime in the testing set
         for reftime in test_reftimes:
             try:
                 predictions = model.forecast(reftime)
-                # predictions will be a DataFrame of (reftime, target) pairs for each target hour
-                predictions.rename(columns={predictions.columns[0]: 'predicted'}, inplace=True)
+                # predictions will be a DataFrame
+                # of (reftime, target) pairs for each target hour
+                predictions.rename(
+                    columns={predictions.columns[0]: 'predicted'}, inplace=True)
 
                 # match true values and find difference
-                matched = pd.concat([predictions, true_values], axis=1, join='inner')
+                matched = pd.concat([predictions, true_values],
+                                    axis=1, join='inner')
 
                 for timestamp, vals in matched.iterrows():
                     hour = (timestamp - reftime) // pd.Timedelta(1, 'h')
@@ -81,15 +91,16 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
 
                     records[hour]['y_pred'].append(vals['predicted'])
                     records[hour]['y_true'].append(vals['true_val'])
-                    
+
             # if anything goes wrong, omit the results from the error estimation
             except CacheMiss:
-                logger.warning(f'Omitting validation results for reftime {reftime}')
+                logger.warning(f'Omitting results for reftime {reftime}')
                 logger.error(sys.exc_info()[0])
                 pass
 
     # compute error using each of the metrics
-    results = pd.DataFrame(index=model.target_hours, columns=[metric.__name__ for metric in metrics])
+    results = pd.DataFrame(index=model.target_hours,
+                           columns=[metric.__name__ for metric in metrics])
     for hour in records:
         y_true, y_pred = records[hour]['y_true'], records[hour]['y_pred']
         for metric in metrics:
@@ -99,7 +110,8 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
     return results
 
 
-def split_validate(model, first, last, metrics=(mean_absolute_error,), test_size=0.25):
+def split_validate(model, first, last, test_size=0.25,
+                   metrics=(mean_absolute_error,), ):
     ''' Evaluate a model using a train-test split
 
     Args:
@@ -109,14 +121,16 @@ def split_validate(model, first, last, metrics=(mean_absolute_error,), test_size
             The timestamp of the first data point to use for cross-validation
         last (str or pd.Timestamp):
             The timestamp of the last data point to use for cross-validation
-        metrics (Iterable<function>):
-            Set of evaluation metrics to apply.  Each metric should have the signature metric_name(y_true, y_predicted)
+        metrics (Iterable[Callable]):
+            Set of evaluation metrics to apply. Each metric should have
+            a signature like metric_name(y_true, y_predicted)
         test_size (float):
-            Proportion of the dataset to use for testing.  The complement will be used for training.
-            The training set will always be the first
+            Proportion of the dataset to use for testing.
+            The complement will be used for training.
 
     Returns:
-        DataFrame: dataframe indexed by target hour with a column for each metric
+        DataFrame:
+            A dataframe indexed by target hour with a column for each metric
 
     '''
 
@@ -134,14 +148,18 @@ def split_validate(model, first, last, metrics=(mean_absolute_error,), test_size
     #     },
     #     . . .
     # }
-    records = {i: {'y_true': list(), 'y_pred': list()} for i in model.target_hours}
+    records = {i: {'y_true': list(), 'y_pred': list()}
+               for i in model.target_hours}
 
     first = pd.Timestamp(first).round(freq='6h')
     last = pd.Timestamp(last).round(freq='6h')
     reftimes = pd.date_range(first, last, freq='6h')
 
-    true_values = ga_power.open_sqlite(model.target, start=first, stop=(last + pd.Timedelta(48, 'h'))).to_dataframe()
-    true_values.rename(columns={true_values.columns[0]: 'true_val'}, inplace=True)
+    true_value_stop = last + pd.Timedelta(48, 'h')
+    true_values = ga_power.open_sqlite(model.target, start=first,
+                                       stop=true_value_stop).to_dataframe()
+    true_values.rename(
+        columns={true_values.columns[0]: 'true_val'}, inplace=True)
 
     split_index = round(len(reftimes) * (1-test_size))
     train_reftimes = reftimes[0:split_index].tolist()
@@ -154,8 +172,9 @@ def split_validate(model, first, last, metrics=(mean_absolute_error,), test_size
     for reftime in test_reftimes:
         try:
             predictions = model.forecast(reftime)
-            # predictions will be a DataFrame of (reftime, target) pairs for each target hour
-            predictions.rename(columns={predictions.columns[0]: 'predicted'}, inplace=True)
+            # predictions will be a DataFrame of (reftime, target) pairs
+            predictions.rename(
+                columns={predictions.columns[0]: 'predicted'}, inplace=True)
 
             # match true values and find difference
             matched = pd.concat([predictions, true_values], axis=1, join='inner')
@@ -174,7 +193,8 @@ def split_validate(model, first, last, metrics=(mean_absolute_error,), test_size
             pass
 
     # compute error using each of the metrics
-    results = pd.DataFrame(index=model.target_hours, columns=[metric.__name__ for metric in metrics])
+    results = pd.DataFrame(index=model.target_hours,
+                           columns=[metric.__name__ for metric in metrics])
     for hour in records:
         y_true, y_pred = records[hour]['y_true'], records[hour]['y_pred']
         for metric in metrics:
