@@ -11,7 +11,7 @@ from apollo.datasets.solar import SolarDataset
 
 
 class ScikitModel(abc.ABC):
-    ''' Abstract base class for models that use estimators conforming to the scikit-learn API
+    ''' Abstract base class for models that use scikit-learn estimators
     '''
     def __init__(self, name=None, **kwargs):
         ''' Initialize a ScikitModel
@@ -83,7 +83,8 @@ class ScikitModel(abc.ABC):
 
     def save(self, path):
         if not self.model:
-            raise ValueError('Model has not been trained.  Ensure `model.fit` is called before `model.save`.')
+            raise ValueError('Model has not been trained. Ensure `model.fit`'
+                             ' is called before `model.save`.')
 
         # serialize the trained scikit-learn model
         joblib.dump(self.model, path / 'regressor.joblib')
@@ -120,6 +121,8 @@ class ScikitModel(abc.ABC):
         x = np.asarray(x)
 
         y = self.model.predict(x)[0]
-        index = [reftime + pd.Timedelta(1, 'h') * n for n in data_kwargs['target_hours']]
-        df = pd.DataFrame(y, index=pd.DatetimeIndex(index), columns=[self.data_kwargs['target']])
+        index = [reftime + pd.Timedelta(1, 'h') * n
+                 for n in data_kwargs['target_hours']]
+        df = pd.DataFrame(y, index=pd.DatetimeIndex(index),
+                          columns=[self.data_kwargs['target']])
         return df
