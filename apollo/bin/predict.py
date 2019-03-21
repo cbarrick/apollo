@@ -5,7 +5,7 @@ import apollo.datasets.nam as nam
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.models import *
-from apollo.output import JsonWriter, CommaSeparatedWriter
+from apollo.output import write_csv, write_json
 
 
 def main():
@@ -54,15 +54,11 @@ def main():
     print('Writing predictions to disk...')
     out_path = args['out_path']
     if 'csv' in args:
-        forecast_writer = CommaSeparatedWriter()
+        output_file = write_csv(forecast=forecast, name=f'{model_name}-{formatted_reftime}', out_path=out_path)
     else:
-        forecast_writer = JsonWriter(source=model_name)
+        output_file = write_json(forecast=forecast, source=model_name, name=f'{model_name}-{formatted_reftime}', out_path=out_path)
 
-    output_files = forecast_writer.write(forecast, f'{model_name}-{formatted_reftime}', out_path=out_path)
-    for filename in output_files:
-        print(f'Wrote {filename}')
-    
-    print('Done.')
+    print(f'Wrote {output_file}')
 
 
 if __name__ == '__main__':
