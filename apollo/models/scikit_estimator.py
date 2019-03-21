@@ -31,6 +31,7 @@ class ScikitModel(Model, abc.ABC):
             'lag': 0,
             'target': 'UGABPOA1IRR',
             'target_hours': tuple(np.arange(1, 25)),
+            'geo_shape': (3, 3),
             'standardize': True
         }
         for key in self.data_kwargs:
