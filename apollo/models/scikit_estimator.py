@@ -8,10 +8,9 @@ from sklearn.externals import joblib
 from sklearn.multioutput import MultiOutputRegressor
 
 from apollo.datasets.solar import SolarDataset
-from apollo.models.base import ValidatableModel
 
 
-class ScikitModel(ValidatableModel, abc.ABC):
+class ScikitModel(abc.ABC):
     ''' Abstract base class for models that use estimators conforming to the scikit-learn API
     '''
     def __init__(self, name=None, **kwargs):

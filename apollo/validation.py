@@ -7,7 +7,6 @@ from sklearn.model_selection import TimeSeriesSplit
 
 import apollo.datasets.ga_power as ga_power
 from apollo.datasets.nam import CacheMiss
-from apollo.models.base import ValidatableModel
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
     ''' Evaluate a model using k-fold cross-validation
 
     Args:
-        model (ValidatableModel):
+        model (Model):
             The model to evaluate
         first (str or pd.Timestamp):
             The timestamp of the first data point to use for cross-validation
@@ -33,8 +32,6 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
             A dataframe indexed by target hour with a column for each metric
 
     '''
-
-    assert isinstance(model, ValidatableModel)
 
     # records has the following structure, where the key is the forecast hour
     # {
@@ -115,8 +112,8 @@ def split_validate(model, first, last, test_size=0.25,
     ''' Evaluate a model using a train-test split
 
     Args:
-        model (ValidatableModel):
-            The model to evaluate
+        model (Model):
+            The model to evaluatef
         first (str or pd.Timestamp):
             The timestamp of the first data point to use for cross-validation
         last (str or pd.Timestamp):
@@ -133,8 +130,6 @@ def split_validate(model, first, last, test_size=0.25,
             A dataframe indexed by target hour with a column for each metric
 
     '''
-
-    assert isinstance(model, ValidatableModel)
 
     # records has the following structure, where the key is the forecast hour
     # {

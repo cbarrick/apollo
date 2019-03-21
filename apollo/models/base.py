@@ -80,8 +80,6 @@ class Model(abc.ABC):
         '''
         pass
 
-
-class ValidatableModel(Model, abc.ABC):
     @property
     @abc.abstractmethod
     def target(self):
