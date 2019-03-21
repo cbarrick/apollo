@@ -22,7 +22,7 @@ def cross_validate(model, first, last, metrics=(mean_absolute_error,), k=3):
             The timestamp of the first data point to use for cross-validation
         last (str or pd.Timestamp):
             The timestamp of the last data point to use for cross-validation
-        metrics (Iterable<function>):
+        metrics (Iterable[Callable]):
             Set of evaluation metrics to apply.  Each metric should have
             a signature like metric_name(y_true, y_predicted)
         k (int):
