@@ -18,6 +18,7 @@ most useful for Scikit-Learn estimators and XGBoost which do not (and cannot)
 exploit the high dimension shape of the features.
 '''
 
+from copy import deepcopy
 from pathlib import Path
 
 import dask.array as da
@@ -26,10 +27,6 @@ import pandas as pd
 import scipy as sp
 import scipy.spatial
 import xarray as xr
-
-import torch
-from torch.utils.data import Dataset as TorchDataset
-from copy import deepcopy
 
 import apollo.storage
 from apollo.datasets import nam, ga_power
@@ -234,7 +231,7 @@ def load_targets(target, start, stop, target_hours):
     return target_data
 
 
-class SolarDataset(TorchDataset):
+class SolarDataset:
     '''A high level interface for the solar prediction dataset.
 
     This class unifies the NAM-NMM and GA Power datasets and provides many
