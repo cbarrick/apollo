@@ -2,8 +2,6 @@ name: apollo
 
 channels:
     - conda-forge
-    - pytorch
-    - defaults
 
 dependencies:
     # Core stack
@@ -20,7 +18,6 @@ dependencies:
     - pynio
     - scikit-learn
     - xgboost
-    - pytorch
     - requests
 
     # Documentation
