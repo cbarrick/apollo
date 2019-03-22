@@ -7,6 +7,7 @@ Apollo
 
     user-guides/getting-started
     user-guides/loading-data
+    user-guides/using-the-cli
 
 
 .. toctree::
