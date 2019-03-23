@@ -67,7 +67,7 @@ def write_json(forecast, reftime, source, name, description,
         'label': 'TIMESTAMP',
         'units': 'ms',
         'longname': 'The timestamp of the forecasted value, '
-                    'expressed as milliseconds since the unix epoch.',
+                    'expressed as milliseconds since 1970-01-01.',
         'type': 'datetime'
     }]
     # add a column for each forecasted variable
