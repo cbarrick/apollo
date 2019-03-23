@@ -115,7 +115,7 @@ class Model(abc.ABC):
         '''
         pass
 
-    def validate(self, first, last, splitter=TimeSeriesSplit(n_splits=3),
+    def validate(self, first, last, splitter=TimeSeriesSplit(n_splits=5),
                  metrics=(mean_absolute_error,), **kwargs):
         ''' Estimate the accuracy of the model
 
