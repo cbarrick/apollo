@@ -12,36 +12,29 @@ from apollo.models.base import Model
 
 
 class ScikitModel(Model, abc.ABC):
-    ''' Abstract base class for models that use estimators conforming to the scikit-learn API
+    ''' Abstract base class for models using estimators from the sklearn API
     '''
     def __init__(self, name=None, **kwargs):
         ''' Initialize a ScikitModel
 
         Args:
-            data_kwargs (dict or None):
-                kwargs to be passed to the SolarDataset constructor
-            model_kwargs (dict or None:
-                kwargs to be passed to the scikit-learn estimator constructor
+            name (str):
+                A human-readable name for the model.
             **kwargs:
-                other kwargs used for model initialization, such as model name
+                Keyword arguments used to customize data loading and the
+                hyperparameters of the underlying scikit-learn estimator.
         '''
         ts = pd.Timestamp('now')
-        # grab kwargs used to load data
-        self.data_kwargs = {
-            'lag': 0,
-            'target': 'UGABPOA1IRR',
-            'target_hours': tuple(np.arange(1, 25)),
-            'standardize': True
-        }
-        for key in self.data_kwargs:
-            if key in kwargs:
-                self.data_kwargs[key] = kwargs[key]
+        self.kwargs = kwargs
 
-        # grab kwargs corresponding to model hyperparams
+        # peel off kwargs corresponding to model hyperparams
         self.model_kwargs = self.default_hyperparams
         for key in self.model_kwargs:
             if key in kwargs:
                 self.model_kwargs[key] = kwargs[key]
+
+        self.data_args = {key: val for key, val in kwargs.items()
+                          if key not in self.model_kwargs}
 
         self.model = None
 
@@ -76,22 +69,19 @@ class ScikitModel(Model, abc.ABC):
 
     def save(self, path):
         if not self.model:
-            raise ValueError('Model has not been trained.  Ensure `model.fit` is called before `model.save`.')
+            raise ValueError('Model has not been trained. Ensure `model.fit` '
+                             'is called before `model.save`.')
 
         # serialize the trained scikit-learn model
         joblib.dump(self.model, path / 'regressor.joblib')
 
         # serialize kwargs
-        args = {
-            'name': self.name
-        }
-        args = dict(args, **self.data_kwargs)
-        args = dict(args, **self.model_kwargs)
+        kwargs = dict({'name': self.name}, **self.kwargs)
         with open(path / 'kwargs.pickle', 'wb') as outfile:
-            pickle.dump(args, outfile)
+            pickle.dump(kwargs, outfile)
 
     def fit(self, first, last):
-        ds = SolarDataset(first, last, **self.data_kwargs)
+        ds = SolarDataset(first, last, **self.data_args)
         x, y = ds.tabular()
         x = np.asarray(x)
         y = np.asarray(y)
@@ -100,19 +90,23 @@ class ScikitModel(Model, abc.ABC):
         model.fit(x, y)
         self.model = model
         # save standardization parameters
-        self.data_kwargs['standardize'] = (ds.mean, ds.std)
+        self.data_args['standardize'] = (ds.mean, ds.std)
 
     def forecast(self, reftime):
-        data_kwargs = dict(self.data_kwargs)
-        data_kwargs['target'] = None
+        target = self.data_args['target'] \
+            if 'target' in self.data_args else 'UGABPOA1IRR'
+        target_hours = self.data_args['target_hours'] \
+            if 'target_hours' in self.data_args else (24,)
+
+        # prevent SolarDataset from trying to load targets
+        data_args = dict(self.data_args)
+        data_args['target'] = None
 
         reftime = pd.Timestamp(reftime)
 
-        ds = SolarDataset(reftime, reftime + pd.Timedelta(6, 'h'), **data_kwargs)
-        x = ds.tabular()
-        x = np.asarray(x)
-
+        ds = SolarDataset(reftime, reftime + pd.Timedelta(6, 'h'), **data_args)
+        x = np.asarray(ds.tabular())
         y = self.model.predict(x)[0]
-        index = [reftime + pd.Timedelta(1, 'h') * n for n in data_kwargs['target_hours']]
-        df = pd.DataFrame(y, index=pd.DatetimeIndex(index), columns=[self.data_kwargs['target']])
+        index = [reftime + pd.Timedelta(1, 'h') * n for n in target_hours]
+        df = pd.DataFrame(y, index=pd.DatetimeIndex(index), columns=[target])
         return df
