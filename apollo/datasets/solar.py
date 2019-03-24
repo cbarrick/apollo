@@ -39,6 +39,9 @@ from apollo.datasets import nam, ga_power
 #:     Botanical Garden of Georgia, because that was the nearest I could find.
 ATHENS_LATLON = (33.9052058, -83.382608)
 
+# default targets loaded by SolarDataset
+DEFAULT_TARGET = 'UGABPOA1IRR'
+DEFAULT_TARGET_HOURS = 24
 
 #: The planar features of the NAM dataset,
 #: i.e. those where the Z-axis has size 1.
@@ -265,9 +268,10 @@ class SolarDataset:
     '''
 
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
-            feature_subset=PLANAR_FEATURES, temporal_features=True,
-            geo_shape=(3, 3), center=ATHENS_LATLON, lag=0, forecast=36,
-            target='UGABPOA1IRR', target_hours=24, standardize=True):
+                 feature_subset=PLANAR_FEATURES, temporal_features=True,
+                 geo_shape=(3, 3), center=ATHENS_LATLON, lag=0, forecast=36,
+                 target=DEFAULT_TARGET, target_hours=DEFAULT_TARGET_HOURS,
+                 standardize=True):
         '''Initialize a SolarDataset
 
         Arguments:
