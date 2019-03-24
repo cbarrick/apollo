@@ -204,7 +204,7 @@ class Model(abc.ABC):
 
 
 def save(model):
-    '''Save a model to the managed storage.s
+    '''Save a model to the managed storage.
 
     This will overwrite any previously saved model with the same name.
 
