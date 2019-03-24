@@ -122,18 +122,14 @@ class Model(abc.ABC):
         Args:
             first (str or Timestamp):
                 The first reftime in the testing set.
-
             last (str or Timestamp):
                 The last reftime in the testing set.
-
             splitter (object):
                 An object implementing a `split` method, that returns training
                 and testing indicies.
-
             metrics (Iterable[Callable]):
                 Set of evaluation metrics to apply.  Each metric should have
                 a signature `metric_name(y_true, y_predicted)`.
-
             **kwargs:
                 Additional parameters to be passed to each metric.
 
