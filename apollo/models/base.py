@@ -182,18 +182,18 @@ class Model(abc.ABC):
 
                     true_vals = matched['true_val'].values
                     pred_vals = matched['predicted'].values
-                    assert(len(true_vals) == len(self.target_hours))
-                    assert(len(pred_vals) == len(self.target_hours))
-                    y_true.append(true_vals)
-                    y_pred.append(pred_vals)
+
+                    # check if some target hours are missing
+                    if not (len(true_vals) == len(self.target_hours)
+                            and len(pred_vals) == len(self.target_hours)):
+                        logger.warning(
+                            f'Omitting results for reftime {reftime}')
+                    else:
+                        y_true.append(true_vals)
+                        y_pred.append(pred_vals)
 
                 # if data unavailable, omit the results from error estimation
                 except CacheMiss:
-                    logger.warning(f'Omitting results for reftime {reftime}')
-                    pass
-
-                # if some of the target hours were missing
-                except AssertionError:
                     logger.warning(f'Omitting results for reftime {reftime}')
                     pass
 
