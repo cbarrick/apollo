@@ -41,7 +41,7 @@ ATHENS_LATLON = (33.9052058, -83.382608)
 
 # default targets loaded by SolarDataset
 DEFAULT_TARGET = 'UGABPOA1IRR'
-DEFAULT_TARGET_HOURS = 24
+DEFAULT_TARGET_HOURS = tuple(range(1, 25))
 
 #: The planar features of the NAM dataset,
 #: i.e. those where the Z-axis has size 1.
