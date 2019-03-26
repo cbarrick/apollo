@@ -27,7 +27,7 @@ def main():
     }
 
     parser = argparse.ArgumentParser(
-        description='Apollo Machine Learning Model Trainer',
+        description='Apollo Model Trainer',
         argument_default=argparse.SUPPRESS,
     )
     # specify the type of model and give it a name

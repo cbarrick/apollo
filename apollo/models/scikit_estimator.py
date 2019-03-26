@@ -7,12 +7,13 @@ import pickle
 from sklearn.externals import joblib
 from sklearn.multioutput import MultiOutputRegressor
 
-from apollo.datasets.solar import SolarDataset
+from apollo.datasets.solar import SolarDataset, \
+    DEFAULT_TARGET, DEFAULT_TARGET_HOURS
 from apollo.models.base import Model
 
 
 class ScikitModel(Model, abc.ABC):
-    ''' Abstract base class for models using estimators from the sklearn API
+    ''' Abstract base class for models that use scikit-learn estimators
     '''
     def __init__(self, name=None, **kwargs):
         ''' Initialize a ScikitModel
@@ -58,6 +59,25 @@ class ScikitModel(Model, abc.ABC):
     def name(self):
         return self._name
 
+    @property
+    def target(self):
+        return self.data_args['target'] \
+            if 'target' in self.data_args \
+            else DEFAULT_TARGET
+
+    @property
+    def target_hours(self):
+        if 'target_hours' in self.data_args:
+            try:
+                return tuple(self.data_args['target_hours'])
+            except TypeError:
+                return self.data_args['target_hours'],
+        else:
+            try:
+                return tuple(DEFAULT_TARGET_HOURS)
+            except TypeError:
+                return DEFAULT_TARGET_HOURS,
+
     @classmethod
     def load(cls, path):
         with open(path / 'kwargs.pickle', 'rb') as args_file:
@@ -69,8 +89,8 @@ class ScikitModel(Model, abc.ABC):
 
     def save(self, path):
         if not self.model:
-            raise ValueError('Model has not been trained. Ensure `model.fit` '
-                             'is called before `model.save`.')
+            raise ValueError('Model has not been trained. Ensure `model.fit`'
+                             ' is called before `model.save`.')
 
         # serialize the trained scikit-learn model
         joblib.dump(self.model, path / 'regressor.joblib')
@@ -93,10 +113,8 @@ class ScikitModel(Model, abc.ABC):
         self.data_args['standardize'] = (ds.mean, ds.std)
 
     def forecast(self, reftime):
-        target = self.data_args['target'] \
-            if 'target' in self.data_args else 'UGABPOA1IRR'
-        target_hours = self.data_args['target_hours'] \
-            if 'target_hours' in self.data_args else (24,)
+        target = self.target
+        target_hours = self.target_hours
 
         # prevent SolarDataset from trying to load targets
         data_args = dict(self.data_args)

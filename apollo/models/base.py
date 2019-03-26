@@ -1,9 +1,15 @@
 import abc
 import json
 import logging
+import pandas as pd
+import numpy as np
 import shutil
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.metrics import mean_absolute_error
 
 from apollo import storage
+import apollo.datasets.ga_power as ga_power
+from apollo.datasets.nam import CacheMiss
 import apollo.models  # makes model subclasses discoverable
 
 
@@ -83,6 +89,123 @@ class Model(abc.ABC):
                 column corresponds to a target variable being forecast.
         '''
         pass
+
+    @property
+    @abc.abstractmethod
+    def target(self):
+        ''' The name of the variable that this model targets.
+
+        This is used with one of the loaders in apollo.datasets.ga_power to load
+        true values of predicted solar irradiance.  It should match the name of
+        one of the variables in the ga_power dataset.
+
+        Returns:
+            str: name of the target variable.
+
+        '''
+        pass
+
+    @property
+    @abc.abstractmethod
+    def target_hours(self):
+        ''' Hours for which this model makes predictions
+
+        Returns:
+            tuple: hours targeted by this model.
+        '''
+        pass
+
+    def validate(self, first, last, splitter=TimeSeriesSplit(n_splits=5),
+                 metrics=(mean_absolute_error,), **kwargs):
+        ''' Estimate the accuracy of the model
+
+        Args:
+            first (str or Timestamp):
+                The first reftime in the testing set.
+            last (str or Timestamp):
+                The last reftime in the testing set.
+            splitter (object):
+                An object implementing a `split` method, that returns training
+                and testing indicies.
+            metrics (Iterable[Callable]):
+                Set of evaluation metrics to apply.  Each metric should have
+                a signature `metric_name(y_true, y_predicted)`.
+            **kwargs:
+                Additional parameters to be passed to each metric.
+
+        Returns:
+            dict:
+                A mapping from the name of each metric to the estimated error(s)
+                computed by that metric.
+
+        '''
+        # find all reftimes in the testing set
+        first = pd.Timestamp(first).floor(freq='6h')
+        last = pd.Timestamp(last).floor(freq='6h')
+        reftimes = pd.date_range(first, last, freq='6h')
+
+        max_target_hour = max(self.target_hours)
+        targets_last = last + pd.Timedelta(max_target_hour+1, 'h')
+
+        # pre-load all ground truth readings
+        ground_truth = ga_power.open_sqlite(
+            self.target,
+            start=first,
+            stop=targets_last).to_dataframe()
+
+        ground_truth.rename(
+            columns={ground_truth.columns[0]: 'true_val'},
+            inplace=True)
+
+        evaluations = {metric.__name__: [] for metric in metrics}
+        for train_index, test_index in splitter.split(reftimes):
+            train_reftimes = reftimes[train_index]
+            test_reftimes = reftimes[test_index]
+
+            # train the model using the training set
+            self.fit(train_reftimes[0], train_reftimes[-1])
+
+            y_true, y_pred = [], []
+            # make predictions for each reftime in the testing set
+            for reftime in test_reftimes:
+                try:
+                    predictions = self.forecast(reftime)
+                    # predictions will be a DataFrame
+                    # of (timestamp, target) pairs for each target hour
+                    predictions.rename(
+                        columns={predictions.columns[0]: 'predicted'},
+                        inplace=True)
+
+                    # match predictions with ground truth
+                    matched = pd.concat([predictions, ground_truth],
+                                        axis=1, join='inner')
+
+                    true_vals = matched['true_val'].values
+                    pred_vals = matched['predicted'].values
+
+                    # check if some target hours are missing
+                    if not (len(true_vals) == len(self.target_hours)
+                            and len(pred_vals) == len(self.target_hours)):
+                        logger.warning(
+                            f'Omitting results for reftime {reftime}')
+                    else:
+                        y_true.append(true_vals)
+                        y_pred.append(pred_vals)
+
+                # if data unavailable, omit the results from error estimation
+                except CacheMiss:
+                    logger.warning(f'Omitting results for reftime {reftime}')
+                    pass
+
+            # compute error metrics for this split
+            for metric in metrics:
+                error = metric(y_true, y_pred, **kwargs)
+                evaluations[metric.__name__].append(error)
+
+        # find mean errors across all splits
+        metrics = {m: np.mean(np.asarray(evaluations[m]), axis=0)
+                   for m in evaluations}
+        return metrics
 
 
 def save(model):
