@@ -83,7 +83,8 @@ def write_json(forecast, reftime, source, name, description,
     for timestamp, series in forecast.iterrows():
         # add tuple (idx, val_1, val_2, . . ., val_n)
         formatted_timestamp = _datestring_to_posix(str(timestamp))
-        raw_data.append((formatted_timestamp, *series.values))
+        formatted_values = (series.values.astype(np.float64))
+        raw_data.append((formatted_timestamp, *formatted_values))
 
     # contents of the output file
     output_dict = {
