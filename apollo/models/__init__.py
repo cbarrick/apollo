@@ -2,3 +2,4 @@
 from apollo.models.linear import *
 from apollo.models.neighbors import *
 from apollo.models.trees import *
+from apollo.models.neural_nets import *
