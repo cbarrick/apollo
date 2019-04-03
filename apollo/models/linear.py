@@ -24,6 +24,6 @@ class SVR(ScikitModel):
         return {
             'C': 1.4,
             'epsilon': 0.6,
-            'kernel': 'sigmoid',
+            'kernel': 'rbf',
             'gamma': 0.001
         }
