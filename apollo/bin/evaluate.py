@@ -2,6 +2,7 @@ import argparse
 from math import floor
 import numpy as np
 import pandas as pd
+import pathlib
 from sklearn.metrics import mean_absolute_error as mae, \
     mean_squared_error as mse, r2_score as r2
 from sklearn.model_selection import TimeSeriesSplit, PredefinedSplit
@@ -50,6 +51,10 @@ def main():
                              ' be reduced to a single value by taking the mean'
                              ' with uniform weights')
 
+    parser.add_argument('--output', '-o', default=None, type=str,
+                        help='The file path where results should be written.'
+                             'If omitted, results are printed to sys.stdout.')
+
     # parse args
     args = parser.parse_args()
     args = vars(args)
@@ -89,7 +94,16 @@ def main():
         splitter=splitter, metrics=metrics,
         multioutput=multioutput)
 
-    print('Results:\n%s' % results)
+    results_df = pd.DataFrame(index=model.target_hours,
+                              columns=[metric for metric in results])
+    for metric in results:
+        results_df[metric] = results[metric]
+
+    if args['output'] is not None:
+        results_df.to_csv(pathlib.Path(args['output']))
+    else:
+        print('Results:')
+        print(results_df.to_string())
 
 
 if __name__ == '__main__':
