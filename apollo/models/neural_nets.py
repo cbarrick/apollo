@@ -4,9 +4,13 @@ from apollo.models.scikit_estimator import ScikitModel
 
 
 class MultilayerPerceptron(ScikitModel):
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self._estimator = MLPRegressor()
+
     @property
     def estimator(self):
-        return MLPRegressor()
+        return self._estimator
 
     @property
     def default_hyperparams(self):
