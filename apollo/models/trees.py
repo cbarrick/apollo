@@ -6,9 +6,13 @@ from apollo.models.scikit_estimator import ScikitModel
 
 
 class DecisionTree(ScikitModel):
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self._estimator = DecisionTreeRegressor()
+
     @property
     def estimator(self):
-        return DecisionTreeRegressor()
+        return self._estimator
 
     @property
     def default_hyperparams(self):
@@ -20,9 +24,13 @@ class DecisionTree(ScikitModel):
 
 
 class RandomForest(ScikitModel):
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self._estimator = RandomForestRegressor()
+
     @property
     def estimator(self):
-        return RandomForestRegressor()
+        return self._estimator
 
     @property
     def default_hyperparams(self):
@@ -34,14 +42,18 @@ class RandomForest(ScikitModel):
 
 
 class GradientBoostedTrees(ScikitModel):
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self._estimator = XGBRegressor()
+
     @property
     def estimator(self):
-        return XGBRegressor()
+        return self._estimator
 
     @property
     def default_hyperparams(self):
         return {
             'learning_rate': 0.05,
             'n_estimators': 200,
-            'max_depth': 5,
+            'max_depth': 20,
         }
