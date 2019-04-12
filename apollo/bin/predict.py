@@ -7,7 +7,7 @@ from apollo.models.base import load as load_model
 from apollo.output import write_csv, write_json
 
 
-def main():
+def main(argv=None):
     model_names = list_trained_models()
     parser = argparse.ArgumentParser(
         description='Apollo Model Prediction Tool',
@@ -37,7 +37,7 @@ def main():
                              ' instead of JSON.')
 
     # parse args
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     args = vars(args)
 
     reftime = timestamps.utc_timestamp(args['reftime'])

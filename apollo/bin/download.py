@@ -35,7 +35,7 @@ def xrange_inclusive(start, stop, step):
         start += step
 
 
-if __name__ == '__main__':
+def main(argv=None):
     # Note that the `--from` argument is parsed into `args.start`
     parser = argparse.ArgumentParser(description='Download NAM forecasts between two times, inclusive.')
     parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--from', type=str, dest='start', help='Download multiple forecasts starting from this timestamp.')
     parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
     parser.add_argument('reftime', nargs='?', default='now', help='The reftime of the forecast as an ISO 8601 timestamp. Defaults to now.')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     logging.basicConfig(format='[{asctime}] {levelname}: {message}', style='{', level=args.log)
     nam.logger.setLevel(args.log)
@@ -87,3 +87,7 @@ if __name__ == '__main__':
     with mp.Pool(args.procs, maxtasksperchild=1) as pool:
         reftimes = xrange_inclusive(start, stop, step)
         pool.map(download, reftimes)
+
+
+if __name__ == '__main__':
+    main()

@@ -13,13 +13,13 @@ def _is_abstract(cls):
 
 
 def parse_kwarg_list(kwarg_list):
-    ''' Parses a list of kwargs formatted like "arg=val" 
+    ''' Parses a list of kwargs formatted like "arg=val"
     '''
     return {pair[0]: pair[1] for pair
             in (kwarg.split('=') for kwarg in kwarg_list)}
 
 
-def main():
+def main(argv=None):
     models = {
         model.__name__: model
         for model in list_known_models()
@@ -51,7 +51,7 @@ def main():
                              '"--kwarg arg1=val1 --kwarg arg2=val2 . . ."')
 
     # parse args
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     args = vars(args)
 
     model_classname = args['model']

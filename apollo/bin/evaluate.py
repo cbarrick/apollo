@@ -14,7 +14,7 @@ def rmse(y_true, y_pred, **kwargs):
     return mse(y_true, y_pred, **kwargs)**0.5
 
 
-def main():
+def main(argv=None):
     model_names = list_trained_models()
     parser = argparse.ArgumentParser(
         description='Apollo Model Evaluator',
@@ -52,7 +52,7 @@ def main():
                         help='If set, results will be output as a csv.')
 
     # parse args
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     args = vars(args)
 
     print('Loading model...')

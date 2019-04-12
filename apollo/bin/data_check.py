@@ -73,7 +73,7 @@ def nc_path(reftime):
     return loader.nc_path(reftime)
 
 
-if __name__ == '__main__':
+def main(argv=None):
     # Note that the `--from` argument is parsed into `args.start`
     parser = argparse.ArgumentParser(description='Check NAM forecasts for join bugs.')
     parser.add_argument('-d', '--dry-run', action='store_true', help='Do not prompt to fix errors.')
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--from', type=str, dest='start', help='Check forecasts starting from this reftime.')
     parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
     parser.add_argument('reftime', nargs='?', default='now', help='The timestamp to check. Defaults to the most recent.')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     logging.basicConfig(
         format='[{asctime}] {levelname}: {message}',
@@ -126,3 +126,7 @@ if __name__ == '__main__':
                     ds = ds.drop(diff)
                     ds.to_netcdf(path_a)
                     assert path_a.exists()
+
+
+if __name__ == '__main__':
+    main()
