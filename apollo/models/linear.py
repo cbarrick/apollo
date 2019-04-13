@@ -5,9 +5,13 @@ from apollo.models.scikit_estimator import ScikitModel
 
 
 class LinearRegression(ScikitModel):
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self._estimator = scikit_LinearRegression()
+
     @property
     def estimator(self):
-        return scikit_LinearRegression()
+        return self._estimator
 
     @property
     def default_hyperparams(self):
@@ -15,9 +19,13 @@ class LinearRegression(ScikitModel):
 
 
 class SVR(ScikitModel):
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self._estimator = scikit_SVR()
+
     @property
     def estimator(self):
-        return scikit_SVR()
+        return self._estimator
 
     @property
     def default_hyperparams(self):
