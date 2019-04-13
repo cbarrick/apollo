@@ -3,7 +3,6 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error as mae, \
     mean_squared_error as mse, r2_score as r2
 from sklearn.model_selection import TimeSeriesSplit
-import sys
 
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
