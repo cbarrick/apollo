@@ -1,11 +1,9 @@
 import argparse
-from math import floor
-import numpy as np
 import pandas as pd
-import pathlib
 from sklearn.metrics import mean_absolute_error as mae, \
     mean_squared_error as mse, r2_score as r2
-from sklearn.model_selection import TimeSeriesSplit, PredefinedSplit
+from sklearn.model_selection import TimeSeriesSplit
+import sys
 
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
@@ -51,9 +49,8 @@ def main():
                              ' be reduced to a single value by taking the mean'
                              ' with uniform weights')
 
-    parser.add_argument('--output', '-o', default=None, type=str,
-                        help='The file path where results should be written.'
-                             'If omitted, results are printed to sys.stdout.')
+    parser.add_argument('--csv', '-c', action='store_true',
+                        help='If set, results will be output as a csv.')
 
     # parse args
     args = parser.parse_args()
@@ -73,21 +70,8 @@ def main():
         # use a time-series splitter
         splitter = TimeSeriesSplit(n_splits=args['k'])
     else:
-        # create custom splitter with PredefinedSplit
-        test_pct = max(0, min(args['split_size'], 1))
-        first = pd.Timestamp(args['first']).floor(freq='6h')
-        last = pd.Timestamp(args['last']).floor(freq='6h')
-        # total reftimes in the selected dataset
-        reftime_count = (last - first) // pd.Timedelta(6, 'h')
-
-        # create index for PredefinedSplit
-        testing_count = floor(reftime_count*test_pct)
-        training_count = reftime_count - testing_count
-        test_fold = np.concatenate((
-            np.ones(training_count) * -1,   # -1 indicates training set
-            np.zeros(testing_count)         # 0 indicates testing set, 1st fold
-        ))
-        splitter = PredefinedSplit(test_fold)
+        # a train-test split is just a time-series splitter with 2 folds
+        splitter = TimeSeriesSplit(n_splits=2)
 
     results = model.validate(
         first=args['first'], last=args['last'],
@@ -99,8 +83,8 @@ def main():
     for metric in results:
         results_df[metric] = results[metric]
 
-    if args['output'] is not None:
-        results_df.to_csv(pathlib.Path(args['output']))
+    if 'csv' in args:
+        print(results_df.to_csv())
     else:
         print('Results:')
         print(results_df.to_string())
