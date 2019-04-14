@@ -11,30 +11,43 @@ from apollo.datasets import nam
 
 
 def reftimes(args):
-    '''Iterate over the reftime range selected by the command line.
+    '''Iterate over the reftimes specified by the command-line arguments.
+
+    Yields:
+        Timestamp:
+            A timestamp for the reftime.
     '''
-    if args.count and args.start:
-        print('The arguments --count/-n and --from/-r are mutually exclusive.')
-        sys.exit(1)
+    # The ``reftime`` mode gives a single reftime.
+    if args.reftime is not None:
+        reftime = timestamps.utc_timestamp(args.reftime)
+        logging.info(f'selected the forecast for reftime {reftime}')
+        yield reftime
 
-    step = pd.Timedelta(6, 'h')
+    # The ``range`` mode gives the reftime between two inclusive endpoints.
+    elif args.range is not None:
+        start = timestamps.utc_timestamp(args.range[0])
+        stop = timestamps.utc_timestamp(args.range[1])
+        step = pd.Timedelta(6, 'h', tz='utc')
+        logging.info(f'selected the forecasts between {start} and {stop} (inclusive)')
+        while start <= stop:
+            yield start
+            start += step
 
-    stop = timestamps.utc_timestamp(args.reftime).floor('6h')
+    # The ``count`` mode downloads the N most recent reftimes.
+    elif args.count is not None:
+        n = args.count
+        reftime = timestamps.utc_timestamp('now').floor('6h')
+        step = pd.Timedelta(6, 'h', tz='utc')
+        logging.info(f'selected the {n} most recent forecasts (ending at {reftime})')
+        for _ in range(n):
+            yield reftime
+            reftime -= step
 
-    if args.start:
-        start = timestamps.utc_timestamp(args.start).floor('6h')
-    elif args.count:
-        start = stop - (args.count - 1) * step
+    # The default is to use the most recent reftime.
     else:
-        start = stop
-
-    size = (stop - start) // step
-
-    logging.debug(f'selected reftimes from {start} to {stop} ({size} forecasts)')
-
-    while start <= stop:
-        yield start
-        start += step
+        reftime = timestamps.utc_timestamp('now').floor('6h')
+        logging.info(f'selected the most recent forecast ({reftime})')
+        yield reftime
 
 
 def local_reftimes(args):
@@ -91,29 +104,32 @@ def main(argv=None):
         '-s',
         '--store',
         type=str,
-        help='path to the data store'
+        help=f'path to the data store (default: {storage.get_root()})',
     )
 
-    parser.add_argument(
+    selectors = parser.add_mutually_exclusive_group()
+
+    selectors.add_argument(
+        '-t',
+        '--reftime',
+        metavar='TIMESTAMP',
+        help='check the forecast for the given reftime',
+    )
+
+    selectors.add_argument(
+        '-r',
+        '--range',
+        nargs=2,
+        metavar=('START', 'STOP'),
+        help='check all forecast on this range, inclusive'
+    )
+
+    selectors.add_argument(
         '-n',
         '--count',
         type=int,
-        help='check this many forecasts (default: 2)'
-    )
-
-    parser.add_argument(
-        '-r',
-        '--from',
-        type=str,
-        dest='start',
-        help='check forecasts starting from this reftime'
-    )
-
-    parser.add_argument(
-        'reftime',
-        nargs='?',
-        default='now',
-        help='the timestamp of the last forecast to check (default: now)'
+        metavar='N',
+        help='check the N most recent forecasts',
     )
 
     args = parser.parse_args(argv)
