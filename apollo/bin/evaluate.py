@@ -20,33 +20,59 @@ def main(argv=None):
         description='Apollo Model Evaluator',
         argument_default=argparse.SUPPRESS,
     )
-    # specify the model to eval
-    parser.add_argument('name', type=str, choices=model_names,
-                        help='The name of the saved model to be evaluated.')
 
-    parser.add_argument('mode', type=str, choices=('cross_val', 'split'),
-                        help='Validation mode.'
-                             ' K-fold timeseries cross-validation'
-                             ' or train-test split.')
+    parser.add_argument(
+        'name',
+        type=str,
+        choices=model_names,
+        help='the name of the saved model to be evaluated',
+    )
 
-    parser.add_argument('--first', '-b', default='2017-01-01 00:00', type=str,
-                        help='The first reftime in the dataset.')
+    parser.add_argument(
+        'mode',
+        type=str,
+        choices=('cross_val', 'split'),
+        help='validation mode',
+    )
 
-    parser.add_argument('--last', '-e', default='2017-12-31 18:00', type=str,
-                        help='The final reftime in the dataset.')
+    parser.add_argument(
+        '--first',
+        '-b',
+        default='2017-01-01T00:00',
+        type=str,
+        help='the first reftime in the dataset',
+    )
 
-    parser.add_argument('--k', '-k', default=5, type=int,
-                        help='Number of folds to use for cross-validation.'
-                             ' Ignored if using `split` mode.')
+    parser.add_argument(
+        '--last',
+        '-e',
+        default='2017-12-31T18:00',
+        type=str,
+        help='the final reftime in the dataset',
+    )
 
-    parser.add_argument('--split_size', '-p', default=0.25, type=float,
-                        help='Proportion of the dataset to be used for testing.'
-                             ' Ignored if using `cross_val` mode.')
+    parser.add_argument(
+        '--k',
+        '-k',
+        default=5,
+        type=int,
+        help='number of folds to use for cross-validation',
+    )
 
-    parser.add_argument('--average', '-a', action='store_true',
-                        help='If set, the evaluations of each target hour will'
-                             ' be reduced to a single value by taking the mean'
-                             ' with uniform weights')
+    parser.add_argument(
+        '--split_size',
+        '-p',
+        default=0.25,
+        type=float,
+        help='proportion of the dataset to be used for testing',
+    )
+
+    parser.add_argument(
+        '--average',
+        '-a',
+        action='store_true',
+        help='evaluate the mean error of forecasts for all hours',
+    )
 
     parser.add_argument('--csv', '-c', action='store_true',
                         help='If set, results will be output as a csv.')

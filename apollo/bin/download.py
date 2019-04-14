@@ -36,20 +36,62 @@ def xrange_inclusive(start, stop, step):
 
 
 def main(argv=None):
-    # Note that the `--from` argument is parsed into `args.start`
-    parser = argparse.ArgumentParser(description='Download NAM forecasts between two times, inclusive.')
-    parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
-    parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
-    parser.add_argument('-d', '--dest', type=str, help='Path to the data store, overriding the APOLLO_DATA env var.')
-    parser.add_argument('-p', '--procs', type=int, default=1, help='Use this many download processes. Defaults to 1.')
-    parser.add_argument('-n', '--count', type=int, help='Download this many forecasts, ending at the reftime.')
-    parser.add_argument('-r', '--from', type=str, dest='start', help='Download multiple forecasts starting from this timestamp.')
-    parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
-    parser.add_argument('reftime', nargs='?', default='now', help='The reftime of the forecast as an ISO 8601 timestamp. Defaults to now.')
-    args = parser.parse_args(argv)
+    parser = argparse.ArgumentParser(
+        description='Download NAM forecasts between two timestamps, inclusive.',
+    )
 
-    logging.basicConfig(format='[{asctime}] {levelname}: {message}', style='{', level=args.log)
-    nam.logger.setLevel(args.log)
+    parser.add_argument(
+        '-x',
+        '--fail-fast',
+        action='store_true',
+        help='Do not retry downloads',
+    )
+
+    parser.add_argument(
+        '-k',
+        '--keep-gribs',
+        action='store_true',
+        help='do not delete grib files',
+    )
+
+    parser.add_argument(
+        '-d',
+        '--dest',
+        type=str,
+        help=f'path to the data store (default: {apollo.storage.get_root()})',
+    )
+
+    parser.add_argument(
+        '-p',
+        '--procs',
+        type=int,
+        default=1,
+        help='use this many download processes (default: 1)',
+    )
+
+    parser.add_argument(
+        '-n',
+        '--count',
+        type=int,
+        help='download this many forecasts, ending at the reftime',
+    )
+
+    parser.add_argument(
+        '-r',
+        '--from',
+        type=str,
+        dest='start',  # Note that `--from` is parsed into `args.start`.
+        help='download forecasts starting from this timestamp'
+    )
+
+    parser.add_argument(
+        'reftime',
+        nargs='?',
+        default='now',
+        help='the timestamp of the last forecast to download (default: now)',
+    )
+
+    args = parser.parse_args(argv)
 
     if args.count and args.start:
         print('The arguments --count/-n and --from/-r are mutually exclusive.')

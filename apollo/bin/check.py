@@ -36,6 +36,7 @@ def reftimes(args):
         yield start
         start += step
 
+
 def local_reftimes(args):
     '''Iterate over the reftimes for which we have data.
     '''
@@ -75,21 +76,47 @@ def nc_path(reftime):
 
 def main(argv=None):
     # Note that the `--from` argument is parsed into `args.start`
-    parser = argparse.ArgumentParser(description='Check NAM forecasts for join bugs.')
-    parser.add_argument('-d', '--dry-run', action='store_true', help='Do not prompt to fix errors.')
-    parser.add_argument('-s', '--store', type=str, help='Path to the data store.')
-    parser.add_argument('-n', '--count', type=int, help='Check this many forecasts, defaults to 2.')
-    parser.add_argument('-r', '--from', type=str, dest='start', help='Check forecasts starting from this reftime.')
-    parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
-    parser.add_argument('reftime', nargs='?', default='now', help='The timestamp to check. Defaults to the most recent.')
-    args = parser.parse_args(argv)
-
-    logging.basicConfig(
-        format='[{asctime}] {levelname}: {message}',
-        style='{',
-        level=args.log.upper(),
+    parser = argparse.ArgumentParser(
+        description='Check NAM forecasts for bugs.'
     )
-    nam.logger.setLevel(args.log.upper())
+
+    parser.add_argument(
+        '-d',
+        '--dry-run',
+        action='store_true',
+        help='identify errors but do not prompt to correct them'
+    )
+
+    parser.add_argument(
+        '-s',
+        '--store',
+        type=str,
+        help='path to the data store'
+    )
+
+    parser.add_argument(
+        '-n',
+        '--count',
+        type=int,
+        help='check this many forecasts (default: 2)'
+    )
+
+    parser.add_argument(
+        '-r',
+        '--from',
+        type=str,
+        dest='start',
+        help='check forecasts starting from this reftime'
+    )
+
+    parser.add_argument(
+        'reftime',
+        nargs='?',
+        default='now',
+        help='the timestamp of the last forecast to check (default: now)'
+    )
+
+    args = parser.parse_args(argv)
 
     logging.debug('called with the following options:')
     for arg, val in vars(args).items():

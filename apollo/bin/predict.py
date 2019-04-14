@@ -13,28 +13,43 @@ def main(argv=None):
         description='Apollo Model Prediction Tool',
         argument_default=argparse.SUPPRESS,
     )
-    # specify the model used to make predictions
-    parser.add_argument('name', type=str, choices=model_names,
-                        help='The name of the saved model used to generate '
-                             'the prediction.')
 
-    parser.add_argument('--reftime', '-r', default='2018-01-01 00:00', type=str,
-                        help='The reftime for which predictions should be made.'
-                             ' Any string accepted by pandas Timestamp'
-                             ' constructor will work.'
-                             ' Ignored if the `latest` flag is set.')
+    parser.add_argument(
+        'name',
+        type=str,
+        choices=model_names,
+        help='the name of the model',
+    )
 
-    parser.add_argument('--latest', '-l', action='store_true',
-                        help='If set, a prediction will be generated for the '
-                             'past reftime which is closest to the '
-                             'current datetime.')
+    parser.add_argument(
+        '--reftime',
+        '-r',
+        default='2018-01-01T00:00',
+        type=str,
+        help='the reftime for which predictions should be made',
+    )
 
-    parser.add_argument('--out_path', '-o', default=None, type=str,
-                        help='The directory where predictions will be written.')
+    parser.add_argument(
+        '--latest',
+        '-l',
+        action='store_true',
+        help='generate predictions for the most recent reftime',
+    )
 
-    parser.add_argument('--csv', '-c', action='store_true',
-                        help='If set, predictions will be written as a CSV file'
-                             ' instead of JSON.')
+    parser.add_argument(
+        '--out_path',
+        '-o',
+        default=None,
+        type=str,
+        help='the directory where predictions will be written',
+    )
+
+    parser.add_argument(
+        '--csv',
+        '-c',
+        action='store_true',
+        help='write predictions as CSV instead of JSON',
+    )
 
     # parse args
     args = parser.parse_args(argv)
