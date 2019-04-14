@@ -2,7 +2,6 @@ import argparse
 import pandas as pd
 import numbers
 
-import apollo.datasets.nam as nam
 import apollo.models  # makes all model classes discoverable
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
@@ -46,10 +45,6 @@ def main():
     if 'latest' in args:
         reftime = pd.Timestamp('now').floor('6h')
     formatted_reftime = reftime.strftime('%Y_%m_%d-%H:%M')
-
-    # ensure data for the requested reftime is cached
-    print(f'Caching NAM data for reftime {reftime}...')
-    nam.open(reftime - pd.Timedelta(6, 'h'), reftime)
 
     print('Generating predictions...')
     model_name = args['name']
