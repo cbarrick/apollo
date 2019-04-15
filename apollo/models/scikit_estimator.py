@@ -14,7 +14,20 @@ from apollo.models.base import Model
 
 
 class ScikitModel(Model, abc.ABC):
-    ''' Abstract base class for models that use scikit-learn estimators
+    ''' Abstract base class for models that use scikit-learn estimators.
+
+    ScikitModels are backed by estimators conforming to the scikit-learn API
+    (i.e. having  ``fit`` and ``predict`` methods).
+    If the model targets multiple hours, then scikit's
+    :class:`sklearn.multioutput.MultiOutputRegressor` is used to train one
+    estimator for each target hour.
+
+    The constructor can be passed an arbitrary set of kwargs which can be used
+    to customize the behavior of the model
+    The ``name`` keyword argument is peeled off and serves as a model's human-
+    readable name.  Each of the other kwargs are passed to the
+    :class:`SolarDataset constructor <apollo.datasets.solar.SolarDataset>`
+    or to the backing estimator, based on name matching.
     '''
     def __init__(self, name=None, **kwargs):
         ''' Initialize a ScikitModel

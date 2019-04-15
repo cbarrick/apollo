@@ -32,6 +32,11 @@ apollo.models.scikit\_estimator
 
     ScikitModel
 
+Persistence
+--------------------------------------------------
+
+.. autoclass:: apollo.models.persistence.PersistenceModel
+    :no-members:
 
 Linear Regression
 --------------------------------------------------
