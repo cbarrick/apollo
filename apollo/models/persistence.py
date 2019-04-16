@@ -2,6 +2,7 @@ import pandas as pd
 import pathlib
 import pickle
 
+from apollo import timestamps
 from apollo.datasets.ga_power import open_sqlite
 from apollo.datasets.solar import DEFAULT_TARGET, DEFAULT_TARGET_HOURS
 from apollo.models.base import Model
@@ -19,7 +20,7 @@ class PersistenceModel(Model):
             **kwargs:
                 The keyword arguments forwarded to the data loader
         '''
-        ts = pd.Timestamp('now')
+        ts = timestamps.utc_timestamp('now')
 
         self.kwargs = kwargs
         self.data_args = kwargs
@@ -67,7 +68,7 @@ class PersistenceModel(Model):
         pass
 
     def forecast(self, reftime):
-        reftime = pd.Timestamp(reftime)
+        reftime = timestamps.utc_timestamp(reftime)
         forecast_reach = max(*self.target_hours)  # maximum forecast hour
         past_values_start = reftime - pd.Timedelta(forecast_reach, 'h')
         past_values_end = reftime

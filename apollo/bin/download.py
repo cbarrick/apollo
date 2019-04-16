@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import apollo.storage
+from apollo import storage, timestamps
 from apollo.datasets import nam
 
 
@@ -60,12 +60,12 @@ if __name__ == '__main__':
         logging.debug(f'  {arg}: {val}')
 
     if args.dest:
-        apollo.storage.set_root(args.dest)
+        storage.set_root(args.dest)
 
     step = pd.Timedelta(6, 'h')
-    stop = pd.Timestamp(args.reftime).floor('6h')
+    stop = timestamps.utc_timestamp(args.reftime).floor('6h')
     if args.start:
-        start = pd.Timestamp(args.start).floor('6h')
+        start = timestamps.utc_timestamp(args.start).floor('6h')
     elif args.count:
         start = stop - (args.count - 1) * step
     else:

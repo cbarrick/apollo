@@ -42,7 +42,7 @@ import pandas as pd
 import requests
 import xarray as xr
 
-from apollo import storage
+from apollo import storage, timestamps
 
 
 # Module level logger
@@ -216,8 +216,8 @@ class NamLoader:
             str:
                 A URL to a GRIB file.
         '''
-        reftime = pd.Timestamp(reftime).floor('6h')
-        now = pd.Timestamp('now').floor('6h')
+        reftime = timestamps.utc_timestamp(reftime).floor('6h')
+        now = timestamps.utc_timestamp('now').floor('6h')
         delta = now - reftime
         if pd.Timedelta(7, 'd') < delta:
             url_fmt = ARCHIVE_URL
@@ -238,7 +238,7 @@ class NamLoader:
             pathlib.Path:
                 The local path for a GRIB file, which may not exist.
         '''
-        reftime = pd.Timestamp(reftime).floor('6h')
+        reftime = timestamps.utc_timestamp(reftime).floor('6h')
         prefix_fmt = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'
         filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
         prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
@@ -256,7 +256,7 @@ class NamLoader:
             pathlib.Path:
                 The local path to a netCDF file, which may not exist.
         '''
-        reftime = reftime = pd.Timestamp(reftime).floor('6h')
+        reftime = reftime = timestamps.utc_timestamp(reftime).floor('6h')
         prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
         filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
         return self.data_dir / prefix / filename
@@ -403,8 +403,8 @@ class NamLoader:
         # Both are stored as integers with appropriate units.
         # The reftime dimension is hours since the Unix epoch (1970-01-01 00:00).
         # The forecast dimension is hours since the reftime.
-        reftime = pd.Timestamp(reftime).floor('6h')
-        epoch = pd.Timestamp('1970-01-01 00:00')
+        reftime = timestamps.utc_timestamp(reftime).floor('6h')
+        epoch = timestamps.utc_timestamp('1970-01-01 00:00')
         delta_seconds = int((reftime - epoch).total_seconds())
         delta_hours = delta_seconds // 60 // 60
         ds = ds.assign_coords(
@@ -500,7 +500,7 @@ class NamLoader:
         for v in metadata:
             ds[v] = ds[v].assign_attrs(metadata[v])
 
-        now = pd.Timestamp("now", tz='utc')
+        now = timestamps.utc_timestamp("now", tz='utc')
         ds.attrs['title'] = 'NAM-UGA, a subset of NAM-NMM for solar forecasting research in Georgia'
         ds.attrs['history'] = f'{now.isoformat()} Initial conversion from GRIB files released by NCEP\n'
 
@@ -615,8 +615,8 @@ class NamLoader:
                 A single dataset containing all forecasts at the given reference
                 times. Some data may be dropped when combining forecasts.
         '''
-        start = pd.Timestamp(start).floor('6h')
-        stop = pd.Timestamp(stop).floor('6h')
+        start = timestamps.utc_timestamp(start).floor('6h')
+        stop = timestamps.utc_timestamp(stop).floor('6h')
 
         datasets = []
         delta = pd.Timedelta(6, 'h')

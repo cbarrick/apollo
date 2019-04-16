@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import apollo.storage
+from apollo import storage, timestamps
 from apollo.datasets import nam
 
 
@@ -19,10 +19,10 @@ def reftimes(args):
 
     step = pd.Timedelta(6, 'h')
 
-    stop = pd.Timestamp(args.reftime).floor('6h')
+    stop = timestamps.utc_timestamp(args.reftime).floor('6h')
 
     if args.start:
-        start = pd.Timestamp(args.start).floor('6h')
+        start = timestamps.utc_timestamp(args.start).floor('6h')
     elif args.count:
         start = stop - (args.count - 1) * step
     else:
@@ -96,13 +96,13 @@ if __name__ == '__main__':
         logging.debug(f'  {arg}: {val}')
 
     if args.store:
-        apollo.storage.set_root(args.store)
+        storage.set_root(args.store)
 
-    now = pd.Timestamp('now', tz='utc')
+    now = timestamps.utc_timestamp('now', tz='utc')
 
     for (a, b) in dataset_pairs(args):
-        time_a = pd.Timestamp(a.reftime.data[0]).floor('6h')
-        time_b = pd.Timestamp(b.reftime.data[0]).floor('6h')
+        time_a = timestamps.utc_timestamp(a.reftime.data[0]).floor('6h')
+        time_b = timestamps.utc_timestamp(b.reftime.data[0]).floor('6h')
         vars_a = set(a.variables.keys())
         vars_b = set(b.variables.keys())
         path_a = nc_path(time_a)
