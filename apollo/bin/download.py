@@ -129,14 +129,10 @@ def main(argv=None):
 
     for reftime in reftimes(args):
         try:
-            nam.open(
-                reftime,
-                fail_fast=args.fail_fast,
-                keep_gribs=args.keep_gribs,
-            )
+            nam.download(reftime, fail_fast=args.fail_fast, keep_gribs=args.keep_gribs)
         except Exception as e:
             logging.error(e)
-            logging.error(f'Could not load data for {reftime}')
+            logging.error(f'Could not download data for {reftime}')
 
 
 if __name__ == '__main__':
