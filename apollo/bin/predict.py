@@ -1,8 +1,7 @@
 import argparse
-import pandas as pd
 import numbers
 
-import apollo.models  # makes all model classes discoverable
+from apollo import models, timestamps
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.output import write_csv, write_json
@@ -41,9 +40,9 @@ def main():
     args = parser.parse_args()
     args = vars(args)
 
-    reftime = pd.Timestamp(args['reftime'])
+    reftime = timestamps.utc_timestamp(args['reftime'])
     if 'latest' in args:
-        reftime = pd.Timestamp('now').floor('6h')
+        reftime = timestamps.utc_timestamp('now').floor('6h')
     formatted_reftime = reftime.strftime('%Y_%m_%d-%H:%M')
 
     print('Generating predictions...')

@@ -7,10 +7,9 @@ import shutil
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_absolute_error
 
-from apollo import storage
-import apollo.datasets.ga_power as ga_power
+from apollo import modela, storage, timestamps
+from apollo.datasets import ga_power
 from apollo.datasets.nam import CacheMiss
-import apollo.models  # makes model subclasses discoverable
 
 
 logger = logging.getLogger(__name__)
@@ -140,8 +139,8 @@ class Model(abc.ABC):
 
         '''
         # find all reftimes in the testing set
-        first = pd.Timestamp(first).floor(freq='6h')
-        last = pd.Timestamp(last).floor(freq='6h')
+        first = timestamps.utc_timestamp(first).floor(freq='6h')
+        last = timestamps.utc_timestamp(last).floor(freq='6h')
         reftimes = pd.date_range(first, last, freq='6h')
 
         max_target_hour = max(self.target_hours)

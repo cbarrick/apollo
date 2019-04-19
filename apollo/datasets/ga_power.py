@@ -13,7 +13,7 @@ import pandas as pd
 import xarray as xr
 import sqlite3
 
-import apollo.storage
+from apollo import storage, timestamps
 
 
 # Module level logger
@@ -116,7 +116,7 @@ def open_mb007(*cols, group=2017):
             The dataset giving the targets.
     '''
     # The data directory contains more than just the mb-007 labels.
-    data_dir = apollo.storage.get('GA-POWER')
+    data_dir = storage.get('GA-POWER')
     path = data_dir / f'mb-007.{group}.log'
 
     # Ensure reftime is always selected and is a list.
@@ -163,11 +163,11 @@ def open_sqlite(*cols, start, stop):
     Returns:
 
     '''
-    data_dir = apollo.storage.get('GA-POWER')
+    data_dir = storage.get('GA-POWER')
     path = data_dir / 'solar_farm.sqlite'
     connection = sqlite3.connect(str(path))
 
-    start, stop = pd.Timestamp(start), pd.Timestamp(stop)
+    start, stop = timestamps.utc_timestamp(start), timestamps.utc_timestamp(stop)
 
     # convert start and stop timestamps to unix epoch in seconds
     unix_start = start.value // 10**9

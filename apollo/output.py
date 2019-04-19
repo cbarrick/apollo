@@ -1,19 +1,18 @@
 import json
-import pandas as pd
 import pathlib
 import numpy as np
 
-import apollo.storage as storage
+from apollo import storage, timestamps
 from apollo.datasets.solar import ATHENS_LATLON
 
 
 def _datestring_to_posix(date_string):
-    timestring = pd.to_datetime(date_string, utc=True).timestamp()
+    timestring = timestamps.utc_timestamp(date_string).timestamp()
     return int(timestring * 1000)  # convert to milliseconds
 
 
 def _format_date(date_string):
-    dt = pd.to_datetime(date_string, utc=True)
+    dt = timestamps.utc_timestamp(date_string)
     return dt.strftime('%Y-%m-%dT%X')
 
 
@@ -94,7 +93,7 @@ def write_json(forecast, reftime, source, name, description,
         'targets': ','.join(forecast.columns),
         'location': location,
         'created': _datestring_to_posix('now'),
-        'reftime': _datestring_to_posix(pd.Timestamp(reftime)),
+        'reftime': _datestring_to_posix(timestamps.utc_timestamp(reftime)),
         'start': _datestring_to_posix(forecast.first_valid_index()),
         'stop': _datestring_to_posix(forecast.last_valid_index()),
         'columns': columns,
