@@ -19,6 +19,8 @@ dependencies:
     - scikit-learn
     - xgboost
     - requests
+    - pvlib-python
+    - siphon
 
     # Documentation
     - sphinx
