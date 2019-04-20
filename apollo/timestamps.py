@@ -33,7 +33,7 @@ def utc_timestamp(*args, **kwargs):
     else:
         ts_input = None
 
-    ts = Timestamp(*args, **kwargs)
+    ts = pd.Timestamp(*args, **kwargs)
 
     # - When the timestamp is tz-aware, we convert it to UTC.
     # - When the timestamp is tz-naive but explict, we localize it to UTC.
