@@ -7,7 +7,7 @@ import shutil
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_absolute_error
 
-from apollo import models, storage, timestamps
+from apollo import storage, timestamps
 from apollo.datasets import ga_power
 from apollo.datasets.nam import CacheMiss
 
