@@ -198,11 +198,16 @@ def load_targets(target, start, stop, target_hours):
     '''
     # Normalize the target_hours to a list,
     target_hours = list(target_hours)
+    max_target_hour = max(target_hours)
 
     # Load the raw target data, corresponding to a 0 hour prediction.
     # Note that 'target_hour' is a non-dimension coordinate. We later
     # use `DataArray.expan_dims` to promote it to a dimension.
-    target_data_raw = ga_power.open_sqlite(target, start=start, stop=stop)
+    target_data_raw = ga_power.open_sqlite(
+        target,
+        start=start,
+        stop=stop + pd.Timedelta(max_target_hour, 'h')
+    )
     target_data_raw['target_hour'] = 0
 
     # Create a DataArray for each target hour.
@@ -222,7 +227,7 @@ def load_targets(target, start, stop, target_hours):
             x.attrs[attr] = deepcopy(x.attrs[attr])
 
         # lag target values
-        x['reftime'] -= np.timedelta64(int(hour), 'h')
+        x['reftime'] -= pd.Timedelta(int(hour), 'h')
         x['target_hour'] = hour
         x = x.expand_dims('target_hour', 1)
         target_data_arrays.append(x)
