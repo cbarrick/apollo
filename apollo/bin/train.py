@@ -19,11 +19,12 @@ def main(argv=None):
     )
 
     parser.add_argument(
-        '--hyper',
+        '--set',
         metavar='KEY=VALUE',
         type=str,
         action='append',
         default=[],
+        dest='kwrags',  # Note that this is parsed into ``args.kwargs``.
         help='set a hyper-parameter for the model, may be specified multiple times',
     )
 
@@ -47,7 +48,7 @@ def main(argv=None):
     classes = {model.__name__: model for model in list_known_models()}
 
     ModelClass = classes[args.model]
-    kwargs = dict(pair.split('=') for pair in args.hyper)
+    kwargs = dict(pair.split('=') for pair in args.kwargs)
     first = timestamps.utc_timestamp(args.range[0]).floor('6h')
     last = timestamps.utc_timestamp(args.range[1]).floor('6h')
 
