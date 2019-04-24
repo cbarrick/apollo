@@ -15,7 +15,6 @@ We run a cron job similar to the following to sync the local store:
 
 import argparse
 import logging
-import sys
 import textwrap
 
 import pandas as pd
