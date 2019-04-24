@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="text/javascript" src="https://www.google.com/jsapi?autoload={
+                'modules':[{
+                'name':'visualization',
+                'version':'1',
+                'packages':['corechart','table']
+                }]
+        }"></script>
+ 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<script type="text/javascript" src="explorer_ui_schema.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<script src="date_utils.js" type="text/javascript"></script>
+	<script src="explorer_ui.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="explorer.css"/>
+    </head>
+    <body onload="initSources();">
+        <div id="thecontainer" class="container">
+            <header>
+                <h1>Apollo Data Explorer</h1>
+            </header>
+            <nav id="nav_div">
+
+			<div id="widgets_bar">
+
+
+
+			<div class="param_header">Source</div>			
+			<div>
+			 <select id="source_sel" name="source_sel", onchange="selectSource();"></select>
+			</div>
+						
+			<div id="sources"></div>
+
+                    <div class="param_header">Start Date</div>
+		    <div>
+			<input type="text" id="startdate">
+		    </div>
+                    <div class="param_header">Start Hour</div>
+		    <div>
+			 <select id="starthour" name="starthour">
+				<option value="0" selected>0</option>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+				<option value="11">11</option>
+				<option value="12">12</option>
+				<option value="13">13</option>
+				<option value="14">14</option>
+				<option value="15">15</option>
+				<option value="16">16</option>
+				<option value="17">17</option>
+				<option value="18">18</option>
+				<option value="19">19</option>
+				<option value="20">20</option>
+				<option value="21">21</option>
+				<option value="22">22</option>
+				<option value="23">23</option>
+                        </select>
+		    </div>
+                    <div class="param_header">Stop Date</div>
+		    <div>
+			<input type="text" id="stopdate">
+		    </div>
+                    <div class="param_header">Stop Hour</div>
+		    <div>
+			 <select id="stophour" name="stophour">
+				<option value="0" selected>0</option>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+				<option value="11">11</option>
+				<option value="12">12</option>
+				<option value="13">13</option>
+				<option value="14">14</option>
+				<option value="15">15</option>
+				<option value="16">16</option>
+				<option value="17">17</option>
+				<option value="18">18</option>
+				<option value="19">19</option>
+				<option value="20">20</option>
+				<option value="21">21</option>
+				<option value="22">22</option>
+				<option value="23">23</option>
+                        </select>
+		    </div>
+
+					<div class="update_div">
+                        <button id="updatebutton" onclick="runQuery()">Run Query</button>
+                    </div>
+                </div>
+				
+				      <div id="widgets_bar">
+
+    		    <div class="param_header">Result Format</div>
+                    <div>
+                        <select id="chartSelect" name="chartSelect">
+							<option value="line" selected>Line Chart</option>
+							<option value="area">Area Chart</option>
+							<option value="column">Column Chart</option>
+							<option value="scatter">Scatter Chart</option>
+							<option value="stepped">Stepped Chart</option>
+							<option value="histogram">Histogram</option>
+							<option value="table">Table</option>
+                        </select>
+					</div>
+				 <div class="param_header">Show/Hide</div>
+                    <div>
+                        <select id="showHide" name="showHide" multiple></select>
+					</div>
+					<div class="param_header">Date/Time Format</div>
+					<div>
+                        <select id="timezoneSelect" name="timezoneSelect">
+							<option value="local" selected>Local</option>
+							<option value="utc">UTC</option>
+							<option value="unix">Integer (Unix Time)</option>
+                        </select>
+                    </div>										
+					
+					<div class="update_div">
+                        <button id="refreshbutton" onclick="refreshChart()">Refresh Output</button>
+                    </div>
+					<div class="update_div">
+                       <span  id="outfile_span"></span>
+                    </div>
+
+					
+					</div>
+
+            </nav>
+		<article id="results_container">
+		<div id="results_title"></div>
+		<div id="results_note"></div>
+		<div id="results_div"></div>
+		<div id='png'></div>
+		</article>
+           <footer>The University of Georgia</footer>
+	    <div id="error_container"><span id="status_msg"></span></div>
+        </div>
+    </body>
+</html>
+
+
+  

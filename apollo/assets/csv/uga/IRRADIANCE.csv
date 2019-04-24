@@ -1,0 +1,37 @@
+index,label,description,units,sql_datatype,type,hidden
+1,TIMESTAMP,Unix integer timestamp,s,INTEGER,datetime,TRUE
+2,YEAR,Year of the observation,,INTEGER,number,TRUE
+3,MONTH,Month (1-12) of the observation,,INTEGER,number,TRUE
+4,DAY,Day of the month,,INTEGER,number,TRUE
+5,HOUR,Hour (0-23) of the observation,,INTEGER,number,TRUE
+6,MINUTE,Minute of the Hour (0-59),,INTEGER,number,TRUE
+7,DAYOFYEAR,Day of the Year,,INTEGER,number,TRUE
+8,CODE1,System Code 1 (not used in database),,REAL,number,TRUE
+9,CODE2,System Code 2 (not used in database),,REAL,number,TRUE
+10,CODE3,System Code 3 (not used in database),,REAL,number,TRUE
+11,UGAAPOA1IRR,Pyranometer PYR01: Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+12,UGAAPOA2IRR,Pyranometer PYR02: LICOR - Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+13,UGAAPOA3IRR,Pyranometer PYR03: LICOR  Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+14,UGAAPOAREFIRR,Reference Cell: Plane of Array Irradiance,w/m2,REAL,number,FALSE
+15,UGABPOA1IRR,Pyranometer PYR01: Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+16,UGABPOA2IRR,Pyranometer PYR02: LICOR - Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+17,UGABPOA3IRR,Pyranometer PYR03: LICOR  Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+18,UGABPOAREFIRR,Reference Cell: Plane of Array Irradiance,w/m2,REAL,number,FALSE
+19,UGADPOA1IRR,Pyranometer PYR01: Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+20,UGADPOA2IRR,Pyranometer PYR02: LICOR - Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+21,UGADPOA3IRR,Pyranometer PYR03: LICOR  Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+22,UGADPOAREFIRR,Reference Cell: Plane of Array Irradiance,w/m2,REAL,number,FALSE
+23,UGACPOA1IRR,Pyranometer PYR01: Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+24,UGACPOA2IRR,Pyranometer PYR02: LICOR - Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+25,UGACPOA3IRR,Pyranometer PYR03: LICOR  Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+26,UGACPOAREFIRR,Reference Cell: Plane of Array Irradiance,w/m2,REAL,number,FALSE
+27,UGAEPOA1IRR,Pyranometer PYR01: Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+28,UGAEPOA2IRR,Pyranometer PYR02: LICOR - Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+29,UGAEPOA3IRR,Pyranometer PYR03: LICOR  Irradiance - Instantaneous - Plane of Array Value - from Logger,w/m2,REAL,number,FALSE
+30,UGAEPOAREFIRR,Reference Cell: Plane of Array Irradiance,w/m2,REAL,number,FALSE
+31,UGAMET01POA1IRR,Pyranometer PYR01: Irradiance - Instantaneous - Global Horiyontal Value - from Logger,w/m2,REAL,number,FALSE
+32,UGAMET01POA2IRR,Pyranometer PYR02: Irradiance - Instantaneous - Global Horiyontal Value - from Logger,w/m2,REAL,number,FALSE
+33,UGAMET02GHIIRR,Solys 2: Global Horiyontal Irradiance,w/m2,REAL,number,FALSE
+34,UGAMET02DHIIRR,Solys 2: Diffuse Irradiance,w/m2,REAL,number,FALSE
+35,UGAMET02DNIIRR,Solys 2: Direct Normal Irradiance,w/m2,REAL,number,FALSE
+36,UGAMET02FIRIRR,Solys 2: Far Infrared Irradiance,w/m2,REAL,number,FALSE
