@@ -183,9 +183,13 @@ def open_sqlite(*cols, start, stop):
     params = [unix_start, unix_stop]
 
     # load data and aggregate by hour
-    df = pd.read_sql_query(sql=query, con=connection, params=params, index_col='reftime', parse_dates=['reftime'])
+    df = pd.read_sql_query(
+        sql=query,
+        con=connection,
+        params=params,
+        index_col='reftime',
+        parse_dates=['reftime'])
     df = df.dropna()
-    df.index = pd.to_datetime(df.index, unit='s')  # timestamp index is unix epoch (in seconds)
 
     # clip into selected date range
     df = df[start:stop]
