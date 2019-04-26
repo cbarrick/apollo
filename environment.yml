@@ -1,8 +1,5 @@
 name: apollo
 
-channels:
-    - conda-forge
-
 dependencies:
     # Core stack
     - python>=3.6
@@ -11,8 +8,6 @@ dependencies:
     - matplotlib
     - cartopy
     - pandas
-    - dask
-    - dask-ml
     - xarray>=0.10
     - netcdf4
     - pynio
