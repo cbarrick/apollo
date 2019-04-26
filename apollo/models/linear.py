@@ -30,8 +30,8 @@ class SVR(ScikitModel):
     @property
     def default_hyperparams(self):
         return {
-            'C': 1.4,
-            'epsilon': 0.6,
+            'C': 1200,
+            'epsilon': 2,
             'kernel': 'rbf',
-            'gamma': 0.001
+            'gamma': 9e-05
         }
