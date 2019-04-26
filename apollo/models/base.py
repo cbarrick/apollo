@@ -150,7 +150,8 @@ class Model(abc.ABC):
         ground_truth = ga_power.open_sqlite(
             self.target,
             start=first,
-            stop=targets_last).to_dataframe()
+            stop=targets_last
+        ).to_dataframe().tz_localize(tz='UTC')
 
         ground_truth.rename(
             columns={ground_truth.columns[0]: 'true_val'},
