@@ -15,9 +15,7 @@ We run a cron job similar to the following to sync the local store:
 
 import argparse
 import logging
-import multiprocessing as mp
-import sys
-from pathlib import Path
+import textwrap
 
 import pandas as pd
 
@@ -25,65 +23,121 @@ from apollo import storage, timestamps
 from apollo.datasets import nam
 
 
-def xrange_inclusive(start, stop, step):
-    '''Like the builtin `range`, but:
-        1. supports arbitrary data types, like datetime64, and
-        2. is an inclusive range
+def reftimes(args):
+    '''Iterate over the reftimes specified by the command-line arguments.
+
+    Yields:
+        Timestamp:
+            A timestamp for the reftime.
     '''
-    while start <= stop:
-        yield start
-        start += step
+    # The ``reftime`` mode gives a single reftime.
+    if args.reftime is not None:
+        reftime = timestamps.utc_timestamp(args.reftime)
+        logging.info(f'selected the forecast for reftime {reftime}')
+        yield reftime
+
+    # The ``range`` mode gives the reftime between two inclusive endpoints.
+    elif args.range is not None:
+        start = timestamps.utc_timestamp(args.range[0])
+        stop = timestamps.utc_timestamp(args.range[1])
+        step = pd.Timedelta(6, 'h', tz='utc')
+        logging.info(f'selected the forecasts between {start} and {stop} (inclusive)')
+        while start <= stop:
+            yield start
+            start += step
+
+    # The ``count`` mode downloads the N most recent reftimes.
+    elif args.count is not None:
+        n = args.count
+        reftime = timestamps.utc_timestamp('now').floor('6h')
+        step = pd.Timedelta(6, 'h', tz='utc')
+        logging.info(f'selected the {n} most recent forecasts (ending at {reftime})')
+        for _ in range(n):
+            yield reftime
+            reftime -= step
+
+    # The default is to use the most recent reftime.
+    else:
+        reftime = timestamps.utc_timestamp('now').floor('6h')
+        logging.info(f'selected the most recent forecast ({reftime})')
+        yield reftime
 
 
-if __name__ == '__main__':
-    # Note that the `--from` argument is parsed into `args.start`
-    parser = argparse.ArgumentParser(description='Download NAM forecasts between two times, inclusive.')
-    parser.add_argument('-x', '--fail-fast', action='store_true', help='Do not retry downloads.')
-    parser.add_argument('-k', '--keep-gribs', action='store_true', help='Do not delete grib files.')
-    parser.add_argument('-d', '--dest', type=str, help='Path to the data store, overriding the APOLLO_DATA env var.')
-    parser.add_argument('-p', '--procs', type=int, default=1, help='Use this many download processes. Defaults to 1.')
-    parser.add_argument('-n', '--count', type=int, help='Download this many forecasts, ending at the reftime.')
-    parser.add_argument('-r', '--from', type=str, dest='start', help='Download multiple forecasts starting from this timestamp.')
-    parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
-    parser.add_argument('reftime', nargs='?', default='now', help='The reftime of the forecast as an ISO 8601 timestamp. Defaults to now.')
-    args = parser.parse_args()
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description='Download and process NAM forecasts.',
+        epilog=textwrap.dedent('''\
+        Forecasts are selected by one of --reftime/-t, --range/-r, or --count/-n.
+        If none of those options are provided, the most recent forecast is selected.
+        '''),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
-    logging.basicConfig(format='[{asctime}] {levelname}: {message}', style='{', level=args.log)
-    nam.logger.setLevel(args.log)
+    parser.add_argument(
+        '-x',
+        '--fail-fast',
+        action='store_true',
+        help='do not retry downloads',
+    )
 
-    if args.count and args.start:
-        print('The arguments --count/-n and --from/-r are mutually exclusive.')
-        sys.exit(1)
+    parser.add_argument(
+        '-k',
+        '--keep-gribs',
+        action='store_true',
+        help='do not delete grib files',
+    )
+
+    parser.add_argument(
+        '-s',
+        '--store',
+        help=f'path to the data store (default: {storage.get_root()})',
+    )
+
+    selectors = parser.add_mutually_exclusive_group()
+
+    selectors.add_argument(
+        '-t',
+        '--reftime',
+        metavar='TIMESTAMP',
+        help='download the forecast for the given reftime',
+    )
+
+    selectors.add_argument(
+        '-r',
+        '--range',
+        nargs=2,
+        metavar=('START', 'STOP'),
+        help='download all forecast on this range, inclusive'
+    )
+
+    selectors.add_argument(
+        '-n',
+        '--count',
+        type=int,
+        metavar='N',
+        help='download the N most recent forecasts',
+    )
+
+    args = parser.parse_args(argv)
 
     logging.debug('called with the following options:')
     for arg, val in vars(args).items():
         logging.debug(f'  {arg}: {val}')
 
-    if args.dest:
-        storage.set_root(args.dest)
+    if args.store:
+        storage.set_root(args.store)
 
-    step = pd.Timedelta(6, 'h')
-    stop = timestamps.utc_timestamp(args.reftime).floor('6h')
-    if args.start:
-        start = timestamps.utc_timestamp(args.start).floor('6h')
-    elif args.count:
-        start = stop - (args.count - 1) * step
-    else:
-        start = stop
-
-    logging.info(f'downloading forecasts from {start} to {stop}')
-
-    def download(reftime):
+    for reftime in reftimes(args):
         try:
-            nam.open(reftime, fail_fast=args.fail_fast, keep_gribs=args.keep_gribs)
+            nam.open(
+                reftime,
+                fail_fast=args.fail_fast,
+                keep_gribs=args.keep_gribs,
+            )
         except Exception as e:
             logging.error(e)
             logging.error(f'Could not load data for {reftime}')
 
-    # The argument `maxtasksperchild` causes the worker process to be destroyed
-    # and restarted after fufilling this many tasks. This is defensive against
-    # resource leaks in the NAM loader which may have existed with older xarray
-    # versions.
-    with mp.Pool(args.procs, maxtasksperchild=1) as pool:
-        reftimes = xrange_inclusive(start, stop, step)
-        pool.map(download, reftimes)
+
+if __name__ == '__main__':
+    main()

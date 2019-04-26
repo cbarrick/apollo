@@ -11,30 +11,44 @@ from apollo.datasets import nam
 
 
 def reftimes(args):
-    '''Iterate over the reftime range selected by the command line.
+    '''Iterate over the reftimes specified by the command-line arguments.
+
+    Yields:
+        Timestamp:
+            A timestamp for the reftime.
     '''
-    if args.count and args.start:
-        print('The arguments --count/-n and --from/-r are mutually exclusive.')
-        sys.exit(1)
+    # The ``reftime`` mode gives a single reftime.
+    if args.reftime is not None:
+        reftime = timestamps.utc_timestamp(args.reftime)
+        logging.info(f'selected the forecast for reftime {reftime}')
+        yield reftime
 
-    step = pd.Timedelta(6, 'h')
+    # The ``range`` mode gives the reftime between two inclusive endpoints.
+    elif args.range is not None:
+        start = timestamps.utc_timestamp(args.range[0])
+        stop = timestamps.utc_timestamp(args.range[1])
+        step = pd.Timedelta(6, 'h', tz='utc')
+        logging.info(f'selected the forecasts between {start} and {stop} (inclusive)')
+        while start <= stop:
+            yield start
+            start += step
 
-    stop = timestamps.utc_timestamp(args.reftime).floor('6h')
+    # The ``count`` mode downloads the N most recent reftimes.
+    elif args.count is not None:
+        n = args.count
+        reftime = timestamps.utc_timestamp('now').floor('6h')
+        step = pd.Timedelta(6, 'h', tz='utc')
+        logging.info(f'selected the {n} most recent forecasts (ending at {reftime})')
+        for _ in range(n):
+            yield reftime
+            reftime -= step
 
-    if args.start:
-        start = timestamps.utc_timestamp(args.start).floor('6h')
-    elif args.count:
-        start = stop - (args.count - 1) * step
+    # The default is to use the most recent reftime.
     else:
-        start = stop
+        reftime = timestamps.utc_timestamp('now').floor('6h')
+        logging.info(f'selected the most recent forecast ({reftime})')
+        yield reftime
 
-    size = (stop - start) // step
-
-    logging.debug(f'selected reftimes from {start} to {stop} ({size} forecasts)')
-
-    while start <= stop:
-        yield start
-        start += step
 
 def local_reftimes(args):
     '''Iterate over the reftimes for which we have data.
@@ -73,23 +87,52 @@ def nc_path(reftime):
     return loader.nc_path(reftime)
 
 
-if __name__ == '__main__':
+def main(argv=None):
     # Note that the `--from` argument is parsed into `args.start`
-    parser = argparse.ArgumentParser(description='Check NAM forecasts for join bugs.')
-    parser.add_argument('-d', '--dry-run', action='store_true', help='Do not prompt to fix errors.')
-    parser.add_argument('-s', '--store', type=str, help='Path to the data store.')
-    parser.add_argument('-n', '--count', type=int, help='Check this many forecasts, defaults to 2.')
-    parser.add_argument('-r', '--from', type=str, dest='start', help='Check forecasts starting from this reftime.')
-    parser.add_argument('-l', '--log', type=str, default='INFO', help='Set the log level.')
-    parser.add_argument('reftime', nargs='?', default='now', help='The timestamp to check. Defaults to the most recent.')
-    args = parser.parse_args()
-
-    logging.basicConfig(
-        format='[{asctime}] {levelname}: {message}',
-        style='{',
-        level=args.log.upper(),
+    parser = argparse.ArgumentParser(
+        description='Check NAM forecasts for bugs.'
     )
-    nam.logger.setLevel(args.log.upper())
+
+    parser.add_argument(
+        '-d',
+        '--dry-run',
+        action='store_true',
+        help='identify errors but do not prompt to correct them'
+    )
+
+    parser.add_argument(
+        '-s',
+        '--store',
+        type=str,
+        help=f'path to the data store (default: {storage.get_root()})',
+    )
+
+    selectors = parser.add_mutually_exclusive_group()
+
+    selectors.add_argument(
+        '-t',
+        '--reftime',
+        metavar='TIMESTAMP',
+        help='check the forecast for the given reftime',
+    )
+
+    selectors.add_argument(
+        '-r',
+        '--range',
+        nargs=2,
+        metavar=('START', 'STOP'),
+        help='check all forecast on this range, inclusive'
+    )
+
+    selectors.add_argument(
+        '-n',
+        '--count',
+        type=int,
+        metavar='N',
+        help='check the N most recent forecasts',
+    )
+
+    args = parser.parse_args(argv)
 
     logging.debug('called with the following options:')
     for arg, val in vars(args).items():
@@ -126,3 +169,7 @@ if __name__ == '__main__':
                     ds = ds.drop(diff)
                     ds.to_netcdf(path_a)
                     assert path_a.exists()
+
+
+if __name__ == '__main__':
+    main()

@@ -1,69 +1,63 @@
 import argparse
+import logging
 
-from apollo.models.base import save as save_model, list_known_models
-
-
-def _is_abstract(cls):
-    if not hasattr(cls, "__abstractmethods__"):
-        return False  # an ordinary class
-    elif len(cls.__abstractmethods__) == 0:
-        return False  # a concrete implementation of an abstract class
-    else:
-        return True  # an abstract class
+from apollo import timestamps
+from apollo.models.base import save as save_model
+from apollo.models.base import list_known_models
 
 
-def parse_kwarg_list(kwarg_list):
-    ''' Parses a list of kwargs formatted like "arg=val" 
-    '''
-    return {pair[0]: pair[1] for pair
-            in (kwarg.split('=') for kwarg in kwarg_list)}
-
-
-def main():
-    models = {
-        model.__name__: model
-        for model in list_known_models()
-        if not _is_abstract(model)
-    }
-
+def main(argv=None):
     parser = argparse.ArgumentParser(
-        description='Apollo Model Trainer',
-        argument_default=argparse.SUPPRESS,
+        description='Train a new Apollo model.',
     )
-    # specify the type of model and give it a name
-    parser.add_argument('model', type=str, choices=list(models.keys()),
-                        help='The type of the model to train.')
 
-    # specify the training period
-    parser.add_argument('--start', '-b', default='2017-01-01 00:00', type=str,
-                        help='The first reftime in the training dataset. '
-                             'Any string accepted by pandas\'s Timestamp '
-                             'constructor will work.')
+    parser.add_argument(
+        'model',
+        metavar='MODEL',
+        type=str,
+        help='the class of the model to train',
+    )
 
-    parser.add_argument('--stop', '-e', default='2017-12-31 18:00', type=str,
-                        help='The final reftime in the training dataset. '
-                             'Any string accepted by pandas\'s Timestamp '
-                             'constructor will work.')
+    parser.add_argument(
+        '--set',
+        metavar='KEY=VALUE',
+        type=str,
+        action='append',
+        default=[],
+        dest='kwrags',  # Note that this is parsed into ``args.kwargs``.
+        help='set a hyper-parameter for the model, may be specified multiple times',
+    )
 
-    parser.add_argument('--kwarg', type=str, action='append',
-                        help='Keyword arguments to pass to the model.'
-                             'Should be formatted like '
-                             '"--kwarg arg1=val1 --kwarg arg2=val2 . . ."')
+    selectors = parser.add_mutually_exclusive_group()
 
-    # parse args
-    args = parser.parse_args()
-    args = vars(args)
+    selectors.add_argument(
+        '-r',
+        '--range',
+        nargs=2,
+        metavar=('START', 'STOP'),
+        default=('2017-01-01T00:00', '2017-12-31T18:00'),
+        help='train on all forecast on this range, inclusive'
+    )
 
-    model_classname = args['model']
-    ModelClass = models[model_classname]
+    # TODO: Add more selectors to be consistent with other Apollo CLIs.
+    # This requires our models to be more Scikit-learn compatible (#65).
+    # With multiple selectors, we can't set a default for argparse.
 
-    kwarg_list = args['kwarg'] if 'kwarg' in args else list()
-    kwargs = parse_kwarg_list(kwarg_list)
+    args = parser.parse_args(argv)
 
+    classes = {model.__name__: model for model in list_known_models()}
+
+    ModelClass = classes[args.model]
+    kwargs = dict(pair.split('=') for pair in args.kwargs)
+    first = timestamps.utc_timestamp(args.range[0]).floor('6h')
+    last = timestamps.utc_timestamp(args.range[1]).floor('6h')
+
+    logging.info(f'Constructing {args.model} with kwargs: {kwargs}')
     model = ModelClass(**kwargs)
-    model.fit(first=args['start'], last=args['stop'])
+    model.fit(first, last)
+
+    logging.info(f'Saving model with name "{model.name}"')
     save_model(model)
-    print(f'Model saved under name "{model.name}"')
 
 
 if __name__ == '__main__':

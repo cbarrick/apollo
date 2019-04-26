@@ -4,22 +4,22 @@ from apollo.models.base import list_trained_models
 from apollo.models.base import delete as delete_model
 
 
-def main():
-    model_names = list_trained_models()
+def main(argv=None):
     parser = argparse.ArgumentParser(
-        description='Apollo Model Deleter',
-        argument_default=argparse.SUPPRESS,
+        description='Delete a trained model.',
     )
-    # specify the type of model and give it a name
-    parser.add_argument('name', type=str, choices=model_names,
-                        help='The name of the saved model you wish to delete')
 
-    # parse args
-    args = parser.parse_args()
-    args = vars(args)
+    parser.add_argument(
+        'model',
+        type=str,
+        metavar='MODEL',
+        help='the name of the model',
+    )
 
-    delete_model(args['name'])
+    args = parser.parse_args(argv)
+
+    delete_model(args.model)
 
 
 if __name__ == '__main__':
-    main()
+    main(argv)
