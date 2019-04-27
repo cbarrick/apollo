@@ -11,11 +11,11 @@
     model at its core. This version of the NAM is also known as the NAM
     Non-hydrostatic Mesoscale Model (NAM-NMM).
 
-Most users will be interested in the :func:`open`, :func:`open_local`, and
-:func:`open_range` functions which select forecasts by reference time. The
-actual data loading logic is encapsulated in the :class:`NamLoader` class.
+Most users will be interested in the :func:`open`, and :func:`open_range`
+functions which select forecasts by reference time. The actual data
+loading logic is encapsulated by the :class:`NamLoader` class.
 
-The dataset live remotely. A live feed is provided by NCEP and an 11
+The dataset lives remotely. A live feed is provided by NCEP and an 11
 month archive is provided by NCDC (both are divisions of NOAA). This
 module caches the data locally, allowing us to build a larger archive.
 The remote dataset is provided in GRIB format, while this module uses
@@ -76,72 +76,72 @@ NAM218_PROJ = ccrs.LambertConformal(
 )
 
 
-def open(*reftimes, **kwargs):
-    '''Load and combine forecasts for some reference times,
-    downloading and preprocessing GRIBs as necessary.
-
-    If the dataset exists as a local netCDF file, it is loaded and
-    returned. Otherwise, any missing GRIB files are downloaded and
-    preprocessed into an :class:`xarray.Dataset`. The dataset is then
-    saved as a netCDF file, the GRIBs are deleted, and the dataset is
-    returned.
+def open(reftimes='now', on_miss='raise', **kwargs):
+    '''Open the forecasts for the given reference times.
 
     Arguments:
-        *reftimes (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
-            The reference times to open. If none are given, the current
-            forecast period is used.
+        reftimes (timestamp or sequence):
+            The reference time(s) to open. The default is to load the most
+            recent forecast.
+        on_miss (str):
+            Determines the behavior on a cache miss:
+            - ``'raise'``: Raise a :class:`CacheMiss` exception.
+            - ``'download'``: Attempt to download the forecast.
+            - ``'skip'``: Skip missing forecasts.
         **kwargs:
-            Forwarded to :class:`NamLoader`.
+            Forwarded to the :class:`NamLoader` constructor.
 
     Returns:
         xarray.Dataset:
-            Returns a single dataset containing all forecasts at the given
-            reference times. Some data may be dropped when combining forecasts.
+            A single dataset containing all forecasts at the given reference
+            times.
     '''
     loader = NamLoader(**kwargs)
     return loader.open(*reftimes)
 
 
-def open_range(start, stop, **kwargs):
-    '''Load and combine forecasts for a range of reference times.
-
-    NOTE: This method only loads data from the local store.
+def open_range(start, stop='now', on_miss='skip', **kwargs):
+    '''Open the forecasts for a range of reference times.
 
     Arguments:
-        start (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+        start (timestamp):
             The first time in the range.
-        stop (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+        stop (timestamp):
             The last time in the range.
+        on_miss (str):
+            Determines the behavior on a cache miss:
+            - ``'raise'``: Raise a :class:`CacheMiss` exception.
+            - ``'download'``: Attempt to download the forecast.
+            - ``'skip'``: Skip missing forecasts.
         **kwargs:
-            Forwarded to :class:`NamLoader`.
+            Forwarded to the :class:`NamLoader` constructor.
 
     Returns:
         xarray.Dataset:
-            Returns a single dataset containing all forecasts at the given
-            reference times. Some data may be dropped when combining forecasts.
+            A single dataset containing all forecasts at the given reference
+            times.
     '''
     loader = NamLoader(**kwargs)
-    return loader.open_range(start, stop)
+    return loader.open_range(start, stop, on_miss=on_miss)
 
-def open_local(reftime='now', **kwargs):
-    '''Load a forecast from netCDF in the local store.
+
+def download(reftime='now', **kwargs):
+    '''Download a forecast for a given reference time.
+
+    The download is skipped for GRIB files in the cache.
 
     Arguments:
-        reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+        reftime (timestamp):
             The reference time to open.
         **kwargs:
-            Forwarded to :class:`NamLoader`.
+            Forwarded to the :class:`NamLoader` constructor.
 
     Returns:
-        ds (xarray.Dataset):
+        xarray.Dataset:
             A dataset for the forecast at this reftime.
-
-    Raises:
-        CacheMiss:
-            An exception is raised if the forecast does not exist locally.
     '''
     loader = NamLoader(**kwargs)
-    return loader.open_local(reftime)
+    return loader.download(reftime=reftime)
 
 
 def proj_coords(lats, lons):
@@ -204,10 +204,17 @@ class NamLoader:
         self.data_dir = storage.get('NAM-NMM')
 
     def grib_url(self, reftime, forecast):
-        '''The URL for a specific forecast.
+        '''The URL to a GRIB for the given reference and forecast times.
+
+        This method resolves the URL from one of two sources. The production
+        NAM forecasts are hosted by the National Centers for Environmental
+        Prediction (NCEP, <https://www.ncep.noaa.gov/>). After seven days, the
+        forecasts are moved to an eleven month archive hosted by the National
+        Climatic Data Center (NCDC, <https://www.ncdc.noaa.gov/>). Older
+        forecasts will resolve to the NCDC URL, but they are unlikely to exist.
 
         Arguments:
-            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+            reftime (timestamp):
                 The reference time.
             forecast (int):
                 The forecast hour.
@@ -226,10 +233,13 @@ class NamLoader:
         return url_fmt.format(ref=reftime, forecast=forecast)
 
     def grib_path(self, reftime, forecast):
-        '''The path for a forecast GRIB.
+        '''The path to a GRIB for the given reference and forecast times.
+
+        GRIB forecasts are downloaded to this path and may be deleted once the
+        forecast is processed into netCDF. This file does not necessarily exist.
 
         Arguments:
-            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+            reftime (timestamp):
                 The reference time.
             forecast (int):
                 The forecast hour.
@@ -246,10 +256,13 @@ class NamLoader:
         return self.data_dir / prefix / filename
 
     def nc_path(self, reftime):
-        '''The path to the netCDF forecast for the given reference time.
+        '''The path to a netCDF for the given reference time.
+
+        NetCDF files are generated after forecasts are processed from the raw
+        GRIB data. This file does not necessarily exist.
 
         Arguments:
-            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+            reftime (timestamp):
                 The reference time.
 
         Returns:
@@ -261,11 +274,11 @@ class NamLoader:
         filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
         return self.data_dir / prefix / filename
 
-    def download(self, reftime, forecast, max_tries=8, timeout=10):
+    def _download_grib(self, reftime, forecast, max_tries=8, timeout=10):
         '''Ensure that the GRIB for this reftime and forecast exists locally.
 
         Arguments:
-            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+            reftime (timestamp):
                 The reference time to download.
             forecast (int):
                 The forecast hour to download
@@ -278,8 +291,8 @@ class NamLoader:
                 Note that the government servers can be kinda slow.
 
         Returns:
-            path (pathlib.Path):
-                The path to the downloaded GRIB.
+            xarray.Dataset:
+                The downloaded dataset.
         '''
         if self.fail_fast:
             max_tries = 1
@@ -323,7 +336,8 @@ class NamLoader:
                 path.unlink()
                 raise err
 
-        return path
+        logger.info(f'reading {path}')
+        return xr.open_dataset(path, engine='pynio')
 
     def _process_grib(self, ds, reftime, forecast):
         '''Process a forecast loaded from GRIB.
@@ -338,7 +352,7 @@ class NamLoader:
         Arguments:
             ds (xarray.Dataset):
                 The dataset to process.
-            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
+            reftime (timestamp):
                 The reference time associated with the dataset.
             forecast (int):
                 The forecast hour associated with the dataset.
@@ -507,135 +521,6 @@ class NamLoader:
         ds = xr.decode_cf(ds)
         return ds
 
-    def open_remote(self, reftime='now'):
-        '''Load a forecast from GRIBs, downlading if they do not exist.
-
-        If the loader was initialized with ``save_nc=True`` and
-        ``keep_gribs=False`` (the default), then the resulting forecast is
-        converted to a netCDF file on disk and the GRIB files are discarded.
-
-        Arguments:
-            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
-                The reference time to open.
-
-        Returns:
-            xarray.Dataset:
-                A dataset for the forecast at this reftime.
-        '''
-        datasets = []
-        for forecast in FORECAST_PERIOD:
-            path = self.download(reftime, forecast)
-            logger.info(f'reading {path}')
-            ds = xr.open_dataset(path, engine='pynio')
-            ds = self._process_grib(ds, reftime, forecast)
-            datasets.append(ds)
-        ds = xr.concat(datasets, dim='forecast')
-
-        if self.save_nc:
-            path = self.nc_path(reftime)
-            logger.info(f'writing {path}')
-            ds.to_netcdf(path)
-            if not self.keep_gribs:
-                logger.info('deleting local gribs')
-                for forecast in FORECAST_PERIOD:
-                    path = self.grib_path(reftime, forecast)
-                    path.unlink()
-            ds = self.open_local(reftime)
-
-        return ds
-
-    def open_local(self, reftime='now'):
-        '''Load a forecast from netCDF in the local store.
-
-        Arguments:
-            reftime (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
-                The reference time to open.
-
-        Returns:
-            ds (xarray.Dataset):
-                A dataset for the forecast at this reftime.
-
-        Raises:
-            CacheMiss:
-                An exception is raised if the forecast does not exist locally.
-        '''
-        path = self.nc_path(reftime)
-        if path.exists():
-            logger.info(f'reading {path}')
-            ds = xr.open_dataset(path, chunks={})
-            return ds
-        else:
-            raise CacheMiss(reftime)
-
-    def open(self, *reftimes):
-        '''Load and combine forecasts for some reference times,
-        downloading and preprocessing GRIBs as necessary.
-
-        If the dataset exists as a local netCDF file, it is loaded and
-        returned. Otherwise, any missing GRIB files are downloaded and
-        preprocessed into an xarray Dataset. The dataset is then saved as a
-        netCDF file, the GRIBs are deleted, and the dataset is returned.
-
-        Arguments:
-            *reftimes (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
-                The reference times to open. If none are given, the current
-                forecast period is used.
-
-        Returns:
-            xarray.Dataset:
-                A single dataset containing all forecasts at the given reference
-                times. Some data may be dropped when combining forecasts.
-        '''
-        def _open(reftime):
-            try:
-                ds = self.open_local(reftime)
-            except CacheMiss:
-                ds = self.open_remote(reftime)
-            return ds
-
-        if len(reftimes) == 0:
-            return _open('now')
-        else:
-            datasets = [_open(r) for r in reftimes]
-            return self._combine(datasets)
-
-    def open_range(self, start, stop):
-        '''Load and combine forecasts for a range of reference times.
-
-        NOTE: This method only loads data from the local store.
-
-        Arguments:
-            start (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
-                The first time in the range.
-            stop (pandas.Timestamp or numpy.datetime64 or datetime.datetime or str):
-                The last time in the range.
-
-        Returns:
-            xarray.Dataset:
-                A single dataset containing all forecasts at the given reference
-                times. Some data may be dropped when combining forecasts.
-        '''
-        start = timestamps.utc_timestamp(start).floor('6h')
-        stop = timestamps.utc_timestamp(stop).floor('6h')
-
-        datasets = []
-        delta = pd.Timedelta(6, 'h')
-        while start < stop:
-            try:
-                ds = self.open_local(start)
-                datasets.append(ds)
-            except OSError as e:
-                logger.warn(f'error reading forecast for {start}')
-                logger.warn(e)
-            except CacheMiss:
-                pass
-            start += delta
-
-        if len(datasets) > 0:
-            return self._combine(datasets)
-        else:
-            raise CacheMiss(f'{start} through {stop}')
-
     def _combine(self, datasets):
         '''Combine a list of datasets.
 
@@ -673,3 +558,122 @@ class NamLoader:
         ds = xr.concat(datasets, dim='reftime')
         ds = ds.assign_coords(**coords)
         return ds
+
+
+    def download(self, reftime='now', save_nc=None, keep_gribs=None):
+        '''Download a forecast for a given reference time.
+
+        The download is skipped for GRIB files in the cache.
+
+        Arguments:
+            reftime (timestamp):
+                The reference time to open.
+            save_nc (bool or None):
+                Whether to save the processed forecast in the cache as a netCDF.
+                The default is to defer to the ``save_nc`` property of the
+                :class:`NamLoader`.
+            keep_gribs (bool or None):
+                Whether to save the raw forecast in the cache as a set of GRIBs.
+                The default is to defer to the ``keep_gribs`` property of the
+                :class:`NamLoader`.
+
+        Returns:
+            xarray.Dataset:
+                A dataset for the forecast at this reftime.
+        '''
+        if save_nc is None: save_nc = self.save_nc
+        if keep_gribs is None: keep_gribs = self.keep_gribs
+
+        datasets = []
+        for forecast in FORECAST_PERIOD:
+            ds = self._download_grib(reftime, forecast)
+            ds = self._process_grib(ds, reftime, forecast)
+            datasets.append(ds)
+        ds = self._combine(datasets)
+
+        if save_nc:
+            path = self.nc_path(reftime)
+            logger.info(f'writing {path}')
+            ds.to_netcdf(path)
+
+        if not keep_gribs:
+            for forecast in FORECAST_PERIOD:
+                path = self.grib_path(reftime, forecast)
+                logger.info(f'deleting {path}')
+                path.unlink()
+
+        return ds
+
+    def open(self, reftimes='now', on_miss='raise'):
+        '''Open the forecasts for the given reference times.
+
+        Arguments:
+            reftimes (timestamp or sequence):
+                The reference time(s) to open. The default is to load the most
+                recent forecast.
+            on_miss (str):
+                Determines the behavior on a cache miss:
+                - ``'raise'``: Raise a :class:`CacheMiss` exception.
+                - ``'download'``: Attempt to download the forecast.
+                - ``'skip'``: Skip missing forecasts. This mode will raise a
+                  :class:`CacheMiss` exception if no forecasts are found for
+                  the query.
+
+        Returns:
+            xarray.Dataset:
+                A single dataset containing all forecasts at the given reference
+                times.
+        '''
+        # ``reftimes`` may be a single timestamp or a collection of timestamps.
+        # We must ensure that it is an iterable going forward.
+        try:
+            reftimes = [timestamps.utc_timestamp(reftimes).floor('6h')]
+        except TypeError:
+            reftimes = (
+                timestamps.utc_timestamp(r).floor('6h')
+                for r in reftimes
+            )
+
+        datasets = []
+        for reftime in reftimes:
+            path = self.nc_path(reftime)
+            if path.exists():
+                logger.info(f'reading {path}')
+                ds = xr.open_dataset(path, chunks={})
+                datasets.append(ds)
+            elif on_miss == 'download':
+                ds = self.download(reftime)
+                datasets.append(ds)
+            elif on_miss == 'skip':
+                continue
+            else:
+                raise CacheMiss(f'Missing forecast for reftime {reftime}')
+
+        if len(datasets) == 0:
+            raise CacheMiss('No applicable forecasts were found')
+
+        return self._combine(datasets)
+
+    def open_range(self, start, stop='now', on_miss='skip'):
+        '''Open the forecasts for a range of reference times.
+
+        Arguments:
+            start (timestamp):
+                The first time in the range.
+            stop (timestamp):
+                The last time in the range.
+            on_miss (str):
+                Determines the behavior on a cache miss:
+                - ``'raise'``: Raise a :class:`CacheMiss` exception.
+                - ``'download'``: Attempt to download the forecast.
+                - ``'skip'``: Skip missing forecasts.
+
+        Returns:
+            xarray.Dataset:
+                A single dataset containing all forecasts at the given reference
+                times.
+        '''
+        start = timestamps.utc_timestamp(start).floor('6h')
+        stop = timestamps.utc_timestamp(stop).floor('6h')
+        reftimes = pd.date_range(start, stop, freq='6h')
+        return self.open(reftimes, on_miss=on_miss)

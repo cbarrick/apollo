@@ -55,7 +55,7 @@ def local_reftimes(args):
     '''
     for reftime in reftimes(args):
         try:
-            nam.open_local(reftime)
+            nam.open(reftime)
         except nam.CacheMiss:
             continue
         yield reftime
@@ -70,10 +70,10 @@ def dataset_pairs(args):
     while True:
         try:
             b = next(it)
-            data_a, data_b = nam.open_local(a), nam.open_local(b)
+            data_a, data_b = nam.open(a), nam.open(b)
             yield data_a, data_b
             data_a.close(); data_b.close()
-            data_a, data_b = nam.open_local(a), nam.open_local(b)
+            data_a, data_b = nam.open(a), nam.open(b)
             yield data_b, data_a
             a = b
         except StopIteration:
