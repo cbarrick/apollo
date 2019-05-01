@@ -1,1 +1,0 @@
-The solar_farm.db database should go in this directory. 
