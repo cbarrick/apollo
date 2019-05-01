@@ -1,10 +1,11 @@
 import argparse
 import logging
-import pkg_resources
 from pathlib import Path
-import webbrowser
 import threading
+from waitress import serve
+import webbrowser
 
+from apollo.server.solarserver import ServerConfig, setup_solar_server
 import apollo.storage
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ def main(argv=None):
         '--html',
         metavar='HTML_DIR',
         type=str,
-        default='',
+        default=apollo.storage.get('assets/html'),
         help='The directory containing html and static files.'
     )
 
@@ -44,24 +45,16 @@ def main(argv=None):
         '--dbdir',
         metavar='DB_DIR',
         type=str,
-        default=apollo.storage.get('GA-POWER'),
-        help='The directory storing the sqlite database(s) to use.'
+        default=apollo.storage.get('assets/db'),
+        help='The directory storing the schema descriptions.'
     )
 
     parser.add_argument(
         '--dbfile',
         metavar='DB_FILE',
         type=str,
-        default='solar_farm.sqlite',
+        default=apollo.storage.get('GA-POWER') / 'solar_farm.sqlite',
         help='The default database file to use.'
-    )
-
-    parser.add_argument(
-        '--dburl',
-        metavar='dburl',
-        type=str,
-        default='/apollo',
-        help='The URL to bind to database queries.'
     )
 
     parser.add_argument(
@@ -81,18 +74,29 @@ def main(argv=None):
     )
     logger.setLevel(args.log)
 
-    # TODO: see if we can get rid of this and just use pkg_resources to access static html assets
-    html_directory = pkg_resources.resource_filename('apollo.assets.html', '/')
-    print(html_directory)
-
+    html_directory = args.html
     db_directory = Path(str(args.dbdir).replace("'", '').replace('"', ''))
-    db_filepath = db_directory / args.dbfile
+    db_filepath = args.dbfile
 
     logging.info('Server started with args:')
     for arg, val in vars(args).items():
         logging.info(f'  {arg}: {val}')
 
-    # TODO: start server
+    cfg = ServerConfig(
+        html_dir=html_directory,
+        db_dir=db_directory,
+        db_filepath=db_filepath)
+
+    # open a webbrowser on the data explorer index page
+    try:
+        threading.Timer(4, lambda: webbrowser.open(
+            "http://" + args.host + ":" + str(args.port) + "/html/index.html",
+            new=2)).start()
+    except:
+        pass
+
+    app = setup_solar_server(cfg)
+    serve(app, host=args.host, port=args.port)
 
 
 if __name__ == '__main__':
