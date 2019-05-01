@@ -1,4 +1,4 @@
-"""Defines routines for retrieving or creating information (schemas) describing 
+"""Defines routines for retrieving or creating information (schemas) describing
 the databases used by the Apollo web-front end. 
 
 The data explorer of Apollo allows users to explore historical data stored in relational databases. 
@@ -148,20 +148,20 @@ import sqlite3
 
 logger = logging.getLogger(__name__)
 
-NAME_KEY =   "name"
-TABLES_KEY = "tables";
-COL_KEY =    "columns"
-INDEX_KEY =   "index"
-LABEL_KEY =  "label";
-DESCRIPTION_KEY = "description";
-UNITS_KEY =  "units";
-CHART_DATATYPE_KEY = "type";
-HIDDEN_KEY =  "hidden";
+NAME_KEY =   'name'
+TABLES_KEY = 'tables'
+COL_KEY =    'columns'
+INDEX_KEY =   'index'
+LABEL_KEY =  'label'
+DESCRIPTION_KEY = 'description'
+UNITS_KEY =  'units'
+CHART_DATATYPE_KEY = 'type'
+HIDDEN_KEY =  'hidden'
 
 # lazily store generated schema dictionaries (key indicates the schema)
 schema_dict = {}
-
 SOURCES = None
+
 
 def extract_csv_schema(working_dir, outfile=None, name="", desc=""):
     """Process ``csv`` files in the given directory, returning a Python dictionary.
@@ -184,20 +184,21 @@ def extract_csv_schema(working_dir, outfile=None, name="", desc=""):
     source_schema = {}
     source_schema[NAME_KEY] = name
     source_schema[DESCRIPTION_KEY] = desc
-    
+
     schema_list = {}
 
     for root, dirs, files in os.walk(working_dir):
-            for filename in files:
-                if filename.endswith('.csv'):
-                    name = filename.replace('.csv','')
-                    schema = _extract_table_schema_from_csv(name, working_dir+filename)
-                    schema_list[name] = schema
+        for filename in files:
+            if filename.endswith('.csv'):
+                name = filename.replace('.csv','')
+                schema = _extract_table_schema_from_csv(name, working_dir+filename)
+                schema_list[name] = schema
     source_schema[TABLES_KEY] = schema_list
     if outfile:
         with open(outfile, 'w') as outf:
             json.dump(source_schema, outf,indent=2)
     return source_schema
+
 
 def _extract_table_schema_from_csv(name, filename):
     """Creates a dictionary from a ``csv`` file. Rows become entries in the dictionary. 
@@ -210,7 +211,7 @@ def _extract_table_schema_from_csv(name, filename):
         dict:
             A dictionary encoding the csv file contents. 
     """
-    df = pd.read_csv(filename, dtype=str, keep_default_na=False) 
+    df = pd.read_csv(filename, dtype=str, keep_default_na=False)
     df1 = df.to_dict(orient='records')
     schema = {}
     schema[LABEL_KEY]  = name;
@@ -222,8 +223,7 @@ def _extract_table_schema_from_csv(name, filename):
             temp_dict[ekey] = entry[ekey]
         columns[key] = temp_dict
     schema[COL_KEY] = columns
-    return schema       
-
+    return schema
 
 
 def extract_db_schema(file, outfile=None, name="", desc=""):
@@ -240,12 +240,12 @@ def extract_db_schema(file, outfile=None, name="", desc=""):
         dict:
             A dictionary encoding the database schemaa. 
     """
-    
+
     # 
     source_schema = {}
     source_schema[NAME_KEY] = name
     source_schema[DESCRIPTION_KEY] = desc
-    
+
     schema_list = {}
     try:
         conn = sqlite3.connect(file)
@@ -267,9 +267,10 @@ def extract_db_schema(file, outfile=None, name="", desc=""):
         if outfile:
             with open(outfile, 'w') as outf:
                 json.dump(source_schema, outf,indent=2)
-    except: 
+    except:
         raise Exception(f"Problem extacting schema: {file}")
     return source_schema
+
 
 def _process_db_table_columns(table, column_data):
     """Given a table of column data for a table, generate a dictionary 
@@ -300,14 +301,14 @@ def _process_db_table_columns(table, column_data):
     columns = {}
     for column in column_data:
         temp_dict = {
-                "index": column[0],
-                "label": column[1],
-                "description": column[1],
-                "units": "",
-                "sql_datatype": column[2],
-                "type": "number",
-                "hidden": "FALSE"
-                }
+            "index": column[0],
+            "label": column[1],
+            "description": column[1],
+            "units": "",
+            "sql_datatype": column[2],
+            "type": "number",
+            "hidden": "FALSE"
+        }
         columns[column[1]] = temp_dict
     schema[COL_KEY] = columns
     return schema
@@ -336,7 +337,7 @@ def get_schema_data(schema_dir, schema, table, attribute):
         dict:
             A dictionary encoding metadata on the specified table column. 
     """
-    global schema_dict 
+    global schema_dict
     if schema not in schema_dict:
         sfile = schema+".json"
         try:
@@ -349,11 +350,12 @@ def get_schema_data(schema_dir, schema, table, attribute):
     except Exception as e:
         logger.error(f"Problem getting schema data for {schema}. {e} ")
         metadata = {
-                            LABEL_KEY:attribute,
-                            UNITS_KEY:"",
-                            DESCRIPTION_KEY:attribute,
-                            CHART_DATATYPE_KEY:"number"}
+            LABEL_KEY: attribute,
+            UNITS_KEY: '',
+            DESCRIPTION_KEY: attribute,
+            CHART_DATATYPE_KEY: 'number'}
         return metadata
+
 
 def get_schema(schema_dir, schema):
     """Returns a dictionary encoding a data source schema.
@@ -374,7 +376,7 @@ def get_schema(schema_dir, schema):
         dict:
             A dictionary encoding the schema. 
     """
-    global schema_dict 
+    global schema_dict
     try:
         if schema not in schema_dict:
             sfile = schema+".json"
@@ -383,6 +385,7 @@ def get_schema(schema_dir, schema):
     except Exception as e:
         logger.error(f"Problem getting schema data for {schema}. {e} ")
         return None
+
 
 def get_source_ui_schema(working_dir, schema=None,source=None):
     """Returns a dictionary encoding a data source schema, specifically for use in 
@@ -410,23 +413,24 @@ def get_source_ui_schema(working_dir, schema=None,source=None):
         elif schema:
             json = get_schema(working_dir, schema)
         # if it's found, return a result dictionary encoding the schema.            
-        if json:            
+        if json:
             result = {}
-            result[NAME_KEY] = json[NAME_KEY] 
+            result[NAME_KEY] = json[NAME_KEY]
             result[DESCRIPTION_KEY] =  json[DESCRIPTION_KEY]
             result[TABLES_KEY] = [{"id":key, "label":json[TABLES_KEY][key][LABEL_KEY]} for key in json[TABLES_KEY]]
             result[COL_KEY] = [
-                    [
-                            {"id": key2, #json[schemas.TABLES_KEY][key][schemas.COL_KEY][key2][schemas.LABEL_KEY], 
-                             "label": json[TABLES_KEY][key][COL_KEY][key2][DESCRIPTION_KEY]} 
-                            for key2 in json[TABLES_KEY][key][COL_KEY] 
-                            if json[TABLES_KEY][key][COL_KEY][key2][HIDDEN_KEY] == "FALSE"] 
-                    for key in json[TABLES_KEY]]
+                [
+                    {"id": key2, #json[schemas.TABLES_KEY][key][schemas.COL_KEY][key2][schemas.LABEL_KEY],
+                     "label": json[TABLES_KEY][key][COL_KEY][key2][DESCRIPTION_KEY]}
+                    for key2 in json[TABLES_KEY][key][COL_KEY]
+                    if json[TABLES_KEY][key][COL_KEY][key2][HIDDEN_KEY] == "FALSE"]
+                for key in json[TABLES_KEY]]
             return result
     except Exception as e:
         logger.error(f"Problem getting schema data for {schema}. {e} ")
         return None
-    
+
+
 def get_sources(schema_dir, file):
     """Return a dictionary encoding a list of data sources. 
     
@@ -458,34 +462,12 @@ def get_sources(schema_dir, file):
         except Exception as e:
             logger.error(str(e))
     return SOURCES
-   
+
+
 def _load_json(schema_file):
     """
     Loads a json file as a python dictionary.. 
     """
-    results = None
     with open(schema_file, 'r') as f:
         results = json.load(f)
     return results
-
-"""
-if __name__ == "__main__":
-
-    working_dir = "I:/Solar Radition Project Data April 2018/dist/schemas/raw_csv/uga/"
-    outfile = working_dir + 'solar_farm.json'
-    extract_csv_schema(working_dir, outfile, name="solar_farm", desc="UGA Solar Farm")
-    
-    working_dir = "I:/Solar Radition Project Data April 2018/dist/schemas/raw_csv/gaemn/"
-    outfile = working_dir + 'gaemn15min.json'
-    extract_csv_schema(working_dir, outfile, name="gaemn15min", desc="GAEMN 15 Minute Observations")
-        
-    '''
-    working_dir = "I:/Solar Radition Project Data April 2018/dist/db/"
-    outfile = working_dir + 'RAWGRIFFIN.db'
-    x = extract_db_schema(outfile, name="griffin", desc="Griffin")
-    print(x)
-    '''
-
-"""    
-    
-        

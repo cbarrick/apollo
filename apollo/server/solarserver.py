@@ -1,5 +1,4 @@
-"""A command line script for running a :mod:`flask` server to respond to HTTP 
-requests.
+''' Tools for running a :mod:`flask` server to respond to HTTP requests.
 
 This is the primary server for handling queries through the Apollo Data Explorer 
 web interface.  Both queries for static files and queries to the solar farm 
@@ -13,35 +12,36 @@ TODO: much of this likely needs to be updated
 
 A sample directory configuration is shown below. ::
 
-    home
+    $APOLLO_DATA/assets
     ├──db
-    │   ├── solar_farm
-    │   │   └── solar_farm.db
+    │   ├── solar_farm_irr
+    │   │   └── solar_farm_1min_irr.db
     │   ├── gaemn15min
-    │   │   ├── ALAPAHA.db
-    │   │   └── GRIFFIN.db
+    │   │   ├── ATTAPUL.db
+    │   │   └── BLAIRSVI.db
     │   ├── sources.json
     │   ├── solar_farm.json
+    │   ├── solar_farm_irr.json
     │   └── gaemn15min.json
     │   
     └──html
-        └── apollo
-            ├── date_utils.js
-            ├── explorer.css
-            ├── explorer.html
-            ├── exlorer_ui.js
-            ├── index.html
-            ├── pvlib.html
-            └── forecasts
-                ├── dtree_2019-03-21 20_39_43.716000.html
-                └── index.html
+        ├── date_utils.js
+        ├── explorer.css
+        ├── explorer.html
+        ├── exlorer_ui.js
+        ├── index.html
+        ├── pvlib.html
+        └── forecasts
+            ├── dtree_2019-03-21 20_39_43.716000.html
+            └── index.html
     
 The ``html`` directory holds static HTML and other files to be served to web 
 clients, while ``db`` holds databases that can be accessed by the Data Explorer. 
-In this case, ``solar_farm.db``, ``ALAPAHA.db``, and ``GRIFFIN.db`` are databases 
-storting historical weather observations. The file ``sources.json`` contains a list of 
-all of the databases, and the Data Explorer uses this list to determine which 
-databases exist and how to access them. 
+In this case, ``solar_farm_1min_irr.db``, ``ATTAPUL.db``, and ``BLAIRSVI.db``
+are databases storting historical weather observations.
+The file ``sources.json`` contains a list of all of the databases,
+and the Data Explorer uses this list to determine which databases exist and
+how to access them.
 
 The format for ``sources.json`` is shown below. Each entry records the name 
 (``id``) of the database file, its file extension, the name of its corresponding 
@@ -52,29 +52,18 @@ are used in the web interface).
 
     [
     {"id":"solar_farm", "ext":".db", "label":"UGA Solar Farm", "schema":"solar_farm", "initial_start": "2017-01-01", "initial_stop": "2017-01-02"},
-    {"id":"ALAPAHA", "ext":".db", "label":"Alapaha", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"},
+    {"id":"ATTAPUL", "ext":".db", "label":"Attapulgus", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"},
     ]
 
-Files ``solar_farm.json`` and ``gaemn15min.json`` are schema files. These store 
-information on the columns in database tables (their names, brief descriptions, their measurement 
-units, etc.) are this information is used to format the results of queries. 
-Each database should be associated with excactly one schema file. The database should be
-stored in a subdirectory with the same name as the schema. 
-See :class:`apollo.server.schemas` for more information. 
+Files ``solar_farm_1min_irr.json`` and ``gaemn15min.json`` are schema files.
+These store information on the columns in database tables
+(their names, brief descriptions, their measurement units, etc.)
+and this information is used to format the results of queries.
+Each database should be associated with exactly one schema file.
+The database should be stored in a subdirectory with the same name as the schema.
+See :class:`apollo.server.schemas` for more information.
 
-When this script is invoked, ``--dbdir``, ``--htmldir``, ``--dburl``, and 
-``--htmlurl`` should all be specified. These specify both the directories and the URL
-context to associated with them.  For instance, if if ``--htmldir c:\\web`` and 
-``--htmlurl /files`` are specified, then  the following URL 
-would (on a Windows machine) retrieve  ``c:\\web\\apollo\\explorer.html``.  
-
-* ``http://127.0.0.1:5000/files/apollo/explorer.html``
-
-If the database url is ``/query``, then 
-any request to ``http://127.0.0.1:5000/query`` would be handled by the Apollo 
-Data Explorer database handling routines.
-
-"""
+'''
 from flask import Flask, request, jsonify, send_from_directory
 from pathlib import Path
 import logging
@@ -259,8 +248,10 @@ def setup_solar_server(cfg):
         try:
             schema = request.args.get("schema", None)
             source = request.args.get("source", None)
-            result = schemas.get_source_ui_schema(cfg.DB_DIR, schema=schema,
-                                                  source=source)
+            result = schemas.get_source_ui_schema(
+                cfg.DB_DIR,
+                schema=schema,
+                source=source)
             return jsonify(result)
         except Exception as e:
             return _handle_bad_request(e)

@@ -318,4 +318,3 @@ class PVLibForecastWrapper():
         if "dhi" == attr:
             return "DHI"
         return str(attr).replace("_"," ").title()
-        
