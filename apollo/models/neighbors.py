@@ -15,6 +15,6 @@ class KNearest(ScikitModel):
     @property
     def default_hyperparams(self):
         return {
-            'n_neighbors': 5,
+            'n_neighbors': 6,
             'weights': 'distance',
         }
