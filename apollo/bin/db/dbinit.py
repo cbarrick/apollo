@@ -29,8 +29,8 @@ If the database file to create already exists, nothing is done.::
     INFO: db initialized...
 
 """
-import apollo.db.converters as converters
-import apollo.db.gaemn as gaemn
+import apollo.datasets.converters as converters
+import apollo.bin.db.gaemn as gaemn
 import argparse
 import logging
 from pathlib import Path

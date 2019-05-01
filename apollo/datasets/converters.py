@@ -126,6 +126,7 @@ database.
 """ 
 import numpy as np
 import pandas as pd
+import pkg_resources
 import os
 import datetime
 import gzip
@@ -150,8 +151,11 @@ def get_create_sql():
     """Read the GAEMN SQL create table script from the assets folder
     """
     global _SQL
-    if _SQL == None:
-        _SQL = assets.get_asset_string(_SOLAR_FARM_SQL)
+    if _SQL is None:
+        _SQL = pkg_resources.resource_string(
+            'apollo',
+            _SOLAR_FARM_SQL
+        ).decode("utf-8")
     return _SQL
 
 

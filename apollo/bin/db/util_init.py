@@ -14,7 +14,7 @@ Users will need to verify that this script is set up correctly to use their
 log files. 
 """
 
-import apollo.db.converters as converters
+import apollo.datasets.converters as converters
 import os
 import logging
 from pathlib import Path

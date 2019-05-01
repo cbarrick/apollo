@@ -79,12 +79,13 @@ Examples
 import sqlite3
 import argparse
 import os
+import pkg_resources
 import pandas as pd
 import numpy as np
 import datetime
 import traceback
 import logging
-import apollo.db.dbapi as dbapi 
+import apollo.datasets.ga_power as ga_power
 import apollo.assets.api as assets
 from pathlib import Path
 
@@ -96,14 +97,18 @@ _SQL = None
 # path to gaemn sql. 
 _GAMEN_SQL = 'assets/sql/gaemn.sql'
 
+
 # The SQL script for creating the database. Observations will be stored 
 # in a table called OBS
 def _get_sql():
     """Read the GAEMN SQL create table script from the assets folder
     """
     global _SQL
-    if _SQL == None:
-        _SQL = assets.get_asset_string(_GAMEN_SQL)
+    if _SQL is None:
+        _SQL = pkg_resources.resource_string(
+            'apollo',
+            _GAMEN_SQL
+        ).decode("utf-8")
     return _SQL
 
 
@@ -279,9 +284,6 @@ def init_db(db_file):
                 pass
     return True
 
-
-
-
   
 def convert_df(df):
     """Process a data frame created from a GAEMN observation file. 
@@ -351,7 +353,7 @@ def create_db(df, dbfile):
         dbfile (str): The database file to create. 
     """    
     try:
-        handler = dbapi.DBHandler(str(dbfile))
+        handler = ga_power.DBHandler(str(dbfile))
         handler.connect()
         handler.executescript(_get_sql(), commit=True)
         handler.insert_dataframe(df, "OBS")
@@ -359,6 +361,7 @@ def create_db(df, dbfile):
     except Exception as e: 
         logger.error(f"Error inserting dataframe into {dbfile}. {e}")
         traceback.print_exc()
+
 
 def _extract_gaemn_date(row):
     """Extract a datetime object from a GAEMN 15 Min observation.
@@ -375,7 +378,8 @@ def _extract_gaemn_date(row):
     """
     tod = _get_hour(row['TIMEOFDAY'])
     return datetime.datetime(_to_int(row['YEAR']),1,1,tzinfo=datetime.timezone(datetime.timedelta(0))) + datetime.timedelta(days=(tod['day'] + _to_int(row['JULIANDAY'])-1), hours=tod['hour'], minutes=tod['minute'])
-        
+
+
 def _to_int(i):
     """Converts string representations of numbers  to ints, via float.
     
@@ -389,6 +393,7 @@ def _to_int(i):
             The value cast as an int.
     """
     return int(float(i))
+
 
 def _get_hour(h):
     """Extract the hour, minutes, and day (0 or 1) from time strings like '115' 
@@ -432,7 +437,6 @@ def site_summary_strings():
     """
     for site in SITES:
         print("{"+f'"id":"{site}", "label":"{site.title()}", "schema":"gaemn15min",   "initial_start": "2013-01-01", "initial_stop": "2013-01-02"'+"},")
-    
 
 
 def create_gaemn_dbs(indir, outdir,  convert=True, usedb=True, compression = 'gzip'):
@@ -477,7 +481,8 @@ def create_gaemn_dbs(indir, outdir,  convert=True, usedb=True, compression = 'gz
                     logger.info(f"...out: {outfile}")
             except Exception as e:
                 logger.error(f"Error inserting into database. {e}")
-            
+
+
 def config_from_args():
     parser = argparse.ArgumentParser(description="Utility function for creating database files from GAEMN 15-minute observation files. "\
                                      +"You should specify the directory of input csv files as well as the output directory. ")

@@ -19,15 +19,17 @@ See :mod:`apollo.db.converters` for more information.::
 
 """
 import argparse
-import apollo.db.converters as converters
+import apollo.datasets.converters as converters
 import os
 from pathlib import Path
 import logging
 import sys
 
+
 def _ensure_dir_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
+
 
 def _config_from_args():
     parser = argparse.ArgumentParser(description="Utility function for converting logged data from the solar farm. "\
@@ -51,6 +53,7 @@ def _config_from_args():
     logging.info(" * in:"+str(args.infile))
     logging.info(" * out:"+str(args.outfile))
     return args
+
 
 if __name__ == "__main__":
     args = _config_from_args()
@@ -76,4 +79,3 @@ if __name__ == "__main__":
         handler.convert_csv_dir(infile, outdir)
     else:
         handler.convert_csv_file(infile, args.outfile)
-        

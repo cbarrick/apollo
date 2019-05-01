@@ -40,15 +40,12 @@ See :mod:`apollo.db.converters` for more information.::
     INFO:  * no temp:False
     INFO: processing: C:/test/gz_in/IRRADIANCE.csv.gz
     INFO: Finished: C:/test/gz_in/IRRADIANCE.csv.gz
-
-
-
 '''
 
 from pathlib import Path
 import argparse
 import logging
-import apollo.db.converters as converters
+import apollo.datasets.converters as converters
 import sys
 def _config_from_args():
     parser = argparse.ArgumentParser(description="Utility function for inserting logged data from the solar farm into an SQLite databas. "\
