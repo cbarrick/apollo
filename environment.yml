@@ -1,25 +1,29 @@
 name: apollo
 
+channels:
+  - conda-forge
+  - defaults
+
 dependencies:
-    # Core stack
-    - python>=3.6
-    - numpy
-    - scipy
-    - matplotlib
-    - cartopy
-    - pandas
-    - xarray>=0.10
-    - netcdf4
-    - pynio
-    - scikit-learn
-    - xgboost
-    - requests
-    - pvlib-python
-    - siphon
+  # Core stack
+  - python>=3.6
+  - numpy
+  - scipy
+  - matplotlib
+  - cartopy
+  - pandas
+  - xarray>=0.10
+  - netcdf4
+  - pynio
+  - scikit-learn
+  - xgboost
+  - requests
+  - pvlib-python
+  - siphon
 
-    # Documentation
-    - sphinx
-    - sphinx_rtd_theme
+  # Documentation
+  - sphinx
+  - sphinx_rtd_theme
 
-    # Dev tooling
-    - ipython
+  # Dev tooling
+  - ipython
