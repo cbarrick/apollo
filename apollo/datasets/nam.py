@@ -301,11 +301,10 @@ class NamLoader:
         path = self.grib_path(reftime, forecast)
         path.parent.mkdir(exist_ok=True)
 
-        # TODO: We need a better heuristic than skipping if the path exists.
-        if path.exists():
-            return path
-
         for i in range(max_tries):
+            if path.exists():
+                break
+
             try:
                 # Perform a streaming download because the files are big.
                 logger.info(f'downloading {url}')
