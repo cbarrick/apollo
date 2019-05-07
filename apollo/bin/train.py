@@ -24,7 +24,7 @@ def main(argv=None):
         type=str,
         action='append',
         default=[],
-        dest='kwrags',  # Note that this is parsed into ``args.kwargs``.
+        dest='kwargs',  # Note that this is parsed into ``args.kwargs``.
         help='set a hyper-parameter for the model, may be specified multiple times',
     )
 
