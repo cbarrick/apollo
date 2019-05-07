@@ -551,7 +551,7 @@ class NamLoader:
         # We use the last dataset's coordinates for the final dataset.
         tail = datasets[-1]
         coords = {'x': tail.x, 'y': tail.y, 'lat': tail.lat, 'lon': tail.lon}
-        datasets = (ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets)
+        datasets = [ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets]
 
         logger.info('joining datasets')
         ds = xr.concat(datasets, dim='reftime')
