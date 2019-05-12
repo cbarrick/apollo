@@ -1,1 +1,0 @@
-The GAEMN 15 minute databases (GRIFFIN.db, etc.) should go in this directory. 

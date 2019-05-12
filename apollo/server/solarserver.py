@@ -13,12 +13,7 @@ TODO: much of this likely needs to be updated
 A sample directory configuration is shown below. ::
 
     $APOLLO_DATA/assets
-    ├──db
-    │   ├── solar_farm_irr
-    │   │   └── solar_farm_1min_irr.db
-    │   ├── gaemn15min
-    │   │   ├── ATTAPUL.db
-    │   │   └── BLAIRSVI.db
+    ├──schemas
     │   ├── sources.json
     │   ├── solar_farm.json
     │   ├── solar_farm_irr.json

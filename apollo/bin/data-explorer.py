@@ -45,7 +45,7 @@ def main(argv=None):
         '--dbdir',
         metavar='DB_DIR',
         type=str,
-        default=apollo.storage.get('assets/db'),
+        default=apollo.storage.get('assets/schemas'),
         help='The directory storing the schema descriptions.'
     )
 
