@@ -108,7 +108,7 @@ import datetime
 import logging
 from pathlib import Path
 from flask import jsonify
-import apollo.db.dbapi as dbapi
+from apollo.datasets import ga_power
 import apollo.server.schemas as schemas
 import apollo.storage as storage
 import pytz
@@ -206,8 +206,9 @@ def columns(source,table):
         list:
             A list containing the names (strings) of the columns in the table. 
     """
+    dbh = None
     try:
-        dbh = dbapi.DBHandler(source)
+        dbh = ga_power.DBHandler(source)
         dbh.connect()
         columns = dbh.column_names(table)
         dbh.close()
@@ -229,7 +230,7 @@ def tables(source):
     """
     dbh = None
     try:
-        dbh = dbapi.DBHandler(source)
+        dbh = ga_power.DBHandler(source)
         dbh.connect()
         tables = dbh.tables()
         dbh.close()
@@ -328,7 +329,7 @@ class SolarDBRequestHandler(ServerRequestHandler):
         logger.debug("QUERY COMPLETE")
         return js
 
-    def _get_db_file(self, source=None, schema=None, ext=None):
+    def _get_db_file(self, source, schema=None, ext=None):
         """"Attempt to locate the database file associated with the given source and schema
 
         The `$APOLLO_DATA/GA-POWER` directory is searched first.
@@ -339,13 +340,13 @@ class SolarDBRequestHandler(ServerRequestHandler):
 
         """
         db_name = f'{source}{ext}'
+        print(db_name)
         if schema:
             path = storage.get(schema) / db_name
             if os.path.isfile(str(path)):
                 return str(path)
 
-        if source:
-            path = storage.get('databases') / db_name
+            path = storage.get('databases') / schema / db_name
             if os.path.isfile(str(path)):
                 return str(path)
 
@@ -409,7 +410,7 @@ class SolarDBRequestHandler(ServerRequestHandler):
         if groupby in USE_PROC:
             timestamp = "TIMESTAMP"
         
-        df = dbapi.query_db(dbfile,sql)
+        df = ga_power.query_db(dbfile,sql)
 
         response_dict = self._query_format_response(schema,table, int(start_raw), int(stop_raw), timestamp,groupby,statistics,df)
         return response_dict
@@ -456,7 +457,7 @@ class SolarDBRequestHandler(ServerRequestHandler):
         '''
         attributes_temp = []
         try:
-            handler = dbapi.DBHandler(dbfile)
+            handler = ga_power.DBHandler(dbfile)
             handler.connect()
             columns = handler.column_names(table)
             attributes_temp = [at for at in attributes if at in columns]
