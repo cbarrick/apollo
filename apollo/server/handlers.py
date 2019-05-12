@@ -342,7 +342,7 @@ class SolarDBRequestHandler(ServerRequestHandler):
         db_name = f'{source}{ext}'
         print(db_name)
         if schema:
-            path = storage.get(schema) / db_name
+            path = storage.get('GA-POWER')/ schema / db_name
             if os.path.isfile(str(path)):
                 return str(path)
 
