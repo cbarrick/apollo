@@ -84,36 +84,26 @@ column names.
 
 | After activating the conda environment, the predict script can be used by
   invoking the following command:
-| ``python -m apollo.bin.predict <model-name> <arguments>``
+| ``python -m apollo predict <model-name> <arguments>``
 
 The predict script should be given the name of the saved model that will be used
 to generate the prediction.  To view the other optional arguments, run
-``python -m apollo.bin.predict -h``.  This will print the following
+``python -m apollo predict -h``.  This will print the following
 usage instructions::
 
-    usage: predict.py [-h] [--reftime REFTIME] [--latest] [--out_path OUT_PATH]
-                      [--csv]
-                      {rf_demo,gbt_demo,nn-test}
+    usage: python -m apollo predict [-h] [-j | -c] [-t TIMESTAMP] MODEL
 
-    Apollo Model Prediction Tool
+    Generate a prediction from a trained Apollo model.
 
     positional arguments:
-      {rf_demo,gbt_demo,nn-test}
-                            The name of the saved model used to generate the
-                            prediction.
+      MODEL                 the name of the model
 
     optional arguments:
       -h, --help            show this help message and exit
-      --reftime REFTIME, -r REFTIME
-                            The reference time for which predictions should be made.
-                            Any string accepted by pandas Timestamp constructor
-                            will work. Ignored if the 'latest' flag is set.
-      --latest, -l          If set, a prediction will be generated for the past
-                            reftime which is closest to the current datetime.
-      --out_path OUT_PATH, -o OUT_PATH
-                            The directory where predictions will be written.
-      --csv, -c             If set, predictions will be written as a CSV file
-                            instead of JSON.
+      -j, --json            write predictions as JSON (default)
+      -c, --csv             write predictions as CSV
+      -t TIMESTAMP, --reftime TIMESTAMP
+                            make a prediction for the given reftime
 
 Examples
 ^^^^^^^^
@@ -127,13 +117,13 @@ January 1st, 2018, 12:00AM
 (this is one of the pre-trained models that ships with Apollo).
 
 | **Similar commands are used to generate predictions using other models**
-| ``python -m apollo.bin.predict random_forest_b``
-| ``python -m apollo.bin.predict random_forest_e``
-| ``python -m apollo.bin.predict neural_net_c``
-| ``python -m apollo.bin.predict your_custom_model_name``
+| ``python -m apollo predict random_forest_b``
+| ``python -m apollo predict random_forest_e``
+| ``python -m apollo predict neural_net_c``
+| ``python -m apollo predict your_custom_model_name``
 
 | **Predicting irradiance for a specific reference time**
-| ``python -m apollo.bin.predict random_forest_e --reftime 2019-06-22 18:00:00``
+| ``python -m apollo predict random_forest_e --reftime 2019-06-22 18:00:00``
 
 This will use the Random Forest model trained against the pyranometer on Array E
 to predict irradiance relative to the reference time June 22nd, 2019 at 6PM UTC.
@@ -141,21 +131,21 @@ Note that the NAM data for the desired reftime must be cached locally in the
 directory specified by ``$APOLLO_DATA``.
 
 | **Predicting irradiance for the latest available reference time**
-| ``python -m apollo.bin.predict random_forest_e --latest``
+| ``python -m apollo predict random_forest_e --latest``
 
 Note that that option is incompatible with the 'reftime' argument.
 
 | **Writing predictions to a custom directory**
-| ``python -m apollo.bin.predict random_forest_e --reftime 2018-12-31 --out_path path/to/target/directory``
+| ``python -m apollo predict random_forest_e --reftime 2018-12-31 --out_path path/to/target/directory``
 
 | **Writing predictions in CSV format**
-| ``python -m apollo.bin.predict random_forest_e --csv``
+| ``python -m apollo predict random_forest_e --csv``
 
 | **More Examples**
-| ``python -m apollo.bin.predict gbt_a --reftime 2019-04-16 --out_path path/to/target/directory --csv``
-| ``python -m apollo.bin.predict dtree_b --latest --out_path path/to/target/directory --csv``
-| ``python -m apollo.bin.predict linear_regression_d --reftime 2017-01-01``
-| ``python -m apollo.bin.predict svr_e --latest --csv``
+| ``python -m apollo predict gbt_a --reftime 2019-04-16 --out_path path/to/target/directory --csv``
+| ``python -m apollo predict dtree_b --latest --out_path path/to/target/directory --csv``
+| ``python -m apollo predict linear_regression_d --reftime 2017-01-01``
+| ``python -m apollo predict svr_e --latest --csv``
 
 
 .. _training:
@@ -164,13 +154,13 @@ Training New Models
 -------------------
 
 | After activating the conda environment, new models can be trained using locally cached NAM data using the following command:
-| ``python -m apollo.bin.train <model-type> <arguments>``
+| ``python -m apollo train <model-type> <arguments>``
 
 The training script should be given the type model to be trained.
 Apollo also allows for extensive customization of the dataset used to train a
 model as well as the hyperparameters than control a model's behavior.
 These options are passed to the script as *keyword arguments* using the syntax
-``--kwarg keyword=value``.
+``--set keyword=value``.
 The dataset can be customized using the keyword arguments described in
 :doc:`../api/stubs/apollo.datasets.solar.SolarDataset`.
 The hyperparameters for each model are documented in the
@@ -182,58 +172,53 @@ December 31, 2018 using the default arguments of ``SolarDataset``.
 Models trained with the CLI will always be saved in the ``$APOLLO_DATA`` directory.
 
 To view a full description of the arguments, run
-``python -m apollo.bin.train -h``.
+``python -m apollo train -h``.
 This will print the following usage instructions::
 
-    usage: train.py [-h] [--start START] [--stop STOP] [--kwarg KWARG]
-                    {PersistenceModel,LinearRegression,SVR,KNearest,DecisionTree,RandomForest,GradientBoostedTrees,MultilayerPerceptron}
+    usage: python -m apollo train [-h] [--set KEY=VALUE] [-r START STOP] MODEL
 
-    Apollo Model Trainer
+    Train a new Apollo model.
 
     positional arguments:
-      {PersistenceModel,LinearRegression,SVR,KNearest,DecisionTree,RandomForest,GradientBoostedTrees,MultilayerPerceptron}
-                            The type of the model to train.
+      MODEL                 the class of the model to train
 
     optional arguments:
       -h, --help            show this help message and exit
-      --start START, -b START
-                            The first reftime in the training dataset. Any string
-                            accepted by pandas's Timestamp constructor will work.
-      --stop STOP, -e STOP  The final reftime in the training dataset. Any string
-                            accepted by pandas's Timestamp constructor will work.
-      --kwarg KWARG         Keyword arguments to pass to the model.Should be
-                            formatted like "--kwarg arg1=val1 --kwarg arg2=val2 . . ."
+      --set KEY=VALUE       set a hyper-parameter for the model, may be specified
+                            multiple times
+      -r START STOP, --range START STOP
+                            train on all forecast on this range, inclusive
 
 Examples
 ^^^^^^^^
 
 | **Training a new Random Forest model**
-| ``python -m apollo.bin.train RandomForest``
+| ``python -m apollo train RandomForest``
 
 This command will train and save a new Random Forest model on the data from
 January 1st, 2017 to December 31st, 2018.
 The model will be saved with a unique name that is automatically generated.
 
 | The command is similar for different types of models:
-| ``python -m apollo.bin.train KNearest``
-| ``python -m apollo.bin.train GradientBoostedTrees``
-| ``python -m apollo.bin.train MultilayerPerceptron``
+| ``python -m apollo train KNearest``
+| ``python -m apollo train GradientBoostedTrees``
+| ``python -m apollo train MultilayerPerceptron``
 
 | **Training a new model with a custom name**
-| ``python -m apollo.bin.train RandomForest --kwarg name=my-custom-tree``
+| ``python -m apollo train RandomForest --set name=my-custom-tree``
 
 The 'name' keyword argument can be passed to save the model with a custom name.
 The name can be referenced when using the :ref:`predict script <predicting>`.
 
 | **Training on a custom historical period**
-| ``python -m apollo.bin.train KNearest --start 2017-06-01 --stop 2018-03-15``
+| ``python -m apollo train KNearest --start 2017-06-01 --stop 2018-03-15``
 
 The 'start' and 'stop' arguments are used to select a subset of the historical
 NAM data used to train a model.  This example trained a KNN model using historical
 data between June 1st, 2017 and March 15, 2018.
 
 | **Customizing model behavior with kwargs**
-| ``python -m apollo.bin.train KNearest --kwarg target=UGADPOA1IRR --kwarg n_neighbors=15``
+| ``python -m apollo train KNearest --set target=UGADPOA1IRR --set n_neighbors=15``
 
 A set of keyword arguments can be passed to customize the data used to train the
 model and the model's hyperparameters.
@@ -246,13 +231,13 @@ The keyword arguments can be any keyword from the
 appropriate model hyperparameter documented in :doc:`../api/apollo.models`.
 
 | **More Examples**
-| ``python -m apollo.bin.train SVR``
-| ``python -m apollo.bin.train LinearRegression --kwarg target=UGAEPOA3IRR``
-| ``python -m apollo.bin.train LinearRegression --start 2017-01-01 --stop 2017-12-31 --kwarg target=UGACPOA2IRR``
-| ``python -m apollo.bin.train SVR --kwarg forecast=24 --kwarg temporal_features=False``
-| ``python -m apollo.bin.train SVR --kwarg kernel=sigmoid --kwarg epsilon=5``
-| ``python -m apollo.bin.train MultilayerPerceptron --kwarg activation=logistic --kwarg solver=sgd``
-| ``python -m apollo.bin.train DecisionTree --start 2017-01-01 --stop 2019-06-31 --kwarg target=UGADPOA1IRR --kwarg max_depth=30``
+| ``python -m apollo train SVR``
+| ``python -m apollo train LinearRegression --set target=UGAEPOA3IRR``
+| ``python -m apollo train LinearRegression --start 2017-01-01 --stop 2017-12-31 --set target=UGACPOA2IRR``
+| ``python -m apollo train SVR --set forecast=24 --set temporal_features=False``
+| ``python -m apollo train SVR --set kernel=sigmoid --set epsilon=5``
+| ``python -m apollo train MultilayerPerceptron --set activation=logistic --set solver=sgd``
+| ``python -m apollo train DecisionTree --start 2017-01-01 --stop 2019-06-31 --set target=UGADPOA1IRR --set max_depth=30``
 
 
 .. _evaluating:
@@ -292,39 +277,29 @@ for each specific target hour, or results can be combined into a single number
 expressing average performance across all target hours.
 
 | After activating the conda environment, trained models can be evaluated using the following command:
-| ``python -m apollo.bin.evaluate <model-name> <method> <arguments>``
+| ``python -m apollo evaluate <model-name> <method> <arguments>``
 
 To view a full description of the arguments, run
-``python -m apollo.bin.evaluate -h``.
+``python -m apollo evaluate -h``.
 This will print the following usage instructions::
 
-    usage: evaluate.py [-h] [--first FIRST] [--last LAST] [--k K]
-                   [--split_size SPLIT_SIZE] [--average]
-                   {rf_demo,gbt_demo,nn-test} {cross_val,split}
+    usage: python -m apollo evaluate [-h] [-a] [-c] [-r START STOP] (-k K | -p RATIO)
+                                MODEL
 
-    Apollo Model Evaluator
+    Evaluate a trained Apollo model.
 
     positional arguments:
-      {rf_demo,gbt_demo,nn-test}
-                            The name of the saved model to be evaluated.
-      {cross_val,split}     Validation mode. K-fold timeseries cross-validation or
-                            train-test split.
+      MODEL                 the name of the saved model to be evaluated
 
     optional arguments:
       -h, --help            show this help message and exit
-      --first FIRST, -b FIRST
-                            The first reftime in the dataset.
-      --last LAST, -e LAST  The final reftime in the dataset.
-      --k K, -k K           Number of folds to use for cross-validation. Ignored
-                            if using `split` mode.
-      --split_size SPLIT_SIZE, -p SPLIT_SIZE
-                            Proportion of the dataset to be used for testing.
-                            Ignored if using `cross_val` mode.
-      --average, -a         If set, the evaluations of each target hour will be
-                            reduced to a single value by taking the mean with
-                            uniform weights
-
-
+      -a, --average         evaluate the mean error of forecasts for all hours
+      -c, --csv             output the results as a csv
+      -r START STOP, --range START STOP
+                            evaluate using forecast on this range, inclusive
+      -k K, --cross-val K   evaluate using K-fold timeseries cross-validation
+      -p RATIO, --split RATIO
+                            evaluate using a test-train split with this ratio
 
 The following examples demonstrate how the CLI can be used to evaluate models.
 
@@ -332,44 +307,44 @@ Examples
 ^^^^^^^^
 
 | **Evaluating a model**
-| ``python -m apollo.bin.evaluate random_forest_a cross_val``
+| ``python -m apollo evaluate random_forest_a cross_val``
 
 This command will evaluate the model named 'random_forest_a'
 (this is one of the pre-trained models that ships with Apollo)
 using the timeseries cross-validation method.
 
 | **Train-test split validation**
-| ``python -m apollo.bin.evaluate random_forest_a split``
+| ``python -m apollo evaluate random_forest_a split``
 
 This is identical to the first example, except the train-test split validation
 method is used to evaluate the model's performance.
 
 | **Customizing the validation dataset**
-| ``python -m apollo.bin.evaluate random_forest_a cross_val --first 2018-01-01 --last 2019-04-15``
+| ``python -m apollo evaluate random_forest_a cross_val --first 2018-01-01 --last 2019-04-15``
 
 This command will evaluate the model named 'random_forest_a' using a validation
 dataset spanning January 1st, 2018 to April 15th, 2019.
 
 | **Customizing the number of cross-validation folds**
-| ``python -m apollo.bin.evaluate random_forest_a cross_val --k 10``
+| ``python -m apollo evaluate random_forest_a cross_val --k 10``
 
 | **Customizing the train-test split**
-| ``python -m apollo.bin.evaluate random_forest_a split --split_size 0.2``
+| ``python -m apollo evaluate random_forest_a split --split_size 0.2``
 
 This command will cause 20% of the validation dataset to be used for testing and
 the other 80% to be used for trianing.
 
 | **Combining results from multiple target hours**
-| ``python -m apollo.bin.evaluate random_forest_a cross_val --average``
+| ``python -m apollo evaluate random_forest_a cross_val --average``
 
 The '--average' flag will combine results from all target hours into a single
 number expressing the average performance across all target hours.
 
 | **More Examples**
-| ``python -m apollo.bin.evaluate svr_a cross_val``
-| ``python -m apollo.bin.evaluate my_custom_model split --split_size 0.3``
-| ``python -m apollo.bin.evaluate linear_regression_c cross_val --k 10 --first 2017-01-01 --last 2018-12-31``
-| ``python -m apollo.bin.evaluate dtree_d split --first 2017-06-01 --average``
+| ``python -m apollo evaluate svr_a cross_val``
+| ``python -m apollo evaluate my_custom_model split --split_size 0.3``
+| ``python -m apollo evaluate linear_regression_c cross_val --k 10 --first 2017-01-01 --last 2018-12-31``
+| ``python -m apollo evaluate dtree_d split --first 2017-06-01 --average``
 
 
 .. _deleting:
@@ -382,11 +357,11 @@ to ``$APOLLO_DATA``.  The CLI provides a utility to delete old models that are
 no longer useful.
 
 | To delete a model, run the following command:
-| ``python -m apollo.bin.delete <model-name>``
+| ``python -m apollo delete <model-name>``
 
 The model with a matching name will be permanently deleted.
 To view a list of trained models by name, run the command with the ``-h`` flag:
-``python -m apollo.bin.delete -h``.
+``python -m apollo delete -h``.
 
 .. danger::
     Be careful when using the CLI to delete models.  The selected model will be
@@ -397,7 +372,7 @@ Examples
 ^^^^^^^^
 
 | **Deleting a model by name**
-| ``python -m apollo.bin.delete my-custom-model``
+| ``python -m apollo delete my-custom-model``
 
 Assuming you have previously trained a model with the name 'my-custom-model',
 this command will delete the model.
