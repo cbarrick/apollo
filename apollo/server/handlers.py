@@ -110,6 +110,7 @@ from pathlib import Path
 from flask import jsonify
 import apollo.db.dbapi as dbapi
 import apollo.server.schemas as schemas
+import apollo.storage as storage
 import pytz
 
 logger = logging.getLogger(__name__)
@@ -328,21 +329,27 @@ class SolarDBRequestHandler(ServerRequestHandler):
         return js
 
     def _get_db_file(self, source=None, schema=None, ext=None):
-        """"Attempt to locate the database file associated with the given source and schema. 
-        
-        It looks in a subdirectory of the root database directory for a subdirectory
-        matching the name ``schema``. The database should have the format ``source.ext`` 
-        (e.g., if ``source='sample'`` and ``ext='.db'``, the the database searched for 
-        is ``sample.db``). No subdirectory is found, 
-        The root database directory is examined. If nothing
-        is found, the default database (specified at server start) is returned. 
+        """"Attempt to locate the database file associated with the given source and schema
+
+        The `$APOLLO_DATA/GA-POWER` directory is searched first.
+        If the database is not found in that directory, then the
+        `$APOLLO_DATA/databases` directory is searched.
+        If the database cannot be found in that directory, then the path to
+        the default database is returned.
+
         """
-        if schema and os.path.isfile(str(self.db_dir/schema/(source + ext))):
-            return str(self.db_dir/schema/(source + ext))
-        elif source and os.path.isfile(str(self.db_dir/(source + ext))):
-            return str(self.db_dir/(source + ext))
-        else:
-            return str(self.db_file)
+        db_name = f'{source}{ext}'
+        if schema:
+            path = storage.get(schema) / db_name
+            if os.path.isfile(str(path)):
+                return str(path)
+
+        if source:
+            path = storage.get('databases') / db_name
+            if os.path.isfile(str(path)):
+                return str(path)
+
+        return str(self.db_file)
     
     def _process_args(self, query_request):
         """Convert a request to SQL and query a databse, returning 
