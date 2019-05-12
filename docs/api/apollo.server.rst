@@ -9,14 +9,6 @@ apollo\.server\.handlers
     :undoc-members:
     :show-inheritance:
 
-apollo\.server\.html
----------------------------
-
-.. automodule:: apollo.server.html
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 apollo\.server\.pvlibw
 -----------------------------
 

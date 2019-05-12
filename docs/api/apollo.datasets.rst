@@ -29,6 +29,9 @@ apollo.datasets.ga_power
 
 	interval
 	open_mb007
+    open_sqlite
+    DBHandler
+    query_db
 
 
 apollo.datasets.solar

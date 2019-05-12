@@ -65,9 +65,9 @@ proxy to the Apollo Data Explorer.  If this is done
 the primary Web server would redirect only selected queries to the Apollo Data Explorer.
 Among other things, this would  allow the Apollo Data Explorer to run behind a firewall. 
 
-The server can be started by by invoking :mod:`apollo.server.solarserver` with the appropriate arguments.:: 
+The server can be started by by invoking :mod:`apollo.bin.data-explorer` with the appropriate arguments.::
 
-    $ python -m apollo.server.solarserver --host 127.0.0.1 --port 5000 --html "I:\html" --dbdir "I:\db" 
+    $ python -m apollo data-explorer --host 127.0.0.1 --port 5000
     INFO:  * host:127.0.0.1
     INFO:  * port:5000
     INFO:  * html:I:\html
@@ -77,7 +77,7 @@ The server can be started by by invoking :mod:`apollo.server.solarserver` with t
     INFO:  * db url:/apollo
     INFO:  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 
-See the documentation on :mod:`apollo.server.solarserver` for more information. 
+See the documentation on :mod:`apollo.bin.data-explorer` for more information.
 
 
 **************************************************
@@ -97,7 +97,7 @@ The tables are initially created in the database using static SQL scripts.
 Tables can be updated as new data arrives using a script invoked as an hourly 
 (``cron``) job. The  script formats the data and then performs batch updates to the database. 
 
-See :mod:`apollo.db.converters` for a detailed discussion of the database format 
+See :mod:`apollo.datasets.converters` for a detailed discussion of the database format
 and data input. 
 
 
@@ -164,7 +164,7 @@ is given below.
 
 In addition to the numerical values comprising the forecast, the model  contains a summary 
 providing a brief description of the model and its output. This format is described in more detail 
-below and also in :mod:`apollo.server.handlers` and :mod:`apollo.server.html`. 
+below and also in :mod:`apollo.server.handlers` and :mod:`apollo.bin.forecast-to-html`.
 Hypothetically, any model conforming to the format could be incorporated into the system. 
 
 When the HTML generation script is run, the model output directory is scanned, 
@@ -175,7 +175,7 @@ sent by a Web server as static files.
 To incorporate a new model, a developer need only encode the model output 
 appropriately in a JSON file and place it in the model directory to be scanned. 
 
-See the documentation on :mod:`apollo.server.html` for more information on the 
+See the documentation on :mod:`apollo.bin.forecast-to-html` for more information on the
 format of model output and conversion to HTML. 
 
 **************************************************
