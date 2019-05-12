@@ -8,27 +8,38 @@ When this script is invoked, directories for databases, HTML files,
 and supporting files should be set up correctly, and the script should be 
 invoked with corresponding command line arguments.
 
-TODO: much of this likely needs to be updated
-
 A sample directory configuration is shown below. ::
 
-    $APOLLO_DATA/assets
-    ├──schemas
-    │   ├── sources.json
-    │   ├── solar_farm.json
-    │   ├── solar_farm_irr.json
-    │   └── gaemn15min.json
-    │   
-    └──html
-        ├── date_utils.js
-        ├── explorer.css
-        ├── explorer.html
-        ├── exlorer_ui.js
-        ├── index.html
-        ├── pvlib.html
-        └── forecasts
-            ├── dtree_2019-03-21 20_39_43.716000.html
-            └── index.html
+    $APOLLO_DATA
+    ├──assets
+    │    ├──schemas
+    │    │   ├── sources.json
+    │    │   ├── solar_farm.json
+    │    │   ├── solar_farm_irr.json
+    │    │   └── gaemn15min.json
+    │    └──html
+    │        ├── date_utils.js
+    │        ├── explorer.css
+    │        ├── explorer.html
+    │        ├── exlorer_ui.js
+    │        ├── index.html
+    │        ├── pvlib.html
+    │        └── forecasts
+    │            ├── dtree_2019-03-21 20_39_43.716000.html
+    │            └── index.html
+    ├──GA-POWER
+    │   └──solar_farm.sqlite
+    ├──NAM-NMM
+    └──databases
+        ├──gaemn15min
+        │   ├── ATTAPUL.db
+        │   ├── BLAIRSVI.db
+        │   ├── BRUNSW.db
+        │   ├── GRIFFIN.db
+        │   └── JONESB.db
+        └──solar_farm_irr
+            └── solar_farm_1min_irr.db
+
     
 The ``html`` directory holds static HTML and other files to be served to web 
 clients, while ``db`` holds databases that can be accessed by the Data Explorer. 
@@ -46,7 +57,7 @@ are used in the web interface).
  .. code-block:: python
 
     [
-    {"id":"solar_farm", "ext":".db", "label":"UGA Solar Farm", "schema":"solar_farm", "initial_start": "2017-01-01", "initial_stop": "2017-01-02"},
+    {"id":"solar_farm", "ext":".sqlite", "label":"UGA Solar Farm", "schema":"solar_farm", "initial_start": "2017-01-01", "initial_stop": "2017-01-02"},
     {"id":"ATTAPUL", "ext":".db", "label":"Attapulgus", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"},
     ]
 
