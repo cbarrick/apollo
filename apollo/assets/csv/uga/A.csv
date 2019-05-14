@@ -1,0 +1,173 @@
+index,label,description,units,sql_datatype,type,hidden
+1,TIMESTAMP,Unix integer timestamp,s,INTEGER,datetime,TRUE
+2,YEAR,Year of the observation,,INTEGER,number,TRUE
+3,MONTH,Month (1-12) of the observation,,INTEGER,number,TRUE
+4,DAY,Day of the month,,INTEGER,number,TRUE
+5,HOUR,Hour (0-23) of the observation,,INTEGER,number,TRUE
+6,MINUTE,Minute of the Hour (0-59),,INTEGER,number,TRUE
+7,DAYOFYEAR,Day of the Year,,INTEGER,number,TRUE
+8,CODE1,System Code 1 (not used in database),,REAL,number,TRUE
+9,CODE2,System Code 2 (not used in database),,REAL,number,TRUE
+10,CODE3,System Code 3 (not used in database),,REAL,number,TRUE
+11,UGAAINV01INVSTATUS,Device Status,,REAL,number,FALSE
+12,UGAAINV01ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+13,UGAAINV01ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+14,UGAAINV01DC1A,DC Current Input 1,A,REAL,number,FALSE
+15,UGAAINV01DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+16,UGAAINV01DC1W,DC Power Input 1,W,REAL,number,FALSE
+17,UGAAINV01ACW,Active Power Across all lines,W,REAL,number,FALSE
+18,UGAAINV01ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+19,UGAAINV01ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+20,UGAAINV01ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+21,UGAAINV01ACL1A,Grid Current L1,A,REAL,number,FALSE
+22,UGAAINV01ACL2A,Grid Current L2,A,REAL,number,FALSE
+23,UGAAINV01ACL3A,Grid Current L3,A,REAL,number,FALSE
+24,UGAAINV01ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+25,UGAAINV01DC2A,DC Current Input 2,I,REAL,number,FALSE
+26,UGAAINV01DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+27,UGAAINV01DC2W,DC Power Input 2,W,REAL,number,FALSE
+28,UGAAINV01ERR,Error Code,,REAL,number,FALSE
+29,UGAAINV02INVSTATUS,Device Status,,REAL,number,FALSE
+30,UGAAINV02ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+31,UGAAINV02ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+32,UGAAINV02DC1A,DC Current Input 1,A,REAL,number,FALSE
+33,UGAAINV02DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+34,UGAAINV02DC1W,DC Power Input 1,W,REAL,number,FALSE
+35,UGAAINV02ACW,Active Power Across all lines,W,REAL,number,FALSE
+36,UGAAINV02ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+37,UGAAINV02ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+38,UGAAINV02ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+39,UGAAINV02ACL1A,Grid Current L1,A,REAL,number,FALSE
+40,UGAAINV02ACL2A,Grid Current L2,A,REAL,number,FALSE
+41,UGAAINV02ACL3A,Grid Current L3,A,REAL,number,FALSE
+42,UGAAINV02ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+43,UGAAINV02DC2A,DC Current Input 2,I,REAL,number,FALSE
+44,UGAAINV02DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+45,UGAAINV02DC2W,DC Power Input 2,W,REAL,number,FALSE
+46,UGAAINV02ERR,Error Code,,REAL,number,FALSE
+47,UGAAINV03INVSTATUS,Device Status,,REAL,number,FALSE
+48,UGAAINV03ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+49,UGAAINV03ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+50,UGAAINV03DC1A,DC Current Input 1,A,REAL,number,FALSE
+51,UGAAINV03DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+52,UGAAINV03DC1W,DC Power Input 1,W,REAL,number,FALSE
+53,UGAAINV03ACW,Active Power Across all lines,W,REAL,number,FALSE
+54,UGAAINV03ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+55,UGAAINV03ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+56,UGAAINV03ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+57,UGAAINV03ACL1A,Grid Current L1,A,REAL,number,FALSE
+58,UGAAINV03ACL2A,Grid Current L2,A,REAL,number,FALSE
+59,UGAAINV03ACL3A,Grid Current L3,A,REAL,number,FALSE
+60,UGAAINV03ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+61,UGAAINV03DC2A,DC Current Input 2,I,REAL,number,FALSE
+62,UGAAINV03DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+63,UGAAINV03DC2W,DC Power Input 2,W,REAL,number,FALSE
+64,UGAAINV03ERR,Error Code,,REAL,number,FALSE
+65,UGAAINV04INVSTATUS,Device Status,,REAL,number,FALSE
+66,UGAAINV04ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+67,UGAAINV04ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+68,UGAAINV04DC1A,DC Current Input 1,A,REAL,number,FALSE
+69,UGAAINV04DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+70,UGAAINV04DC1W,DC Power Input 1,W,REAL,number,FALSE
+71,UGAAINV04ACW,Active Power Across all lines,W,REAL,number,FALSE
+72,UGAAINV04ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+73,UGAAINV04ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+74,UGAAINV04ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+75,UGAAINV04ACL1A,Grid Current L1,A,REAL,number,FALSE
+76,UGAAINV04ACL2A,Grid Current L2,A,REAL,number,FALSE
+77,UGAAINV04ACL3A,Grid Current L3,A,REAL,number,FALSE
+78,UGAAINV04ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+79,UGAAINV04DC2A,DC Current Input 2,I,REAL,number,FALSE
+80,UGAAINV04DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+81,UGAAINV04DC2W,DC Power Input 2,W,REAL,number,FALSE
+82,UGAAINV04ERR,Error Code,,REAL,number,FALSE
+83,UGAAINV05INVSTATUS,Device Status,,REAL,number,FALSE
+84,UGAAINV05ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+85,UGAAINV05ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+86,UGAAINV05DC1A,DC Current Input 1,A,REAL,number,FALSE
+87,UGAAINV05DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+88,UGAAINV05DC1W,DC Power Input 1,W,REAL,number,FALSE
+89,UGAAINV05ACW,Active Power Across all lines,W,REAL,number,FALSE
+90,UGAAINV05ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+91,UGAAINV05ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+92,UGAAINV05ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+93,UGAAINV05ACL1A,Grid Current L1,A,REAL,number,FALSE
+94,UGAAINV05ACL2A,Grid Current L2,A,REAL,number,FALSE
+95,UGAAINV05ACL3A,Grid Current L3,A,REAL,number,FALSE
+96,UGAAINV05ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+97,UGAAINV05DC2A,DC Current Input 2,I,REAL,number,FALSE
+98,UGAAINV05DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+99,UGAAINV05DC2W,DC Power Input 2,W,REAL,number,FALSE
+100,UGAAINV05ERR,Error Code,,REAL,number,FALSE
+101,UGAAINV06INVSTATUS,Device Status,,REAL,number,FALSE
+102,UGAAINV06ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+103,UGAAINV06ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+104,UGAAINV06DC1A,DC Current Input 1,A,REAL,number,FALSE
+105,UGAAINV06DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+106,UGAAINV06DC1W,DC Power Input 1,W,REAL,number,FALSE
+107,UGAAINV06ACW,Active Power Across all lines,W,REAL,number,FALSE
+108,UGAAINV06ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+109,UGAAINV06ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+110,UGAAINV06ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+111,UGAAINV06ACL1A,Grid Current L1,A,REAL,number,FALSE
+112,UGAAINV06ACL2A,Grid Current L2,A,REAL,number,FALSE
+113,UGAAINV06ACL3A,Grid Current L3,A,REAL,number,FALSE
+114,UGAAINV06ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+115,UGAAINV06DC2A,DC Current Input 2,I,REAL,number,FALSE
+116,UGAAINV06DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+117,UGAAINV06DC2W,DC Power Input 2,W,REAL,number,FALSE
+118,UGAAINV06ERR,Error Code,,REAL,number,FALSE
+119,UGAAINV07INVSTATUS,Device Status,,REAL,number,FALSE
+120,UGAAINV07ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+121,UGAAINV07ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+122,UGAAINV07DC1A,DC Current Input 1,A,REAL,number,FALSE
+123,UGAAINV07DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+124,UGAAINV07DC1W,DC Power Input 1,W,REAL,number,FALSE
+125,UGAAINV07ACW,Active Power Across all lines,W,REAL,number,FALSE
+126,UGAAINV07ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+127,UGAAINV07ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+128,UGAAINV07ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+129,UGAAINV07ACL1A,Grid Current L1,A,REAL,number,FALSE
+130,UGAAINV07ACL2A,Grid Current L2,A,REAL,number,FALSE
+131,UGAAINV07ACL3A,Grid Current L3,A,REAL,number,FALSE
+132,UGAAINV07ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+133,UGAAINV07DC2A,DC Current Input 2,I,REAL,number,FALSE
+134,UGAAINV07DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+135,UGAAINV07DC2W,DC Power Input 2,W,REAL,number,FALSE
+136,UGAAINV07ERR,Error Code,,REAL,number,FALSE
+137,UGAAINV08INVSTATUS,Device Status,,REAL,number,FALSE
+138,UGAAINV08ACBKRSTATUS,Utility Grid Contactor State,BOOL,REAL,number,FALSE
+139,UGAAINV08ACLIFEKWH,Energy Inception to Date,kWh,REAL,number,FALSE
+140,UGAAINV08DC1A,DC Current Input 1,A,REAL,number,FALSE
+141,UGAAINV08DC1V,DC Voltage Input 1,V,REAL,number,FALSE
+142,UGAAINV08DC1W,DC Power Input 1,W,REAL,number,FALSE
+143,UGAAINV08ACW,Active Power Across all lines,W,REAL,number,FALSE
+144,UGAAINV08ACL1V,Grid Voltage L1 to N,V,REAL,number,FALSE
+145,UGAAINV08ACL2V,Grid Voltage L2 to N,V,REAL,number,FALSE
+146,UGAAINV08ACL3V,Grid Voltage L3 to N,V,REAL,number,FALSE
+147,UGAAINV08ACL1A,Grid Current L1,A,REAL,number,FALSE
+148,UGAAINV08ACL2A,Grid Current L2,A,REAL,number,FALSE
+149,UGAAINV08ACL3A,Grid Current L3,A,REAL,number,FALSE
+150,UGAAINV08ACVAR,Reactive Power across all lines,Var,REAL,number,FALSE
+151,UGAAINV08DC2A,DC Current Input 2,I,REAL,number,FALSE
+152,UGAAINV08DC2V,DC Voltage Input 2,V,REAL,number,FALSE
+153,UGAAINV08DC2W,DC Power Input 2,W,REAL,number,FALSE
+154,UGAAINV08ERR,Error Code,,REAL,number,FALSE
+155,UGAAPOAREFTEMP,Reference Cell REF01: Temperature Value - from Logger,ºC,REAL,number,FALSE
+156,UGAAMOD1TEMP,Temperature Transmitter TEMOD01: Module Temperature Value - from Logger,ºC,REAL,number,FALSE
+157,UGAAMOD2TEMP,Temperature Transmitter TEMOD02: Module Temperature Value - from Logger,ºC,REAL,number,FALSE
+158,UGAASMSREFIRR,Irradiance,w/m2,REAL,number,FALSE
+159,UGAASMSREFSCA,Short Circuit Current,A,REAL,number,FALSE
+160,UGAASMSREFT,PV Temperature,C,REAL,number,FALSE
+161,UGAASMSMODIRR,Irradiance 2,w/m2,REAL,number,FALSE
+162,UGAASMSMODSCA,Short Circuit Current 2,A,REAL,number,FALSE
+163,UGAASMSMODT,PV Temperature 2,C,REAL,number,FALSE
+164,UGAASMSMODMPPW,Maximum Power 2,W,REAL,number,FALSE
+165,UGAASMSSOILRATIO,Soiling Ratio,,REAL,number,FALSE
+166,UGAASMSSOILSCRATIO,Short Circuit Ratio,,REAL,number,FALSE
+167,UGAASMSPWRRATIO,Maximum Power Ratio,,REAL,number,FALSE
+168,UGAAMET02EVENT,Event Code,,REAL,number,FALSE
+169,UGAASMSFLUIDLVL,Wash Unit Fluid Level,,REAL,number,FALSE
+170,UGAASMSMODOCV,Voc OpenCircuit Voltage,V,REAL,number,FALSE
+171,UGAASMSMODMPPV,Vmp MaxPower Voltage,V,REAL,number,FALSE
+172,UGAASMSMODMPPA,Imp MaxPower Current (A),A,REAL,number,FALSE

@@ -204,3 +204,220 @@ def open_sqlite(*cols, start, stop):
     # In apollo, all datasets should be presented as xarray
     df = df.to_xarray()
     return df
+
+
+def query_db(dbfile, sql):
+    ''' Query a database, returning the results as a :class:`pandas.DataFrame`.
+
+    Arguments:
+        dbfile (str):
+            The sqlite database file to query.
+        sql (str):
+            The sql statement to execute.
+
+    Returns:
+        :class:`pandas.DataFrame`:
+            The results of the database query.
+
+    '''
+    logger.debug("querying database..." + str(dbfile))
+    logger.debug(sql)
+    conn = None
+    try:
+        conn = sqlite3.connect(dbfile)
+        df = pd.read_sql_query(sql, conn)
+        logger.debug("done querying database.")
+        return df
+    except Exception as e:
+        logger.error(e)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+class DBHandler:
+    ''' Object-oriented interface for interacting with SQLite databases
+
+    :class:`.DBHandler` objects store a path to the database file to access
+    as well as a reference to an open connection to that database.
+
+    Attributes:
+        db_file (str or pathlib.Path):
+            The path to the database file.
+        conn (sqlite3.Connection):
+            A handle to a database connection (or ``None``).
+    '''
+
+    def __init__(self, dbfile):
+        ''' Initialize a :class:`.DBHandler`
+
+        Args:
+            dbfile (str or pathlib.Path):
+                The path to the sqlite database that the handler will target.
+        '''
+        self.db_file = Path(dbfile)
+        self.conn = None
+
+    def connect(self):
+        ''' Opens a connection to this handler's database
+
+        Exceptions are suppressed. If an exception is caught,
+        ``None`` is returned.
+
+        Returns:
+            :class:`sqlite3.Connection`:
+                A handle to the database connection.
+        '''
+        try:
+            if self.conn:
+                self.close()
+            self.conn = sqlite3.connect(str(self.db_file))
+            return self.conn
+        except Exception as e:
+            logger.error(f'Error connecting to db: {self.db_file}. {e}')
+            return None
+
+    def close(self):
+        ''' Close the connection maintained by this handler.
+
+        Before closing, :meth:`sqlite3.Connection.commit` is called.
+        If a connection has not been opened with :meth:`DBHandler.connect`,
+        this method is a no-op
+
+        Returns: None
+
+        '''
+        if self.conn is not None:
+            try:
+                self.conn.commit()
+                self.conn.close()
+                self.conn = None
+            except Exception as e:
+                logger.error(f'Error closing connection. {e}')
+
+    def execute(self, sql, commit=False):
+        ''' Execute a SQL statement against the database
+
+        Args:
+            sql (str):
+                The statement to execute.
+            commit (bool):
+                Peform a commit after execution.
+
+        Returns:
+            :class:`sqlite3.Cursor`:
+                A reference to the cursor with query results.
+
+        '''
+        try:
+            if commit:
+                with self.conn:
+                    return self.conn.execute(sql)
+            return self.conn.execute(sql)
+        except Exception as e:
+            logger.error(f'Error executing statement: {sql}. {e}')
+
+    def executescript(self, sql, commit=False):
+        ''' Executes a SQL script with one or more statements
+
+        Args:
+            sql (str):
+                The script to execute.
+            commit (bool):
+                Peform a commit after execution.
+
+        Returns:
+            :class:`sqlite3.Cursor`:
+                A reference to the cursor containing results.
+
+        '''
+        try:
+            if commit:
+                with self.conn:
+                    return self.conn.executescript(sql)
+            return self.conn.executescript(sql)
+        except Exception as e:
+            logger.error(f'Error executing statement: {sql}. {e}')
+
+    def tables(self):
+        ''' Lists the names of tables in the database
+
+        An open database connection should exist before invoking this method.
+
+        Returns:
+            list:
+                A list of table names.
+
+        '''
+        return [t[0] for t in self.execute(
+            "select name from sqlite_master where type = 'table'")]
+
+    def columns(self, table):
+        ''' List column information
+
+        This is executes ``PRAGMA table_info(table)``, returning the results.
+
+        An open database connection should exist before invoking this method.
+
+        Args:
+            table (str):
+                The name of the table to examine
+
+        Returns:
+            list:
+                A list containing information on the table columns.
+        '''
+        return self.execute(f"PRAGMA table_info({table});").fetchall()
+
+    def column_names(self, table):
+        ''' List the names of columns in the given table
+
+        Args:
+            table (str):
+                The name of the table to examine.
+
+        Returns:
+            list:
+                A list of column names in the table.
+
+        '''
+        return [row[1] for row in self.columns(table)]
+
+    def copy_table(self, source, target):
+        ''' Copy one table into another
+
+        Old records in the target are replaced if there is a conflict.
+
+        An open database connection should exist before invoking this method.
+
+        Args:
+            source (str):
+                The name of the table to copy from.
+            target (str):
+                The name of the table to copy into.
+
+        Returns: None
+
+        '''
+        statement = f"INSERT OR REPLACE INTO {target} SELECT * FROM {source}"
+        self.execute(statement, commit=True)
+
+    def insert_dataframe(self, df, table):
+        ''' Insert a :class:`pandas.DataFrame` into a table
+
+        The dataframe must match the format of the table.
+        If duplicates keys are found, then preexisting values are overwritten.
+
+        An open database connection should exist before invoking this method.
+
+        Args:
+            df (:class:`pandas.DataFrame`):
+                The dataframe to insert.
+            table (str):
+                The name of the table to insert into.
+
+        Returns: None
+
+        '''
+        df.to_sql(table, self.conn, if_exists='replace', index=False)
+

@@ -1,0 +1,48 @@
+index,label,description,units,sql_datatype,type,hidden
+1,SITEID,Site ID,s,INTEGER,number,TRUE
+2,TIMESTAMP,Timestamp,,INTEGER,datetime,TRUE
+3,YEAR,Year,,INTEGER,number,TRUE
+4,MONTH,Month,,INTEGER,number,TRUE
+5,DAY,Day,,INTEGER,number,TRUE
+6,HOUR,Hour,,INTEGER,number,TRUE
+7,MINUTE,Minute,,INTEGER,number,TRUE
+8,DAYOFYEAR,Day of Year,,INTEGER,number,TRUE
+9,JULIANDAYHOUR,Julian Day and Hour,,REAL,number,TRUE
+10,AIRTEMPERATURE,Air Temperature,C,REAL,number,FALSE
+11,HUMIDITY,Humidity,%,REAL,number,FALSE
+12,DEWPOINT,Dew Point,C,REAL,number,FALSE
+13,VAPORPRESSURE,Vapor Pressure,kPa,REAL,number,FALSE
+14,VAPORPRESSUREDEFICIT,Vapor Pressure Deficit,kPa,REAL,number,FALSE
+15,BAROMETRICPRESSURE,Barometric Pressure,kPa,REAL,number,FALSE
+16,WINDSPEED,Wind Speed,m/s,REAL,number,FALSE
+17,WINDDIRECTION,Wind Direction,0-360,REAL,number,FALSE
+18,STANDARDDEVIATION,Standard Deviation,0-360,REAL,number,FALSE
+19,MAXIMUMWINDSPEED,Maximum Windspeed,m/s,REAL,number,FALSE
+20,TIMEOFMAXIMUMWINDSPEED,Time of Maximum Windspeed,,REAL,number,FALSE
+21,SOILTEMPERATURE2CM,Soil Temperature 2cm,C,REAL,number,FALSE
+22,SOILTEMPERATURE5CM,Soil Temperature 5cm,C,REAL,number,FALSE
+23,SOILTEMPERATURE10CM,Soil Temperature 10cm,C,REAL,number,FALSE
+24,SOILTEMPERATURE20CM,Soil Temperature 20cm,C,REAL,number,FALSE
+25,SOILTEMPERATUREA,Soil Temperature A,C,REAL,number,FALSE
+26,SOILTEMPERATUREB,Soil Temperature B,C,REAL,number,FALSE
+27,SOILMOISTURE,Soil Moisture,%,REAL,number,FALSE
+28,PAN,PAN,mm,REAL,number,FALSE
+29,EVAP,Evap,n/a,REAL,number,FALSE
+30,WATERTEMPERATURE,Water Temperature,C,REAL,number,FALSE
+31,SOLARRADIATION,Solar Radiation,W/m^2,REAL,number,FALSE
+32,TOTALSOLARRADIATION,Total Solar Radiation,KJ/m^2,REAL,number,FALSE
+33,PAR,PAR,umole/m^2*s,REAL,number,FALSE
+34,TOTALPAREINSTEIN,Total PAR Einstein,Einstein/m^2,REAL,number,FALSE
+35,NETRADIATION,Net Radiation,W/m^2,REAL,number,FALSE
+36,TOTALNETRADIATION,Total Net Radiation,KJ/m^2,REAL,number,FALSE
+37,RAINFALL,Rainfall,mm,REAL,number,FALSE
+38,RAINFALL2,Rainfall 2,mm,REAL,number,FALSE
+39,MAXRAINFALL,Max Rainfall,mm,REAL,number,FALSE
+40,TIMEOFMAXRAINFALL,Time of Max Rainfail,,REAL,number,FALSE
+41,MAXRAINFALL2,Max Rainfall 2,mm,REAL,number,FALSE
+42,TIMEOFMAXRAINFALL2,Time of Max Rainfall,,REAL,number,FALSE
+43,LEAFWETNESS,Leaf Wetness,,REAL,number,FALSE
+44,WETNESSFREQUENCY,Wetness Frequency,%,REAL,number,FALSE
+45,BATTERYVOLTAGE,Battery Voltage,volts,REAL,number,FALSE
+46,FUELTEMPERATURE,Fuel Temperature,C,REAL,number,FALSE
+47,FUELMOISTURE,Fuel Moisture,%,REAL,number,FALSE

@@ -1,0 +1,114 @@
+index,label,description,units,sql_datatype,type,hidden
+1,TIMESTAMP,Unix integer timestamp,s,INTEGER,datetime,TRUE
+2,YEAR,Year of the observation,,INTEGER,number,TRUE
+3,MONTH,Month (1-12) of the observation,,INTEGER,number,TRUE
+4,DAY,Day of the month,,INTEGER,number,TRUE
+5,HOUR,Hour (0-23) of the observation,,INTEGER,number,TRUE
+6,MINUTE,Minute of the Hour (0-59),,INTEGER,number,TRUE
+7,DAYOFYEAR,Day of the Year,,INTEGER,number,TRUE
+8,CODE1,System Code 1 (not used in database),,REAL,number,TRUE
+9,CODE2,System Code 2 (not used in database),,REAL,number,TRUE
+10,CODE3,System Code 3 (not used in database),,REAL,number,TRUE
+11,UGAAMETERACL1V,Phase to neutral voltage AN,V,REAL,number,FALSE
+12,UGAAMETERACL2V,Phase to neutral voltage BN,V,REAL,number,FALSE
+13,UGAAMETERACL3V,Phase to neutral voltage CN,V,REAL,number,FALSE
+14,UGAAMETERACL1A,Line current phase A,A,REAL,number,FALSE
+15,UGAAMETERACL2A,Line current phase B,A,REAL,number,FALSE
+16,UGAAMETERACL3A,Line current phase C,A,REAL,number,FALSE
+17,UGAAMETERACW,Active Power,W,REAL,number,FALSE
+18,UGAAMETERACVAR,Reactive Power,VAR,REAL,number,FALSE
+19,UGAAMETERACL1ANEU,Line current neutral,A,REAL,number,FALSE
+20,UGAAMETERACDELWH,Generated Active Energy,Wh,REAL,number,FALSE
+21,UGAAMETERACRECWH,Consumed Active Energy,Wh,REAL,number,FALSE
+22,UGAAMETERACNETWH,Net Active Energy,Wh,REAL,number,FALSE
+23,UGAAMETERACDELVARH,Generated Reactive Energy,VARh,REAL,number,FALSE
+24,UGAAMETERACRECVARH,Consumed Reactive Energy,VARh,REAL,number,FALSE
+25,UGABMETERACL1V,Phase to neutral voltage AN,V,REAL,number,FALSE
+26,UGABMETERACL2V,Phase to neutral voltage BN,V,REAL,number,FALSE
+27,UGABMETERACL3V,Phase to neutral voltage CN,V,REAL,number,FALSE
+28,UGABMETERACL1A,Line current phase A,A,REAL,number,FALSE
+29,UGABMETERACL2A,Line current phase B,A,REAL,number,FALSE
+30,UGABMETERACL3A,Line current phase C,A,REAL,number,FALSE
+31,UGABMETERACW,Active Power,W,REAL,number,FALSE
+32,UGABMETERACVAR,Reactive Power,VAR,REAL,number,FALSE
+33,UGABMETERACL1ANEU,Line current neutral,A,REAL,number,FALSE
+34,UGABMETERACDELWH,Generated Active Energy,Wh,REAL,number,FALSE
+35,UGABMETERACRECWH,Consumed Active Energy,Wh,REAL,number,FALSE
+36,UGABMETERACNETWH,Net Active Energy,Wh,REAL,number,FALSE
+37,UGABMETERACDELVARH,Generated Reactive Energy,VARh,REAL,number,FALSE
+38,UGABMETERACRECVARH,Consumed Reactive Energy,VARh,REAL,number,FALSE
+39,UGACMETERACL1V,Phase to neutral voltage AN,V,REAL,number,FALSE
+40,UGACMETERACL2V,Phase to neutral voltage BN,V,REAL,number,FALSE
+41,UGACMETERACL3V,Phase to neutral voltage CN,V,REAL,number,FALSE
+42,UGACMETERACL1A,Line current phase A,A,REAL,number,FALSE
+43,UGACMETERACL2A,Line current phase B,A,REAL,number,FALSE
+44,UGACMETERACL3A,Line current phase C,A,REAL,number,FALSE
+45,UGACMETERACW,Active Power,W,REAL,number,FALSE
+46,UGACMETERACVAR,Reactive Power,VAR,REAL,number,FALSE
+47,UGACMETERACL1ANEU,Line current neutral,A,REAL,number,FALSE
+48,UGACMETERACDELWH,Generated Active Energy,Wh,REAL,number,FALSE
+49,UGACMETERACRECWH,Consumed Active Energy,Wh,REAL,number,FALSE
+50,UGACMETERACNETWH,Net Active Energy,Wh,REAL,number,FALSE
+51,UGACMETERACDELVARH,Generated Reactive Energy,VARh,REAL,number,FALSE
+52,UGACMETERACRECVARH,Consumed Reactive Energy,VARh,REAL,number,FALSE
+53,UGADMETERACL1V,Phase to neutral voltage AN,V,REAL,number,FALSE
+54,UGADMETERACL2V,Phase to neutral voltage BN,V,REAL,number,FALSE
+55,UGADMETERACL3V,Phase to neutral voltage CN,V,REAL,number,FALSE
+56,UGADMETERACL1A,Line current phase A,A,REAL,number,FALSE
+57,UGADMETERACL2A,Line current phase B,A,REAL,number,FALSE
+58,UGADMETERACL3A,Line current phase C,A,REAL,number,FALSE
+59,UGADMETERACW,Active Power,W,REAL,number,FALSE
+60,UGADMETERACVAR,Reactive Power,VAR,REAL,number,FALSE
+61,UGADMETERACL1ANEU,Line current neutral,A,REAL,number,FALSE
+62,UGADMETERACDELWH,Generated Active Energy,Wh,REAL,number,FALSE
+63,UGADMETERACRECWH,Consumed Active Energy,Wh,REAL,number,FALSE
+64,UGADMETERACNETWH,Net Active Energy,Wh,REAL,number,FALSE
+65,UGADMETERACDELVARH,Generated Reactive Energy,VARh,REAL,number,FALSE
+66,UGADMETERACRECVARH,Consumed Reactive Energy,VARh,REAL,number,FALSE
+67,UGAEMETERACL1V,Phase to neutral voltage AN,V,REAL,number,FALSE
+68,UGAEMETERACL2V,Phase to neutral voltage BN,V,REAL,number,FALSE
+69,UGAEMETERACL3V,Phase to neutral voltage CN,V,REAL,number,FALSE
+70,UGAEMETERACL1A,Line current phase A,A,REAL,number,FALSE
+71,UGAEMETERACL2A,Line current phase B,A,REAL,number,FALSE
+72,UGAEMETERACL3A,Line current phase C,A,REAL,number,FALSE
+73,UGAEMETERACW,Active Power,W,REAL,number,FALSE
+74,UGAEMETERACVAR,Reactive Power,VAR,REAL,number,FALSE
+75,UGAEMETERACL1ANEU,Line current neutral,A,REAL,number,FALSE
+76,UGAEMETERACDELWH,Generated Active Energy,Wh,REAL,number,FALSE
+77,UGAEMETERACRECWH,Consumed Active Energy,Wh,REAL,number,FALSE
+78,UGAEMETERACNETWH,Net Active Energy,Wh,REAL,number,FALSE
+79,UGAEMETERACDELVARH,Generated Reactive Energy,VARh,REAL,number,FALSE
+80,UGAEMETERACRECVARH,Consumed Reactive Energy,VARh,REAL,number,FALSE
+81,UGACONNEXMETERACL1V,Phase to neutral voltage AN,V,REAL,number,FALSE
+82,UGACONNEXMETERACL2V,Phase to neutral voltage BN,V,REAL,number,FALSE
+83,UGACONNEXMETERACL3V,Phase to neutral voltage CN,V,REAL,number,FALSE
+84,UGACONNEXMETERACL1A,Line current phase A,A,REAL,number,FALSE
+85,UGACONNEXMETERACL2A,Line current phase B,A,REAL,number,FALSE
+86,UGACONNEXMETERACL3A,Line current phase C,A,REAL,number,FALSE
+87,UGACONNEXMETERACW,Active Power,W,REAL,number,FALSE
+88,UGACONNEXMETERACVAR,Reactive Power,VAR,REAL,number,FALSE
+89,UGACONNEXMETERACL1ANEU,Line current neutral,A,REAL,number,FALSE
+90,UGACONNEXMETERACDELWH,Generated Active Energy,Wh,REAL,number,FALSE
+91,UGACONNEXMETERACRECWH,Consumed Active Energy,Wh,REAL,number,FALSE
+92,UGACONNEXMETERACNETWH,Net Active Energy,Wh,REAL,number,FALSE
+93,UGACONNEXMETERACDELVARH,Generated Reactive Energy,VARh,REAL,number,FALSE
+94,UGACONNEXMETERACRECVARH,Consumed Reactive Energy,VARh,REAL,number,FALSE
+95,UGAPOIMETERACL1V,Inst. Volts Phase A,V,REAL,number,FALSE
+96,UGAPOIMETERACL2V,Inst. Volts Phase B,V,REAL,number,FALSE
+97,UGAPOIMETERACL3V,Inst. Volts Phase C,V,REAL,number,FALSE
+98,UGAPOIMETERACL1A,Inst. Amps Phase A,A,REAL,number,FALSE
+99,UGAPOIMETERACL2A,Inst. Amps Phase B,A,REAL,number,FALSE
+100,UGAPOIMETERACL3A,Inst. Amps Phase C,A,REAL,number,FALSE
+101,UGAPOIMETERACKW,Inst. KW,kW,REAL,number,FALSE
+102,UGAPOIMETERACKVAR,Inst. KVAR,kVAR,REAL,number,FALSE
+103,UGAPOIMETERACPF,Inst. PF,,REAL,number,FALSE
+104,UGAPOIMETERACDELKWH,Del. KWH,kWh,REAL,number,FALSE
+105,UGAPOIMETERACDELKVARH,Del. KVARH,kVARh,REAL,number,FALSE
+106,UGAPOIMETERACRECKWH,Rec. KWH,kWh,REAL,number,FALSE
+107,UGAPOIMETERACRECKVARH,Rec. KVARH,kVARh,REAL,number,FALSE
+108,UGAMET01BARPRESS,Pressure sensor BMP01: Barametric Pressure - from Logger,hPa,REAL,number,FALSE
+109,UGAMET01HUM,Relative Humidity Probe HMP01: Relative Humidity Value - from Logger,%,REAL,number,FALSE
+110,UGAMET01AMBTEMP,Temperature Probe HMP01: Ambient Temperature Value - from Logger,ºC,REAL,number,FALSE
+111,UGAMET01RAIN1D,Tipping Bucket  PCIP01: Rain Precipitation 1 Day Value - from Logger,l/m2,REAL,number,FALSE
+112,UGAMET01WINDDIR,Wind Direction Sensor WDIR01: Direction Value - from Logger,Degrees,REAL,number,FALSE
+113,UGAMET01WINDSPD,Wind Speed Sensor  WSP01: Speed Value - from Logger,m/s,REAL,number,FALSE

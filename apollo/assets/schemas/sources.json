@@ -1,0 +1,8 @@
+[
+{"id":"solar_farm_1min_irr", "ext":".db", "label":"UGA Solar Farm (irradiance, 1 minute averages) ", "schema":"solar_farm_irr", "initial_start": "2017-01-01", "initial_stop": "2017-01-02"},
+{"id":"ATTAPUL", "ext":".db", "label":"Attapulgus", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"},
+{"id":"BLAIRSVI", "ext":".db", "label":"Blairsville", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"},
+{"id":"BRUNSW", "ext":".db", "label":"Brunswick", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"},
+{"id":"GRIFFIN", "ext":".db", "label":"Griffin", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"},
+{"id":"JONESB", "ext":".db", "label":"Jonesboro", "schema":"gaemn15min", "initial_start": "2013-01-01", "initial_stop": "2013-01-02"}
+]

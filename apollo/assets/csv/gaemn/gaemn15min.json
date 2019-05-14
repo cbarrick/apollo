@@ -1,0 +1,434 @@
+{
+  "name": "gaemn15min",
+  "description": "GAEMN 15 Minute Observations",
+  "tables": {
+    "OBS": {
+      "label": "OBS",
+      "columns": {
+        "SITEID": {
+          "index": "1",
+          "label": "SITEID",
+          "description": "Site ID",
+          "units": "s",
+          "sql_datatype": "INTEGER",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "TIMESTAMP": {
+          "index": "2",
+          "label": "TIMESTAMP",
+          "description": "Timestamp",
+          "units": "",
+          "sql_datatype": "INTEGER",
+          "type": "datetime",
+          "hidden": "TRUE"
+        },
+        "YEAR": {
+          "index": "3",
+          "label": "YEAR",
+          "description": "Year",
+          "units": "",
+          "sql_datatype": "INTEGER",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "MONTH": {
+          "index": "4",
+          "label": "MONTH",
+          "description": "Month",
+          "units": "",
+          "sql_datatype": "INTEGER",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "DAY": {
+          "index": "5",
+          "label": "DAY",
+          "description": "Day",
+          "units": "",
+          "sql_datatype": "INTEGER",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "HOUR": {
+          "index": "6",
+          "label": "HOUR",
+          "description": "Hour",
+          "units": "",
+          "sql_datatype": "INTEGER",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "MINUTE": {
+          "index": "7",
+          "label": "MINUTE",
+          "description": "Minute",
+          "units": "",
+          "sql_datatype": "INTEGER",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "DAYOFYEAR": {
+          "index": "8",
+          "label": "DAYOFYEAR",
+          "description": "Day of Year",
+          "units": "",
+          "sql_datatype": "INTEGER",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "JULIANDAYHOUR": {
+          "index": "9",
+          "label": "JULIANDAYHOUR",
+          "description": "Julian Day and Hour",
+          "units": "",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "TRUE"
+        },
+        "AIRTEMPERATURE": {
+          "index": "10",
+          "label": "AIRTEMPERATURE",
+          "description": "Air Temperature",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "HUMIDITY": {
+          "index": "11",
+          "label": "HUMIDITY",
+          "description": "Humidity",
+          "units": "%",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "DEWPOINT": {
+          "index": "12",
+          "label": "DEWPOINT",
+          "description": "Dew Point",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "VAPORPRESSURE": {
+          "index": "13",
+          "label": "VAPORPRESSURE",
+          "description": "Vapor Pressure",
+          "units": "kPa",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "VAPORPRESSUREDEFICIT": {
+          "index": "14",
+          "label": "VAPORPRESSUREDEFICIT",
+          "description": "Vapor Pressure Deficit",
+          "units": "kPa",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "BAROMETRICPRESSURE": {
+          "index": "15",
+          "label": "BAROMETRICPRESSURE",
+          "description": "Barometric Pressure",
+          "units": "kPa",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "WINDSPEED": {
+          "index": "16",
+          "label": "WINDSPEED",
+          "description": "Wind Speed",
+          "units": "m/s",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "WINDDIRECTION": {
+          "index": "17",
+          "label": "WINDDIRECTION",
+          "description": "Wind Direction",
+          "units": "0-360",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "STANDARDDEVIATION": {
+          "index": "18",
+          "label": "STANDARDDEVIATION",
+          "description": "Standard Deviation",
+          "units": "0-360",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "MAXIMUMWINDSPEED": {
+          "index": "19",
+          "label": "MAXIMUMWINDSPEED",
+          "description": "Maximum Windspeed",
+          "units": "m/s",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "TIMEOFMAXIMUMWINDSPEED": {
+          "index": "20",
+          "label": "TIMEOFMAXIMUMWINDSPEED",
+          "description": "Time of Maximum Windspeed",
+          "units": "",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOILTEMPERATURE2CM": {
+          "index": "21",
+          "label": "SOILTEMPERATURE2CM",
+          "description": "Soil Temperature 2cm",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOILTEMPERATURE5CM": {
+          "index": "22",
+          "label": "SOILTEMPERATURE5CM",
+          "description": "Soil Temperature 5cm",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOILTEMPERATURE10CM": {
+          "index": "23",
+          "label": "SOILTEMPERATURE10CM",
+          "description": "Soil Temperature 10cm",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOILTEMPERATURE20CM": {
+          "index": "24",
+          "label": "SOILTEMPERATURE20CM",
+          "description": "Soil Temperature 20cm",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOILTEMPERATUREA": {
+          "index": "25",
+          "label": "SOILTEMPERATUREA",
+          "description": "Soil Temperature A",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOILTEMPERATUREB": {
+          "index": "26",
+          "label": "SOILTEMPERATUREB",
+          "description": "Soil Temperature B",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOILMOISTURE": {
+          "index": "27",
+          "label": "SOILMOISTURE",
+          "description": "Soil Moisture",
+          "units": "%",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "PAN": {
+          "index": "28",
+          "label": "PAN",
+          "description": "PAN",
+          "units": "mm",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "EVAP": {
+          "index": "29",
+          "label": "EVAP",
+          "description": "Evap",
+          "units": "n/a",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "WATERTEMPERATURE": {
+          "index": "30",
+          "label": "WATERTEMPERATURE",
+          "description": "Water Temperature",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "SOLARRADIATION": {
+          "index": "31",
+          "label": "SOLARRADIATION",
+          "description": "Solar Radiation",
+          "units": "W/m^2",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "TOTALSOLARRADIATION": {
+          "index": "32",
+          "label": "TOTALSOLARRADIATION",
+          "description": "Total Solar Radiation",
+          "units": "KJ/m^2",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "PAR": {
+          "index": "33",
+          "label": "PAR",
+          "description": "PAR",
+          "units": "umole/m^2*s",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "TOTALPAREINSTEIN": {
+          "index": "34",
+          "label": "TOTALPAREINSTEIN",
+          "description": "Total PAR Einstein",
+          "units": "Einstein/m^2",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "NETRADIATION": {
+          "index": "35",
+          "label": "NETRADIATION",
+          "description": "Net Radiation",
+          "units": "W/m^2",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "TOTALNETRADIATION": {
+          "index": "36",
+          "label": "TOTALNETRADIATION",
+          "description": "Total Net Radiation",
+          "units": "KJ/m^2",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "RAINFALL": {
+          "index": "37",
+          "label": "RAINFALL",
+          "description": "Rainfall",
+          "units": "mm",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "RAINFALL2": {
+          "index": "38",
+          "label": "RAINFALL2",
+          "description": "Rainfall 2",
+          "units": "mm",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "MAXRAINFALL": {
+          "index": "39",
+          "label": "MAXRAINFALL",
+          "description": "Max Rainfall",
+          "units": "mm",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "TIMEOFMAXRAINFALL": {
+          "index": "40",
+          "label": "TIMEOFMAXRAINFALL",
+          "description": "Time of Max Rainfail",
+          "units": "",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "MAXRAINFALL2": {
+          "index": "41",
+          "label": "MAXRAINFALL2",
+          "description": "Max Rainfall 2",
+          "units": "mm",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "TIMEOFMAXRAINFALL2": {
+          "index": "42",
+          "label": "TIMEOFMAXRAINFALL2",
+          "description": "Time of Max Rainfall",
+          "units": "",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "LEAFWETNESS": {
+          "index": "43",
+          "label": "LEAFWETNESS",
+          "description": "Leaf Wetness",
+          "units": "",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "WETNESSFREQUENCY": {
+          "index": "44",
+          "label": "WETNESSFREQUENCY",
+          "description": "Wetness Frequency",
+          "units": "%",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "BATTERYVOLTAGE": {
+          "index": "45",
+          "label": "BATTERYVOLTAGE",
+          "description": "Battery Voltage",
+          "units": "volts",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "FUELTEMPERATURE": {
+          "index": "46",
+          "label": "FUELTEMPERATURE",
+          "description": "Fuel Temperature",
+          "units": "C",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        },
+        "FUELMOISTURE": {
+          "index": "47",
+          "label": "FUELMOISTURE",
+          "description": "Fuel Moisture",
+          "units": "%",
+          "sql_datatype": "DOUBLE",
+          "type": "number",
+          "hidden": "FALSE"
+        }
+      }
+    }
+  }
+}

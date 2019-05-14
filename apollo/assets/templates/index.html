@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang='en-US'>
+   <head>
+      <title>Generated Forecasts - Index</title>
+      <script >
+      forecast_index = 
+		 ${modelindex}
+      </script>
+      <link rel="stylesheet" type="text/css" href="explorer.css"/>
+      <script >
+         function loadLinks(){
+         	var table = document.getElementById('indextable');
+         	for(var i = 0; i < forecast_index.length;i++){
+         		forecast = forecast_index[i];
+         		var row = table.insertRow(i+1);
+         		var a = document.createElement('a');
+         		var linkText = document.createTextNode(forecast.name);
+                var info_link = 	function(){ var c = i; return function() { test_click(c);}};
+         		
+         		row.addEventListener("click", info_link());
+         		var linkText = document.createTextNode(forecast.name);
+         		
+         		a.appendChild(linkText);
+         		a.href = forecast.href;
+         		var cell1 = row.insertCell(0);
+         		var cell2 = row.insertCell(1);
+         		var cell3 = row.insertCell(2);
+         		var cell4 = row.insertCell(3);
+         		var reftime = new Date(forecast.reftime).toISOString();
+         		var start = new Date(forecast.start).toISOString();
+         		var stop = new Date(forecast.stop).toISOString();
+         		
+         		cell1.appendChild(a);
+         		cell2.innerHTML = "" + reftime;
+         		cell3.innerHTML = "" + start;
+         		cell4.innerHTML = "" + stop;
+         	}
+         }
+         
+         function test_click(i){
+         	var forecast = forecast_index[i];
+         	var s = "<div class='tooltipp'>" 
+         	var entries = Object.entries(forecast)
+            for (const [k, v] of entries) {
+               if(k == "columns") continue;
+               let val = format_value(k, v);
+               s = s + `<b>$${k}</b>: $${val}<br/>`;
+            }
+         	s = s + "</div";
+         	var status = document.getElementById('error_msg');
+         	status.innerHTML = s;
+         }
+         
+         function clear_status(){
+         	var status = document.getElementById('error_msg');
+         	status.innerHTML = "";
+         }
+ 
+        function format_value(k, v){
+             switch(k){
+                 case "reftime": return new Date(v).toISOString();
+                 case "start": return new Date(v).toISOString();
+                 case "stop": return new Date(v).toISOString();
+                 default: return v;
+             }
+         }
+      </script>
+   </head>
+   <body onload="loadLinks();">
+      <div id="thecontainer" class="container">
+         <header>
+            <h1 >Generated Forecasts</h1>
+         </header>
+         <article id="index_container">
+            <table id="indextable">
+               <tr>
+                  <th>Model/Source</th>
+                  <th>Reference Time</th>
+                  <th>Forecast Start</th>
+                  <th>Forecast End</th>
+               </tr>
+            </table>
+         </article>
+         <div id="error_container"><span id="error_msg"></span></div>
+      </div>
+   </body>
+</html>
