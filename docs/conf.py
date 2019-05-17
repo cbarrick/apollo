@@ -95,6 +95,7 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/', None),
     'xarray': ('http://xarray.pydata.org/en/stable/', None),
     'torch': ('https://pytorch.org/docs/stable', None),
+    'sklearn': ('http://scikit-learn.org/stable', None),
 }
 
 

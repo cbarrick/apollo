@@ -7,6 +7,7 @@ Apollo
 
     user-guides/getting-started
     user-guides/loading-data
+    user-guides/using-the-cli
 
 
 .. toctree::
@@ -16,3 +17,4 @@ Apollo
     api/apollo
     api/apollo.datasets
     api/apollo.viz
+    api/apollo.models

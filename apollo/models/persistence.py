@@ -9,7 +9,21 @@ from apollo.models.base import Model
 
 
 class PersistenceModel(Model):
-    ''' Predicts solar irradiance at time using the reading from 24 hours prior
+    ''' Predicts solar irradiance using the irradiance from 24 hours prior
+
+    Persistence models often serve as baselines, since they are very simple to
+    compute and require little data to use.
+    There are a variety of models that may be referred to as
+    "persistence models".  In this case, the model predicts the target variable
+    at time `t` using the value of the target at time `t - 24`.
+
+    Like many of the other Apollo models, the persistence model will fail if the
+    required data is missing.  Unlike the other models, the persistence model
+    does not require a recent NAM forecast, but rather an observation from the
+    previous day.
+
+    This model does not accept any hyperparameters.  All kwargs are forwarded
+    to the data loader.
     '''
     def __init__(self, name=None, **kwargs):
         ''' Initialize a PersistenceModel
