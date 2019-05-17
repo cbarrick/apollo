@@ -42,7 +42,6 @@ class KNearest(ScikitModel):
 
         With `p` = 1, this metric is the Manhattan distance metric.
         With `p` = 2, this metric is the familiar Euclidean distance metric.
-
     '''
     def __init__(self, name=None, **kwargs):
         super().__init__(name=name, **kwargs)

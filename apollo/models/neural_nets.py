@@ -54,8 +54,6 @@ class MultilayerPerceptron(ScikitModel):
         Maximum number of passes to make through the training set.
 
         The actual number of passes may be different is convergence is detected.
-
-
     '''
     def __init__(self, name=None, **kwargs):
         super().__init__(name=name, **kwargs)
