@@ -17,11 +17,13 @@ def main(argv=None):
         description='List Apollo models',
     )
     parser.add_argument(
-        'mode',
+        '--mode',
+        '-m',
         type=str,
-        choices=('classes', 'saved'),
-        help='If `classes`, list the names of subclasses of Model. '
-             'If `saved`, list the names of previously trained models.'
+        choices=('saved', 'classes'),
+        default='saved',
+        help='If `saved`, list the names of previously trained models.'
+             'If `classes`, list the names of subclasses of Model.'
     )
     parser.add_argument(
         '--concrete',
