@@ -22,16 +22,6 @@ apollo.models.base
     delete
 
 
-apollo.models.scikit\_estimator
---------------------------------------------------
-.. automodule:: apollo.models.scikit_estimator
-    :no-members:
-
-.. autosummary::
-    :toctree: stubs
-
-    ScikitModel
-
 Persistence
 --------------------------------------------------
 
