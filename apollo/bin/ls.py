@@ -25,19 +25,11 @@ def main(argv=None):
         help='If `saved`, list the names of previously trained models.'
              'If `classes`, list the names of subclasses of Model.'
     )
-    parser.add_argument(
-        '--concrete',
-        '-c',
-        action='store_true',
-        help='Only print abstract subclasses of Model'
-    )
 
     args = parser.parse_args(argv)
 
     if args.mode == 'classes':
-        subclasses = list_known_models()
-        if args.concrete:
-            subclasses = filter(_is_concrete, subclasses)
+        subclasses = filter(_is_concrete, list_known_models())
         output = '\n'.join([m.__name__ for m in subclasses])
     else:
         output = '\n'.join(list_trained_models())
