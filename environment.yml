@@ -21,13 +21,13 @@ dependencies:
   - pvlib-python
   - siphon
 
-    # Data Explorer
-    - flask
-    - waitress
+  # Data Explorer
+  - flask
+  - waitress
 
-    # Documentation
-    - sphinx
-    - sphinx_rtd_theme
+  # Documentation
+  - sphinx
+  - sphinx_rtd_theme
 
   # Dev tooling
   - ipython
