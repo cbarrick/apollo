@@ -12,6 +12,7 @@ dependencies:
   - matplotlib
   - cartopy
   - pandas
+  - dask
   - xarray>=0.10
   - netcdf4
   - pynio

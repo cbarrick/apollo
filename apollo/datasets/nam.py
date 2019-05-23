@@ -35,6 +35,7 @@ import logging
 from functools import reduce
 from pathlib import Path
 from time import sleep
+from tempfile import TemporaryDirectory
 
 import cartopy.crs as ccrs
 import numpy as np
@@ -74,6 +75,16 @@ NAM218_PROJ = ccrs.LambertConformal(
     # NAM assumes a spherical globe with radius 6,371.229 km
     globe=ccrs.Globe(ellipse=None, semimajor_axis=6371229, semiminor_axis=6371229),
 )
+
+
+def _open_mfdataset(paths):
+    '''A wrapper around :func:`xarray.open_mfdataset` that applies the default
+    chunking used in this module.
+    '''
+    return xr.open_mfdataset(
+        paths = paths,
+        chunks = {'x': 10, 'y': 10, 'reftime': 1, 'forecast': 12},
+    )
 
 
 def open(reftimes='now', on_miss='raise', **kwargs):
@@ -301,11 +312,10 @@ class NamLoader:
         path = self.grib_path(reftime, forecast)
         path.parent.mkdir(exist_ok=True)
 
-        # TODO: We need a better heuristic than skipping if the path exists.
-        if path.exists():
-            return path
-
         for i in range(max_tries):
+            if path.exists():
+                break
+
             try:
                 # Perform a streaming download because the files are big.
                 logger.info(f'downloading {url}')
@@ -521,44 +531,6 @@ class NamLoader:
         ds = xr.decode_cf(ds)
         return ds
 
-    def _combine(self, datasets):
-        '''Combine a list of datasets.
-
-        This is non-trivial because older datasets and the newer datasets are
-        not perfectly aligned; the x and y coordinates are offset by up to 4 km.
-
-        We force all to align to the final dataset's spatial coordinates.
-
-        Arguments:
-            datasets (Sequence[xarray.Dataset]):
-                The datasets to combine.
-
-        Returns:
-            xarray.Dataset:
-                The combined dataset.
-        '''
-        # Check for spurious coordinates that should be ignored.
-        # This is due to a regression: #53
-        k = set(datasets[0].coords.keys())
-        coords = (set(ds.coords.keys()) for ds in datasets)
-        coords = (c ^ k for c in coords)
-        coords = reduce(set.union, coords)
-        if len(coords) != 0:
-            logger.warning('spurious coordinates detected; ignoring them')
-            logger.warning(f'    {coords}')
-            datasets = (ds.drop(coords) for ds in datasets)
-
-        # Drop geographic coordinates since they might not align.
-        # We use the last dataset's coordinates for the final dataset.
-        tail = datasets[-1]
-        coords = {'x': tail.x, 'y': tail.y, 'lat': tail.lat, 'lon': tail.lon}
-        datasets = (ds.drop(('x', 'y', 'lat', 'lon')) for ds in datasets)
-
-        logger.info('joining datasets')
-        ds = xr.concat(datasets, dim='reftime')
-        ds = ds.assign_coords(**coords)
-        return ds
-
 
     def download(self, reftime='now', save_nc=None, keep_gribs=None):
         '''Download a forecast for a given reference time.
@@ -584,12 +556,20 @@ class NamLoader:
         if save_nc is None: save_nc = self.save_nc
         if keep_gribs is None: keep_gribs = self.keep_gribs
 
-        datasets = []
-        for forecast in FORECAST_PERIOD:
-            ds = self._download_grib(reftime, forecast)
-            ds = self._process_grib(ds, reftime, forecast)
-            datasets.append(ds)
-        ds = self._combine(datasets)
+        # We save each GRIB as a netCDF in a temp directory, then reopen all
+        # as a single dataset, which we finally persist in the datastore.
+        # It is important to persist the intermediate datasets for performance
+        # and memory usage.
+        with TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            paths = []
+            for forecast in FORECAST_PERIOD:
+                path = tmpdir / f'{forecast}.nc'
+                ds = self._download_grib(reftime, forecast)
+                ds = self._process_grib(ds, reftime, forecast)
+                ds.to_netcdf(path)
+                paths.append(path)
+            ds = _open_mfdataset(paths)
 
         if save_nc:
             path = self.nc_path(reftime)
@@ -614,45 +594,43 @@ class NamLoader:
             on_miss (str):
                 Determines the behavior on a cache miss:
                 - ``'raise'``: Raise a :class:`CacheMiss` exception.
-                - ``'download'``: Attempt to download the forecast.
+                - ``'download'``: Attempt to download the missing forecast.
                 - ``'skip'``: Skip missing forecasts. This mode will raise a
-                  :class:`CacheMiss` exception if no forecasts are found for
-                  the query.
+                  :class:`CacheMiss` exception only if the resulting dataset
+                  would be empty.
 
         Returns:
             xarray.Dataset:
                 A single dataset containing all forecasts at the given reference
                 times.
         '''
-        # ``reftimes`` may be a single timestamp or a collection of timestamps.
-        # We must ensure that it is an iterable going forward.
         try:
-            reftimes = [timestamps.utc_timestamp(reftimes).floor('6h')]
+            reftimes = [
+                timestamps.utc_timestamp(reftimes).floor('6h')
+            ]
         except TypeError:
-            reftimes = (
+            reftimes = [
                 timestamps.utc_timestamp(r).floor('6h')
                 for r in reftimes
-            )
+            ]
 
-        datasets = []
+        paths = []
         for reftime in reftimes:
             path = self.nc_path(reftime)
             if path.exists():
-                logger.info(f'reading {path}')
-                ds = xr.open_dataset(path, chunks={})
-                datasets.append(ds)
+                paths.append(path)
             elif on_miss == 'download':
-                ds = self.download(reftime)
-                datasets.append(ds)
+                self.download(reftime)
+                paths.append(path)
             elif on_miss == 'skip':
                 continue
             else:
                 raise CacheMiss(f'Missing forecast for reftime {reftime}')
 
-        if len(datasets) == 0:
+        if len(paths) == 0:
             raise CacheMiss('No applicable forecasts were found')
 
-        return self._combine(datasets)
+        return _open_mfdataset(paths)
 
     def open_range(self, start, stop='now', on_miss='skip'):
         '''Open the forecasts for a range of reference times.
