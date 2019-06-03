@@ -273,7 +273,7 @@ class SolarDataset:
     '''
 
     def __init__(self, start='2017-01-01 00:00', stop='2017-12-31 18:00', *,
-                 feature_subset=PLANAR_FEATURES, temporal_features=True,
+                 features=PLANAR_FEATURES, temporal_features=True,
                  geo_shape=(3, 3), center=ATHENS_LATLON, lag=0, forecast=36,
                  target=DEFAULT_TARGET, target_hours=DEFAULT_TARGET_HOURS,
                  standardize=True):
@@ -284,37 +284,43 @@ class SolarDataset:
                 The timestamp of the first reftime.
             stop (timestamp):
                 The timestamp of the final reftime.
-            feature_subset (set of str or None):
+            features (str or set of str or None):
                 The set of features to select. If None, all features are used.
                 The default `PLANAR_FEATURES` is a selection of features with
-                trivial z-axes.
-            temporal_features (bool):
+                trivial z-axes. This argument may be provided as a single string
+                of comma-separated features.
+            temporal_features (str or bool):
                 If true, extend with additional temporal features for time of
-                day and time of year.
-            geo_shape (Tuple[int, int] or None):
+                day and time of year. Strings are parsed by
+                :func:`~apollo.casts.parse_bool`.
+            geo_shape (str or Tuple[int, int] or None):
                 If given, the y and x axes are sliced to this shape, in grid
-                units (roughly 12km). The default `ATHENS_LATLON` is the rough
-                location of the solar farm which collects the target data.
-            center (Tuple[float, float]):
+                units (roughly 12km). Strings are parsed by
+                :func:`~apollo.casts.parse_tuple`.
+            center (str or Tuple[float, float]):
                 The latitude and longitude of the center geographic slice.
-                This only applies when ``geo_shape`` is not None.
-            lag (int):
+                This only applies when ``geo_shape`` is not None. The default
+                is roughly the location of the solar farm in Athens, GA.
+                Strings are parsed by :func:`~apollo.casts.parse_tuple`.
+            lag (str or int):
                 If greater than 0, create a sliding window over the reftime
                 axis for data variables at the 0-hour forecast.
-            forecast (int):
+            forecast (str or int):
                 The maximum forecast hour to include.
             target (str or None):
                 The name of a variable in the GA Power dataset to include as a
                 target. If a target is given the year of the start and stop
                 timestamps must be the same (this can be improved).
-            target_hours (int or Iterable[int]):
+            target_hours (str or int or Iterable[int]):
                 The hour offsets of the target in the reftime dimension.
-                This argument is ignored if ``target`` is None.
-            standardize (bool or Tuple[xarray.Dataset, xarray.Dataset]):
+                This argument is ignored if ``target`` is None. Strings are
+                parsed by :func:`~apollo.casts.parse_tuple`.
+            standardize (str or bool or Tuple[xarray.Dataset, xarray.Dataset]):
                 If true, standardize the data to center mean and unit standard
                 deviation. If a tuple of datasets (or floats), standardize using
                 use the given ``(mean, std)``. Do nothing if false. Note that
-                the target column is never standardized.
+                the target column is never standardized. Strings are parsed by
+                :func:`~apollo.casts.parse_bool`.
         '''
         assert 0 <= lag
 
@@ -322,38 +328,43 @@ class SolarDataset:
         stop = casts.utc_timestamp(stop)
         data = nam.open_range(start, stop)
 
-        if feature_subset:
-            data = data[list(feature_subset)]
+        if features is not None:
+            if isinstance(features, str):
+                features = features.split(',')
+            data = data[list(features)]
 
-        if geo_shape:
+        if geo_shape is not None:
+            geo_shape = casts.parse_tuple(geo_shape, int)
+            center = casts.parse_tuple(center, float)
             data = slice_xy(data, center, geo_shape)
 
         if forecast is not None:
+            forecast = int(forecast)
             data = data.isel(forecast=slice(0, forecast+1))
 
-        if bool(standardize) is False:
-            mean = 0.0
-            std = 1.0
-        elif standardize is True:
+        if isinstance(standardize, [tuple, list]):
+            mean, std = standardize
+            data = (data - mean) / std
+        elif casts.parse_bool(standardize):
             mean = data.mean()
             std = data.std()
             data = (data - mean) / std
         else:
-            mean, std = standardize
-            data = (data - mean) / std
+            mean = 0.0
+            std = 1.0
 
-        if 0 < lag:
-            data = window_reftime(data, lag)
+        if 0 < int(lag):
+            data = window_reftime(data, int(lag))
 
-        if temporal_features:
+        if casts.parse_bool(temporal_features):
             temporal_data = extract_temporal_features(data)
             data = xr.merge([data, temporal_data])
 
         if target:
-            try:
-                target_hours = tuple(target_hours)
-            except TypeError:
-                target_hours = (target_hours,)
+            if isinstance(target_hours, [int, float]):
+                target_hours = (int(target_hours),)
+            else:
+                target_hours = casts.parse_tuple(target_hours, int)
             target_data = load_targets(target, start, stop, target_hours)
             data = xr.merge([data, target_data], join='inner')
         else:
@@ -361,7 +372,7 @@ class SolarDataset:
 
         self.xrds = data.persist()
         self.target = target or None
-        self.standardized = bool(standardize)
+        self.standardized = casts.parse_bool(standardize)
         self.mean = mean
         self.std = std
         self.target_hours = target_hours
