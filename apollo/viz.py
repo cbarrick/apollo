@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from apollo import timestamps
+from apollo import casts
 
 
 DAYS = np.array(['Sun.', 'Mon.', 'Tues.', 'Wed.', 'Thurs.', 'Fri.', 'Sat.'])
@@ -289,7 +289,7 @@ def nam_map(xrds, feature, reftime=0, forecast=0, level=0, title=None,
 
     # Set the title.
     if title is None:
-        reftime_iso = timestamps.utc_timestamp(data.reftime.data).isoformat()
+        reftime_iso = casts.utc_timestamp(data.reftime.data).isoformat()
         plt.title(f'{reftime_iso}Z + {forecast} hours')
     else:
         plt.title(title)

@@ -14,7 +14,7 @@ import sqlite3
 import pandas as pd
 import xarray as xr
 
-from apollo import storage, timestamps
+from apollo import storage, casts
 
 
 logger = logging.getLogger(__name__)
@@ -83,8 +83,8 @@ def open(start='2016-01-01', stop='now'):
         xarray.Dataset:
             The contents of the query.
     '''
-    start = timestamps.utc_timestamp(start)
-    stop = timestamps.utc_timestamp(stop)
+    start = casts.utc_timestamp(start)
+    stop = casts.utc_timestamp(stop)
 
     with connect() as con:
         df = pd.read_sql_query(f'''

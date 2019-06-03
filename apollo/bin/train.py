@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from apollo import timestamps
+from apollo import casts
 from apollo.models.base import save as save_model
 from apollo.models.base import list_known_models
 
@@ -49,8 +49,8 @@ def main(argv=None):
 
     ModelClass = classes[args.model]
     kwargs = dict(pair.split('=') for pair in args.kwargs)
-    first = timestamps.utc_timestamp(args.range[0]).floor('6h')
-    last = timestamps.utc_timestamp(args.range[1]).floor('6h')
+    first = casts.utc_timestamp(args.range[0]).floor('6h')
+    last = casts.utc_timestamp(args.range[1]).floor('6h')
 
     logging.info(f'Constructing {args.model} with kwargs: {kwargs}')
     model = ModelClass(**kwargs)

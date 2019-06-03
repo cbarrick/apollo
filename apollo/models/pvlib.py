@@ -6,7 +6,7 @@ import pandas as pd
 
 from pvlib.forecast import GFS, HRRR, RAP, NAM, NDFD
 
-from apollo import timestamps
+from apollo import casts
 from apollo.models.base import Model
 
 
@@ -146,7 +146,7 @@ class PVLibModel(Model):
                 The index gives the timestamp of the forecast hours, and the
                 only column corresponds to the target variable being forecast.
         '''
-        start = timestamps.utc_timestamp(reftime).floor('6h')
+        start = casts.utc_timestamp(reftime).floor('6h')
         end = start + pd.Timedelta(1, 'h') * (self.forecast_hours - 1)
 
         data = self.forecast_model.get_processed_data(

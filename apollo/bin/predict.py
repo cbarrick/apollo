@@ -4,7 +4,7 @@ import multiprocessing as mp
 import os
 import sys
 
-from apollo import models, storage, timestamps
+from apollo import models, storage, casts
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 from apollo.output import write_csv, write_json
@@ -108,7 +108,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     all_models = list_trained_models()
     models = all_models if args.all else args.models
-    reftime = timestamps.utc_timestamp(args.reftime).floor('6h')
+    reftime = casts.utc_timestamp(args.reftime).floor('6h')
 
     # Ensure `--all` is used without any explicit models.
     if args.all and not len(args.models) == 0:

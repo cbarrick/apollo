@@ -7,7 +7,7 @@ import pickle
 from sklearn.externals import joblib
 from sklearn.multioutput import MultiOutputRegressor
 
-from apollo import timestamps
+from apollo import casts
 from apollo.datasets.solar import SolarDataset, \
     DEFAULT_TARGET, DEFAULT_TARGET_HOURS
 from apollo.models.base import Model
@@ -39,7 +39,7 @@ class ScikitModel(Model, abc.ABC):
                 Keyword arguments used to customize data loading and the
                 hyperparameters of the underlying scikit-learn estimator.
         '''
-        ts = timestamps.utc_timestamp('now')
+        ts = casts.utc_timestamp('now')
         self.kwargs = kwargs
 
         # peel off kwargs corresponding to model hyperparams
@@ -134,7 +134,7 @@ class ScikitModel(Model, abc.ABC):
         data_args = dict(self.data_args)
         data_args['target'] = None
 
-        reftime = timestamps.utc_timestamp(reftime)
+        reftime = casts.utc_timestamp(reftime)
 
         ds = SolarDataset(reftime, reftime + pd.Timedelta(6, 'h'), **data_args)
         x = np.asarray(ds.tabular())

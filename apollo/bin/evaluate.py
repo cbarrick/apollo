@@ -10,7 +10,7 @@ from sklearn.metrics import mean_squared_error as mse
 from sklearn.metrics import r2_score as r2
 from sklearn.model_selection import TimeSeriesSplit, PredefinedSplit
 
-from apollo import models, timestamps
+from apollo import models, casts
 from apollo.models.base import list_trained_models
 from apollo.models.base import load as load_model
 
@@ -128,8 +128,8 @@ def main(argv=None):
     logging.info('Loading model...')
     model = load_model(args.model)
 
-    first = timestamps.utc_timestamp(args.range[0]).floor('6h')
-    last = timestamps.utc_timestamp(args.range[1]).floor('6h')
+    first = casts.utc_timestamp(args.range[0]).floor('6h')
+    last = casts.utc_timestamp(args.range[1]).floor('6h')
 
     splitter = make_splitter(args, first, last)
 

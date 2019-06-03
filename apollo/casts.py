@@ -1,4 +1,4 @@
-'''Utilities for working with Timestamps.
+'''Functions for casting between types, typically by parsing strings
 '''
 
 import time

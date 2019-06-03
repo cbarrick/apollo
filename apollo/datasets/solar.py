@@ -28,7 +28,7 @@ import scipy as sp
 import scipy.spatial
 import xarray as xr
 
-from apollo import timestamps
+from apollo import casts
 from apollo.datasets import nam, ga_power
 
 
@@ -318,8 +318,8 @@ class SolarDataset:
         '''
         assert 0 <= lag
 
-        start = timestamps.utc_timestamp(start) - pd.Timedelta(6, 'h') * lag
-        stop = timestamps.utc_timestamp(stop)
+        start = casts.utc_timestamp(start) - pd.Timedelta(6, 'h') * lag
+        stop = casts.utc_timestamp(stop)
         data = nam.open_range(start, stop)
 
         if feature_subset:
