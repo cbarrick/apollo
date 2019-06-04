@@ -3,7 +3,7 @@ import pathlib
 import pickle
 
 from apollo import timestamps
-from apollo.datasets.ga_power import open_sqlite
+from apollo.datasets import ga_power
 from apollo.datasets.solar import DEFAULT_TARGET, DEFAULT_TARGET_HOURS
 from apollo.models.base import Model
 
@@ -86,7 +86,7 @@ class PersistenceModel(Model):
         forecast_reach = max(*self.target_hours)  # maximum forecast hour
         past_values_start = reftime - pd.Timedelta(forecast_reach, 'h')
         past_values_end = reftime
-        past_values = open_sqlite(
+        past_values = ga_power.open(
             self.target, start=past_values_start, stop=past_values_end)\
             .to_dataframe()
 

@@ -203,7 +203,7 @@ def load_targets(target, start, stop, target_hours):
     # Load the raw target data, corresponding to a 0 hour prediction.
     # Note that 'target_hour' is a non-dimension coordinate. We later
     # use `DataArray.expan_dims` to promote it to a dimension.
-    target_data_raw = ga_power.open_sqlite(
+    target_data_raw = ga_power.open(
         target,
         start=start,
         stop=stop + pd.Timedelta(max_target_hour, 'h')

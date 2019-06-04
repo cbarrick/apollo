@@ -147,7 +147,7 @@ class Model(abc.ABC):
         targets_last = last + pd.Timedelta(max_target_hour+1, 'h')
 
         # pre-load all ground truth readings
-        ground_truth = ga_power.open_sqlite(
+        ground_truth = ga_power.open(
             self.target,
             start=first,
             stop=targets_last
