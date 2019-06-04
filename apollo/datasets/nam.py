@@ -108,7 +108,7 @@ def open(reftimes='now', on_miss='raise', **kwargs):
             times.
     '''
     loader = NamLoader(**kwargs)
-    return loader.open(*reftimes)
+    return loader.open(*reftimes, on_miss=on_miss)
 
 
 def open_range(start, stop='now', on_miss='skip', **kwargs):
