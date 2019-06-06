@@ -630,7 +630,15 @@ class NamLoader:
         if len(paths) == 0:
             raise CacheMiss('No applicable forecasts were found')
 
-        return _open_mfdataset(paths)
+        ds = _open_mfdataset(paths)
+
+        # Reconstruct `time` dimension by combining `reftime` and `forecast`.
+        # - `reftime` is the time the forecast was made.
+        # - `forecast` is the offset of the data relative to the reftime.
+        # - `time` is the time being forecasted.
+        ds = ds.assign_coords({'time': ds.reftime + ds.forecast})
+
+        return ds
 
     def open_range(self, start, stop='now', on_miss='skip'):
         '''Open the forecasts for a range of reference times.
