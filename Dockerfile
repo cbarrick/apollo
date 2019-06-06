@@ -30,10 +30,11 @@ COPY . /usr/local/src/apollo
 RUN pip install .
 
 # Install the cron job.
-RUN install ./scripts/cron.bash /etc/cron.hourly/apollo
+RUN install --mode=755 ./scripts/apollo-cron /etc/cron.hourly
 
 # Configure apollo to use `/apollo-data` for the data store.
 # This is expected to be mounted as an external volume.
+# See <https://docs.docker.com/storage/volumes/>.
 ENV APOLLO_DATA="/apollo-data"
 VOLUME /apollo-data
 WORKDIR /apollo-data
