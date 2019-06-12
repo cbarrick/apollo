@@ -265,19 +265,8 @@ def main(argv=None):
         type=str,
         default=apollo.storage.get('assets/html/forecasts'),
         help='The directory to write the generated HTML files.')
-    parser.add_argument(
-        '--log',
-        type=str,
-        default='INFO',
-        choices=('DEBUG', 'INFO', 'WARN', 'ERROR'),
-        help='Sets the log level. Default is INFO')
 
     args = parser.parse_args(argv)
-
-    logging.basicConfig(
-        format='[{asctime}] {levelname}: {message}',
-        style='{',
-        level=args.log)
 
     logging.info(" * in:" + str(args.input_dir))
     logging.info(" * out:" + str(args.output_dir))
@@ -287,5 +276,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
-
-
