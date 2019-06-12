@@ -1,44 +1,50 @@
 # This image is based on debian:latest with miniconda3 installed.
 # The base conda environment is activated for login shells.
 FROM continuumio/miniconda3:latest
-
-# Update debian and install cron.
-RUN apt-get update -y \
- && apt-get upgrade -y \
- && apt-get install cron -y
-
-# The miniconda3 image doesn't necessarily use the latest conda release.
-# We update it manually now to avoid the standard outdated warning later.
-RUN conda update -n base -c defaults conda --quiet
-
-# The Filesystem Hierarchy Standard says we should build our app here.
-# https://wiki.debian.org/FilesystemHierarchyStandard
 WORKDIR /usr/local/src/apollo
 
-# Install our environment on top of conda's base environment.
-# Do this before copying the rest of the source code to allow docker to cache
-# the intermediate image. This saves gigabytes of package downloads when
-# rebuilding the image after changing the source code.
-COPY environment.yml /usr/local/src/apollo
-RUN conda env update -f environment.yml -n base --quiet
+# Update Debian and install cron.
+RUN apt-get -y update \
+ && apt-get -y upgrade \
+ && apt-get -y install cron \
+ && apt-get clean
 
-# Copy the source code to the image. The actual files copied into the image
-# are whitelisted by the `.dockerignore` file.
-COPY . /usr/local/src/apollo
+# Update conda to avoid the outdated warning.
+RUN conda update -n base -c defaults conda
 
-# Install the apollo package.
-RUN pip install .
+# Install our dependencies in conda's base environment.
+# Do this early to save gigabytes of downloads with cached builds.
+COPY ./environment.yml ./environment.yml
+RUN conda env update -n base \
+ && conda clean --all
+
+# Copy the source code into the image.
+# See the `.dockerignore` file for specifics.
+COPY . .
+
+# Install the python package.
+# Perform an "editable" install to use these sources directly.
+RUN pip install -e .
 
 # Install the cron job.
 RUN install --mode=755 ./scripts/apollo-cron /etc/cron.hourly
 
-# Configure apollo to use `/apollo-data` for the data store.
+# Use `/apollo-data` for the data store.
 # This is expected to be mounted as an external volume.
 # See <https://docs.docker.com/storage/volumes/>.
 ENV APOLLO_DATA="/apollo-data"
 VOLUME /apollo-data
-WORKDIR /apollo-data
 
-# The job of this container is to download and process forecasts.
-# That is encapsulated by the cron job.
-CMD ["cron", "-f"]
+# Set the startup command of the container.
+# This script launches cron jobs and the data explorer UI.
+CMD ["./scripts/apollo-docker.bash"]
+
+# Expose port 80.
+#
+# The data explorer runs over HTTP on port 80. When running the container,
+# use the `-P` or `-p` arguments to map this port to the host machine.
+# See <https://docs.docker.com/engine/reference/run/#expose-incoming-ports>.
+#
+# If exposing the service to the internet, this container should be behind some
+# reverse proxy that handles authentication and TLS termination.
+EXPOSE 80/tcp
