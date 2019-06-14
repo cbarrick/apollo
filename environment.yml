@@ -21,6 +21,7 @@ dependencies:
   - requests
   - pvlib-python
   - siphon
+  - joblib
 
   # Data Explorer
   - flask

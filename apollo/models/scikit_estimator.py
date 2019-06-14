@@ -1,10 +1,10 @@
 import abc
+import joblib
 import numpy as np
 import pandas as pd
 import pathlib
 import pickle
 
-from sklearn.externals import joblib
 from sklearn.multioutput import MultiOutputRegressor
 
 from apollo import casts
