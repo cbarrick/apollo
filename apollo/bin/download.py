@@ -87,12 +87,6 @@ def main(argv=None):
         help='do not delete grib files',
     )
 
-    parser.add_argument(
-        '-s',
-        '--store',
-        help=f'path to the data store (default: {storage.get_root()})',
-    )
-
     selectors = parser.add_mutually_exclusive_group()
 
     selectors.add_argument(
@@ -123,9 +117,6 @@ def main(argv=None):
     logging.debug('called with the following options:')
     for arg, val in vars(args).items():
         logging.debug(f'  {arg}: {val}')
-
-    if args.store:
-        storage.set_root(args.store)
 
     for reftime in reftimes(args):
         try:

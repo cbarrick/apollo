@@ -100,13 +100,6 @@ def main(argv=None):
         help='identify errors but do not prompt to correct them'
     )
 
-    parser.add_argument(
-        '-s',
-        '--store',
-        type=str,
-        help=f'path to the data store (default: {storage.get_root()})',
-    )
-
     selectors = parser.add_mutually_exclusive_group()
 
     selectors.add_argument(
@@ -137,9 +130,6 @@ def main(argv=None):
     logging.debug('called with the following options:')
     for arg, val in vars(args).items():
         logging.debug(f'  {arg}: {val}')
-
-    if args.store:
-        storage.set_root(args.store)
 
     now = casts.utc_timestamp('now', tz='utc')
 
