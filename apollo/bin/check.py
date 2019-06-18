@@ -80,13 +80,6 @@ def dataset_pairs(args):
             return
 
 
-def nc_path(reftime):
-    '''The path for a local netCDF file.
-    '''
-    loader = nam.NamLoader()
-    return loader.nc_path(reftime)
-
-
 def main(argv=None):
     # Note that the `--from` argument is parsed into `args.start`
     parser = argparse.ArgumentParser(
@@ -138,7 +131,7 @@ def main(argv=None):
         time_b = casts.utc_timestamp(b.reftime.data[0]).floor('6h')
         vars_a = set(a.variables.keys())
         vars_b = set(b.variables.keys())
-        path_a = nc_path(time_a)
+        path_a = nam.nc_path(time_a)
         path_backup = Path(f'{path_a}.bak')
 
         if vars_a - vars_b:
