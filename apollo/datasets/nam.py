@@ -105,15 +105,6 @@ PLANAR_FEATURES = (
 )
 
 
-def _open_mfdataset(paths):
-    '''A wrapper around :func:`xarray.open_mfdataset` that applies chunking.
-    '''
-    return xr.open_mfdataset(
-        paths = paths,
-        chunks = {'x': 10, 'y': 10, 'reftime': 1, 'forecast': 12},
-    )
-
-
 def proj_coords(lats, lons):
     '''Transform geographic coordinates into the NAM218 projection.
 
@@ -540,7 +531,7 @@ def _combine(datasets):
             path = tmpdir / f'tmp_{i}.nc'
             ds.to_netcdf(path)
             paths.append(path)
-        ds = _open_mfdataset(paths)
+        ds = xr.open_mfdataset(paths)
     return ds
 
 
@@ -591,13 +582,13 @@ def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwarg
             ds = _process_grib(ds, reftime, forecast)
             ds.to_netcdf(path)
             paths.append(path)
-        ds = _open_mfdataset(paths)
+        ds = xr.open_mfdataset(paths)
 
     if save_nc:
         path = nc_path(reftime)
         logger.info(f'writing {path}')
         ds.to_netcdf(path)
-        ds = _open_mfdataset([path])
+        ds = xr.open_mfdataset([path])
 
     if not keep_gribs:
         for forecast in FORECAST_PERIOD:
@@ -659,7 +650,7 @@ def open(reftimes='now', on_miss='raise', **kwargs):
     if len(paths) == 0:
         raise CacheMiss('No applicable forecasts were found')
 
-    ds = _open_mfdataset(paths)
+    ds = xr.open_mfdataset(paths)
 
     # Reconstruct `time` dimension by combining `reftime` and `forecast`.
     # - `reftime` is the time the forecast was made.
