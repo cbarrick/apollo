@@ -63,9 +63,9 @@ FULL_FORECAST_PERIOD = tuple(range(36)) + tuple(range(36, 85, 3))
 FORECAST_PERIOD = FULL_FORECAST_PERIOD[:37]
 
 
-# The projection of the NAM-NMM dataset as a `cartopy.crs.CRS`.
-# The projection is officially called called "Grid 218" by NOAA.
-# http://www.nco.ncep.noaa.gov/pmb/docs/on388/tableb.html#GRID218
+#: The projection of the NAM-NMM dataset as a `cartopy.crs.CRS`.
+#: The projection is officially called called "Grid 218" by NOAA.
+#: http://www.nco.ncep.noaa.gov/pmb/docs/on388/tableb.html#GRID218
 NAM218_PROJ = ccrs.LambertConformal(
     central_latitude=25,
     central_longitude=265,
@@ -77,9 +77,36 @@ NAM218_PROJ = ccrs.LambertConformal(
 )
 
 
+#: The latitude and longitude of the solar array.
+#:
+#: In practice, this gets rounded to the nearest coordinate in the NAM dataset.
+#: That location is ``(33.93593, -83.32683)`` and is near the intersection of
+#: Gains School and Lexington.
+#:
+#: .. note::
+#:     This is was taken from Google Maps as the lat/lon of the State
+#:     Botanical Garden of Georgia.
+ATHENS_LATLON = (33.9052058, -83.382608)
+
+
+#: The planar features of the NAM dataset,
+#: i.e. those where the Z-axis has size 1.
+PLANAR_FEATURES = (
+    'PRES_SFC',
+    'HGT_SFC',
+    'HGT_TOA',
+    'TMP_SFC',
+    'VIS_SFC',
+    'UGRD_TOA',
+    'VGRD_TOA',
+    'DSWRF_SFC',
+    'DLWRF_SFC',
+    'TCC_EATM',
+)
+
+
 def _open_mfdataset(paths):
-    '''A wrapper around :func:`xarray.open_mfdataset` that applies the default
-    chunking used in this module.
+    '''A wrapper around :func:`xarray.open_mfdataset` that applies chunking.
     '''
     return xr.open_mfdataset(
         paths = paths,
@@ -89,28 +116,74 @@ def _open_mfdataset(paths):
 
 def proj_coords(lats, lons):
     '''Transform geographic coordinates into the NAM218 projection.
-    The input is a geographic area described by a pair of 2D arrays giving the
-    latitude and longitude of each cell. The input must map to a square area in
-    the projected coordinates. The values returned are 1D indices along both
-    the x and y axes.
 
-    The output is undefined if the input does not map to a square area.
+    This function converts latitude-longitude pairs into x-y pairs, where x and
+    y are measured in meters relative to the NAM218 projection described by
+    :data:`NAM218_PROJ`.
+
+    NAM218 is the name of the projection used by NAM. It is a Lambert Conformal
+    projection covering the contiguous United States.
+
+    The latitude and longitude arguments may be given as floats or arrays, but
+    must have the same shape. The returned values have the same shape as the
+    inputs.
 
     Arguments:
-        lats (numpy.ndarray):
-            The latitude at each cell as a 2D array.
-        lons (numpy.ndarray):
-            The longitude at each cell as a 2D array.
+        lats (float or numpy.ndarray):
+            The latitudes.
+        lons (float or numpy.ndarray):
+            The longitudes.
+
     Returns:
         x (numpy.ndarray):
-            The coordinates for the x axis in meters as a 1D array.
+            The x coordinate, measured in meters.
         y (numpy.ndarray):
-            The coordinates for the y axis in meters as a 1D array.
+            The y coordinate, measured in meters.
     '''
+    lats = np.asarray(lats)
+    lons = np.asarray(lons)
     unproj = ccrs.PlateCarree()
-    coords = NAM218_PROJ.transform_points(unproj, lons, lats)
-    x, y = coords[0,:,0], coords[:,0,1]
+    coords = NAM218_PROJ.transform_points(unproj, lons.flatten(), lats.flatten())
+    x, y = coords[...,0], coords[...,1]
+    x = x.reshape(lats.shape)
+    y = y.reshape(lats.shape)
     return x, y
+
+
+def slice_geo(data, center, shape):
+    '''Slice a dataset along geographic coordinates.
+
+    Arguments:
+        data (xarray.Dataset):
+            The dataset to slice. It should have coordinates ``x`` and ``y``
+            measured in meters relative to the NAM218 projection.
+        center (pair of float):
+            The center of the slice, as a latitude-longited pair.
+        shape (float or pair of float):
+            The height and width of the geographic area, measured in meters. If
+            a scalar, both height and width are the same size.
+
+    Returns:
+        Dataset:
+            The sliced dataset.
+    '''
+    # Convert the center from lat-lon to x-y.
+    lat, lon = center
+    x, y = proj_coords(lat, lon)
+
+    # Round x and y to the nearest index.
+    center_data = data.sel(x=x, y=y, method='nearest')
+    x = center_data.x.values
+    y = center_data.y.values
+
+    # Compute the slice bounds from the shape.
+    if np.isscalar(shape): shape = (shape, shape)
+    x_shape, y_shape = shape
+    x_slice = slice(x - x_shape/2, x + x_shape/2)
+    y_slice = slice(y - y_shape/2, y + y_shape/2)
+
+    # Perform the selection.
+    return data.sel(x=x_slice, y=y_slice)
 
 
 class CacheMiss(Exception):
@@ -327,6 +400,7 @@ def _process_grib(ds, reftime, forecast):
 
     # Compute the coordinates for x and y
     x, y = proj_coords(ds.lat.data, ds.lon.data)
+    x, y = x[0,:], y[:,0]
     ds = ds.assign_coords(x=x, y=y)
 
     # Add a z dimension to variables that don't have one.
@@ -444,7 +518,33 @@ def _process_grib(ds, reftime, forecast):
     return ds
 
 
-def download(reftime='now', save_nc=True, keep_gribs=False, **kwargs):
+def _combine(datasets):
+    '''Combine many datasets into one.
+
+    This function works by persisting each dataset into a temporary directory,
+    then re-opening them together as a single multifile dataset. This may
+    happen in memory or on disk, depending on how the temp filesystem is setup.
+
+    Arguments:
+        datasets (list of xarray.Dataset):
+            The datasets to combine.
+
+    Returns:
+        xarray.Dataset:
+            The combined dataset.
+    '''
+    with TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        paths = []
+        for i, data in enumerate(datasets):
+            path = tmpdir / f'tmp_{i}.nc'
+            ds.to_netcdf(path)
+            paths.append(path)
+        ds = _open_mfdataset(paths)
+    return ds
+
+
+def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwargs):
     '''Download a forecast for a given reference time.
 
     The download is skipped for GRIB files in the cache.
@@ -456,6 +556,8 @@ def download(reftime='now', save_nc=True, keep_gribs=False, **kwargs):
             Whether to save the processed forecast in the cache as a netCDF.
         keep_gribs (bool or None):
             Whether to save the raw forecast in the cache as a set of GRIBs.
+        force (bool):
+            If true, download even if the dataset already exists locally.
         max_tries (int):
             The maximum number of failed downloads for a single file
             before raising an `IOError`. Exponential backoff is applied
@@ -471,6 +573,11 @@ def download(reftime='now', save_nc=True, keep_gribs=False, **kwargs):
         xarray.Dataset:
             A dataset for the forecast at this reftime.
     '''
+    # No need to download if we already have the dataset.
+    if not force and nc_path(reftime).exists():
+        logger.info(f'skipping downlod, file exists: {nc_path(reftime)}')
+        return open(reftime, on_miss='raise')
+
     # We save each GRIB as a netCDF in a temp directory, then reopen all
     # as a single dataset, which we finally persist in the datastore.
     # It is important to persist the intermediate datasets for performance
@@ -490,6 +597,7 @@ def download(reftime='now', save_nc=True, keep_gribs=False, **kwargs):
         path = nc_path(reftime)
         logger.info(f'writing {path}')
         ds.to_netcdf(path)
+        ds = _open_mfdataset([path])
 
     if not keep_gribs:
         for forecast in FORECAST_PERIOD:
@@ -522,6 +630,9 @@ def open(reftimes='now', on_miss='raise', **kwargs):
             A single dataset containing all forecasts at the given reference
             times.
     '''
+    if not on_miss in ('raise', 'download', 'skip'):
+        raise ValueError(f"Unknown cache miss strategy: {repr(on_miss)}")
+
     try:
         reftimes = [
             casts.utc_timestamp(reftimes).floor('6h')
@@ -554,7 +665,8 @@ def open(reftimes='now', on_miss='raise', **kwargs):
     # - `reftime` is the time the forecast was made.
     # - `forecast` is the offset of the data relative to the reftime.
     # - `time` is the time being forecasted.
-    ds = ds.assign_coords({'time': ds.reftime + ds.forecast})
+    time = ds.reftime + ds.forecast
+    ds = ds.assign_coords(time=time)
 
     return ds
 
