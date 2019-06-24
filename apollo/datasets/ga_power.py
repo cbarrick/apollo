@@ -80,7 +80,7 @@ def open(start='2016-01-01', stop='now'):
             is the current time when the function is called.
 
     Returns:
-        xarray.Dataset:
+        pd.DataFrame:
             The contents of the query.
     '''
     start = casts.utc_timestamp(start)
@@ -96,7 +96,7 @@ def open(start='2016-01-01', stop='now'):
             parse_dates=['TIMESTAMP'])
 
     df.index.name = 'time'
-    return df.to_xarray()
+    return df
 
 
 # ---------------------------------------------------------------------------
