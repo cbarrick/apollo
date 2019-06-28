@@ -81,7 +81,6 @@ def dataset_pairs(args):
 
 
 def main(argv=None):
-    # Note that the `--from` argument is parsed into `args.start`
     parser = argparse.ArgumentParser(
         description='Check NAM forecasts for bugs.'
     )
