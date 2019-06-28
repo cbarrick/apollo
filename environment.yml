@@ -21,6 +21,15 @@ dependencies:
   - requests
   - pvlib-python
   - siphon
+  - pickle5
+
+  # We are deprecating our use of joblib. Previously, joblib was only used
+  # directly for its serialization feature. Starting with Python 3.8, a new
+  # pickle protocol (version 5) has been introduced to solve the same problems
+  # of the joblib serialization. It has been backported to Python 3.6 as the
+  # pickle5 package.
+  #
+  # Version 1 of the model API uses joblib. Version 2 uses pickle5.
   - joblib
 
   # Data Explorer
