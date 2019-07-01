@@ -26,6 +26,5 @@ conda activate
 # image uses `/apollo-data`.
 export APOLLO_DATA='/apollo-data'
 
-# Download the most recent forecast, make predictions, and generate html.
+# Download the most recent forecast.
 apollo download
-apollo predict --all
