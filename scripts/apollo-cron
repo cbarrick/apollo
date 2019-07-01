@@ -27,4 +27,4 @@ conda activate
 export APOLLO_DATA='/apollo-data'
 
 # Download the most recent forecast.
-apollo download
+apollo nam download
