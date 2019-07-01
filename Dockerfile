@@ -38,13 +38,3 @@ VOLUME /apollo-data
 # Set the startup command of the container.
 # This script launches cron jobs and the data explorer UI.
 CMD ["./scripts/apollo-docker.bash"]
-
-# Expose port 80.
-#
-# The data explorer runs over HTTP on port 80. When running the container,
-# use the `-P` or `-p` arguments to map this port to the host machine.
-# See <https://docs.docker.com/engine/reference/run/#expose-incoming-ports>.
-#
-# If exposing the service to the internet, this container should be behind some
-# reverse proxy that handles authentication and TLS termination.
-EXPOSE 80/tcp

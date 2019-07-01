@@ -29,4 +29,3 @@ export APOLLO_DATA='/apollo-data'
 # Download the most recent forecast, make predictions, and generate html.
 apollo download
 apollo predict --all
-apollo forecast-to-html

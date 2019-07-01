@@ -32,9 +32,3 @@ export APOLLO_DATA='/apollo-data'
 # daemons. We use cron to schedule Apollo forecasts and thus need to launch the
 # cron daemon manually.
 cron
-
-# Launch the web UI over HTTP on port 80.
-#
-# If exposing the service to the internet, this container should be behind some
-# reverse proxy that handles authentication and TLS termination.
-apollo data-explorer --port=80

@@ -32,10 +32,6 @@ dependencies:
   # Version 1 of the model API uses joblib. Version 2 uses pickle5.
   - joblib
 
-  # Data Explorer
-  - flask
-  - waitress
-
   # Documentation
   - sphinx
   - sphinx_rtd_theme
