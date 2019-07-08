@@ -22,6 +22,23 @@ Documentation
     cli
 
 
+Thesis
+--------------------------------------------------
+
+.. note::
+    These are my thesis chapters and won't appear in the final docs.
+
+.. toctree::
+    :caption: Thesis
+    :maxdepth: 1
+
+    thesis/01-introduction.rst
+    thesis/02-system-design.rst
+    thesis/03-nam.rst
+    thesis/04-experiments.rst
+    thesis/05-conclusions.rst
+
+
 Acknowledgements
 --------------------------------------------------
 
