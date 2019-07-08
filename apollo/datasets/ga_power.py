@@ -96,6 +96,7 @@ def open(start='2016-01-01', stop='now'):
             parse_dates=['TIMESTAMP'])
 
     df.index.name = 'time'
+    df.index = df.index.tz_localize('UTC')
     return df
 
 
