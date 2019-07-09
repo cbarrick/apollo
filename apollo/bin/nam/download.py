@@ -19,7 +19,8 @@ import textwrap
 
 import pandas as pd
 
-from apollo import storage, casts
+import apollo
+from apollo import storage
 from apollo.datasets import nam
 
 
@@ -32,14 +33,14 @@ def reftimes(args):
     '''
     # The ``reftime`` mode gives a single reftime.
     if args.reftime is not None:
-        reftime = casts.utc_timestamp(args.reftime)
+        reftime = apollo.Timestamp(args.reftime)
         logging.info(f'selected the forecast for reftime {reftime}')
         yield reftime
 
     # The ``range`` mode gives the reftime between two inclusive endpoints.
     elif args.range is not None:
-        start = casts.utc_timestamp(args.range[0])
-        stop = casts.utc_timestamp(args.range[1])
+        start = apollo.Timestamp(args.range[0])
+        stop = apollo.Timestamp(args.range[1])
         step = pd.Timedelta(6, 'h', tz='utc')
         logging.info(f'selected the forecasts between {start} and {stop} (inclusive)')
         while start <= stop:
@@ -49,7 +50,7 @@ def reftimes(args):
     # The ``count`` mode downloads the N most recent reftimes.
     elif args.count is not None:
         n = args.count
-        reftime = casts.utc_timestamp('now').floor('6h')
+        reftime = apollo.Timestamp('now').floor('6h')
         step = pd.Timedelta(6, 'h', tz='utc')
         logging.info(f'selected the {n} most recent forecasts (ending at {reftime})')
         for _ in range(n):
@@ -58,7 +59,7 @@ def reftimes(args):
 
     # The default is to use the most recent reftime.
     else:
-        reftime = casts.utc_timestamp('now').floor('6h')
+        reftime = apollo.Timestamp('now').floor('6h')
         logging.info(f'selected the most recent forecast ({reftime})')
         yield reftime
 

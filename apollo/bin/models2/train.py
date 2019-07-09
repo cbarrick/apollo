@@ -5,7 +5,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-from apollo import casts, models2
+import apollo
+from apollo import models2
 from apollo.datasets import ga_power
 
 

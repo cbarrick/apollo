@@ -203,8 +203,8 @@ def grib_url(reftime, forecast):
         str:
             A URL to a GRIB file.
     '''
-    reftime = casts.utc_timestamp(reftime).floor('6h')
-    now = casts.utc_timestamp('now').floor('6h')
+    reftime = apollo.Timestamp(reftime).floor('6h')
+    now = apollo.Timestamp('now').floor('6h')
     delta = now - reftime
     if pd.Timedelta(7, 'd') < delta:
         url_fmt = ARCHIVE_URL
@@ -229,7 +229,7 @@ def grib_path(reftime, forecast):
         pathlib.Path:
             The local path for a GRIB file, which may not exist.
     '''
-    reftime = casts.utc_timestamp(reftime).floor('6h')
+    reftime = apollo.Timestamp(reftime).floor('6h')
     prefix_fmt = 'nam.{ref.year:04d}{ref.month:02d}{ref.day:02d}'
     filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
     prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
@@ -251,7 +251,7 @@ def nc_path(reftime):
         pathlib.Path:
             The local path to a netCDF file, which may not exist.
     '''
-    reftime = reftime = casts.utc_timestamp(reftime).floor('6h')
+    reftime = reftime = apollo.Timestamp(reftime).floor('6h')
     prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
     filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
     return DATA_DIR / prefix / filename
@@ -404,8 +404,8 @@ def _process_grib(ds, reftime, forecast):
     # Both are stored as integers with appropriate units.
     # The reftime dimension is hours since the Unix epoch (1970-01-01 00:00).
     # The forecast dimension is hours since the reftime.
-    reftime = casts.utc_timestamp(reftime).floor('6h')
-    epoch = casts.utc_timestamp('1970-01-01 00:00')
+    reftime = apollo.Timestamp(reftime).floor('6h')
+    epoch = apollo.Timestamp('1970-01-01 00:00')
     delta_seconds = int((reftime - epoch).total_seconds())
     delta_hours = delta_seconds // 60 // 60
     ds = ds.assign_coords(
@@ -501,7 +501,7 @@ def _process_grib(ds, reftime, forecast):
     for v in metadata:
         ds[v] = ds[v].assign_attrs(metadata[v])
 
-    now = casts.utc_timestamp("now", tz='utc')
+    now = apollo.Timestamp("now", tz='utc')
     ds.attrs['title'] = 'NAM-UGA, a subset of NAM-NMM for solar forecasting research in Georgia'
     ds.attrs['history'] = f'{now.isoformat()} Initial conversion from GRIB files released by NCEP\n'
 
@@ -626,11 +626,11 @@ def open(reftimes='now', on_miss='raise', **kwargs):
 
     try:
         reftimes = [
-            casts.utc_timestamp(reftimes).floor('6h')
+            apollo.Timestamp(reftimes).floor('6h')
         ]
     except TypeError:
         reftimes = [
-            casts.utc_timestamp(r).floor('6h')
+            apollo.Timestamp(r).floor('6h')
             for r in reftimes
         ]
 
@@ -683,7 +683,7 @@ def open_range(start, stop='now', on_miss='skip', **kwargs):
             A single dataset containing all forecasts at the given reference
             times.
     '''
-    start = casts.utc_timestamp(start).floor('6h')
-    stop = casts.utc_timestamp(stop).floor('6h')
+    start = apollo.Timestamp(start).floor('6h')
+    stop = apollo.Timestamp(stop).floor('6h')
     reftimes = pd.date_range(start, stop, freq='6h')
     return open(reftimes, on_miss=on_miss, **kwargs)
