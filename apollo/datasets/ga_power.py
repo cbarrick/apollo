@@ -15,7 +15,6 @@ import pandas as pd
 import xarray as xr
 
 import apollo
-from apollo import storage
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ def raw_connect():
         sqlite3.Connection:
             The database connection.
     '''
-    data_dir = storage.get('GA-POWER')
+    data_dir = apollo.path('GA-POWER')
     path = data_dir / 'solar_farm.sqlite'
     return sqlite3.connect(str(path))
 

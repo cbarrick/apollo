@@ -16,7 +16,7 @@ from sklearn.preprocessing import StandardScaler
 import pvlib
 from pvlib import solarposition
 
-from apollo import storage
+import apollo
 from apollo.datasets import nam
 
 
@@ -149,7 +149,7 @@ def from_template(template, **kwargs):
         if os.sep in template:
             template = Path(template)
         else:
-            template = storage.get('models2') / 'templates' / f'{template}.json'
+            template = apollo.path('models2') / 'templates' / f'{template}.json'
 
     # Convert Path to file-like.
     if isinstance(template, Path):
@@ -180,7 +180,7 @@ def list_templates():
         list of str:
             The named templates.
     '''
-    base = storage.get('models2') / 'templates'
+    base = apollo.path('models2') / 'templates'
     base.mkdir(parents=True, exist_ok=True)
     template_paths = base.glob('*.json')
     template_stems = [p.stem for p in template_paths]
@@ -197,7 +197,7 @@ def list_models():
         list of str:
             The trained models.
     '''
-    base = storage.get('models2') / 'models'
+    base = apollo.path('models2') / 'models'
     base.mkdir(parents=True, exist_ok=True)
     model_paths = base.glob('*.pickle')
     model_stems = [p.stem for p in model_paths]
@@ -437,7 +437,7 @@ class Model:
                 The path at which the model was saved.
         '''
         if path is None:
-            base = storage.get('models2') / 'models'
+            base = apollo.path('models2') / 'models'
             base.mkdir(parents=True, exist_ok=True)
             path = base / f'{self.name}.pickle'
         else:
@@ -463,7 +463,7 @@ class Model:
                 The model.
         '''
         if isinstance(path, str) and os.sep not in path:
-            base = storage.get('models2') / 'models'
+            base = apollo.path('models2') / 'models'
             base.mkdir(parents=True, exist_ok=True)
             path = base / f'{name}.pickle'
         else:

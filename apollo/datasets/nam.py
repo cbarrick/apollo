@@ -39,15 +39,13 @@ import pandas as pd
 import requests
 import xarray as xr
 
-from apollo import storage, casts
-
 
 # Module level logger
 logger = logging.getLogger(__name__)
 
 
 # The directory containing this dataset.
-DATA_DIR = storage.get('NAM-NMM')
+DATA_DIR = apollo.path('NAM-NMM')
 
 
 # URLs of remote grib files.

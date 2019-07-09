@@ -44,8 +44,10 @@ def set_root(root):
     return old_root
 
 
-def get(component):
+def path(component):
     '''Access a directory under the storage root.
+
+    This function is reexported at the top-level, e.g. ``apollo.path``.
 
     Arguments:
         component (str or Path):
