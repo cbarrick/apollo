@@ -39,6 +39,8 @@ import pandas as pd
 import requests
 import xarray as xr
 
+import apollo
+
 
 # Module level logger
 logger = logging.getLogger(__name__)
