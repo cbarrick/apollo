@@ -41,7 +41,7 @@ def reftimes(args):
     elif args.range is not None:
         start = apollo.Timestamp(args.range[0])
         stop = apollo.Timestamp(args.range[1])
-        step = pd.Timedelta(6, 'h', tz='utc')
+        step = pd.Timedelta(6, 'h')
         logging.info(f'selected the forecasts between {start} and {stop} (inclusive)')
         while start <= stop:
             yield start
@@ -51,7 +51,7 @@ def reftimes(args):
     elif args.count is not None:
         n = args.count
         reftime = apollo.Timestamp('now').floor('6h')
-        step = pd.Timedelta(6, 'h', tz='utc')
+        step = pd.Timedelta(6, 'h')
         logging.info(f'selected the {n} most recent forecasts (ending at {reftime})')
         for _ in range(n):
             yield reftime

@@ -501,7 +501,7 @@ def _process_grib(ds, reftime, forecast):
     for v in metadata:
         ds[v] = ds[v].assign_attrs(metadata[v])
 
-    now = apollo.Timestamp("now", tz='utc')
+    now = apollo.Timestamp('now')
     ds.attrs['title'] = 'NAM-UGA, a subset of NAM-NMM for solar forecasting research in Georgia'
     ds.attrs['history'] = f'{now.isoformat()} Initial conversion from GRIB files released by NCEP\n'
 

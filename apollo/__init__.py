@@ -1,1 +1,1 @@
-from apollo.timestamps import Timestamp
+from .time import *

@@ -29,7 +29,7 @@ def times_to_reftimes(times):
     This attempts to get the reftimes for all forecasts that include this time.
     On the edge case, this may select one extra forecast per time.
     '''
-    reftimes = pd.DatetimeIndex(times, name='reftime', tz='UTC').unique()
+    reftimes = apollo.DatetimeIndex(times, name='reftime').unique()
     a = reftimes.floor('6h').unique()
     b = a - pd.Timedelta('6h')
     c = a - pd.Timedelta('12h')
@@ -38,103 +38,6 @@ def times_to_reftimes(times):
     f = a - pd.Timedelta('30h')
     g = a - pd.Timedelta('36h')
     return a.union(b).union(c).union(d).union(e).union(f).union(g)
-
-
-def time_of_day(times):
-    '''Compute time-of-day features.
-
-    Arguments:
-        times (numpy.ndarray like):
-            A series of timestamps.
-
-    Returns:
-        pandas.DataFrame:
-            A data frame with 2 data variables:
-                - ``time_of_day_sin`` for the sin component of time-of-day
-                - ``time_of_day_cos`` for the cosin component of time-of-day
-
-            The data frame is indexed by the input timestamps.
-    '''
-    nanos = np.asarray(times, dtype='datetime64[ns]').astype('float32')
-    seconds = nanos / 1e9
-    days = seconds / 86400
-
-    return pd.DataFrame({
-        'time_of_day_sin': np.sin(days * 2 * np.pi),
-        'time_of_day_cos': np.cos(days * 2 * np.pi),
-    }, index=pd.DatetimeIndex(times, tz='UTC'))
-
-
-def time_of_year(times):
-    '''Compute time-of-year features.
-
-    Arguments:
-        times (numpy.ndarray like):
-            A series of timestamps.
-
-    Returns:
-        pandas.DataFrame:
-            A data frame with 2 data variables:
-                - ``time_of_year_sin`` for the sin component of time-of-year.
-                - ``time_of_year_cos`` for the cosin component of time-of-year.
-
-            The data frame is indexed by the input timestamps.
-    '''
-    nanos = np.asarray(times, dtype='datetime64[ns]').astype('float32')
-    seconds = nanos / 1e9
-    days = seconds / 86400
-
-    # Convert the data into day and year units.
-    # The time-of-year is measured in Julian years, 365.25 days of 86400 seconds
-    # each. These are not exactly equal to a Gregorian year (i.e. a year on the
-    # western calendar) once you get into the crazy leap rules.
-    years = days / 365.25
-
-    return pd.DataFrame({
-        'time_of_year_sin': np.sin(years * 2 * np.pi),
-        'time_of_year_cos': np.cos(years * 2 * np.pi),
-    }, index=pd.DatetimeIndex(times, tz='UTC'))
-
-
-def daylight(times, lat, lon):
-    '''Determine if the sun is above the horizon for the given times.
-
-    The resulting series has a one hour leeway for both sunrise and sunset.
-
-    Arguments:
-        times (numpy.ndarray like):
-            A series of timestamps.
-        lat (float):
-            The latitude.
-        lon (float):
-            The longitude.
-
-    Returns:
-        pandas.Series:
-            A boolean series indexed by the times.
-    '''
-    times = pd.DatetimeIndex(times, name='time', tz='UTC')
-
-    # Compute the time of the next sunrise, sunset, and transit (solar noon).
-    # This computation assumes an altitude of sea-level and determined positions
-    # based on the center of the sun. It could be adjusted for greater accuracy,
-    # but the loss of generality probably isn't worth it.
-    # (`rst` abreviates `rise_set_transit`)
-    rst = solarposition.sun_rise_set_transit_ephem(times, lat, lon)
-
-    # Daylight is when the next sunset preceeds the next sunrise.
-    daylight = (rst.sunset < rst.sunrise)
-
-    # Give ourselves leeway to account for the hour in which sunrise/set occurs.
-    one_hour = pd.Timedelta(1, 'h')
-    sunrise_edge = (rst.sunrise - rst.index < one_hour)
-    sunset_edge = (rst.sunset - rst.index < one_hour)
-    daylight |= sunrise_edge
-    daylight |= sunset_edge
-
-    # Ensure the series has a name.
-    daylight.name = 'daylight'
-    return daylight
 
 
 def import_from_str(dotted):
@@ -381,7 +284,7 @@ class Model:
             pandas.DataFrame:
                 A data fram indexed by the forecast time.
         '''
-        times = pd.DatetimeIndex(times, name='time', tz='UTC')
+        times = apollo.DatetimeIndex(times, name='time')
         times = times.floor('1h').unique()
 
         # Load the xarray data.
@@ -448,10 +351,10 @@ class Model:
         # Add time-of-day and time-of-year features.
         if self.add_time_of_day:
             logger.debug('load: computing time-of-day')
-            data = data.join(time_of_day(data.index))
+            data = data.join(apollo.time_of_day(data.index))
         if self.add_time_of_year:
             logger.debug('load: computing time-of-year')
-            data = data.join(time_of_year(data.index))
+            data = data.join(apollo.time_of_year(data.index))
 
         return data
 
@@ -463,7 +366,7 @@ class Model:
             logger.debug('fit: filter out night times')
             times = targets.index
             (lat, lon) = self.center
-            targets = targets[daylight(times, lat, lon)]
+            targets = targets[apollo.is_daylight(times, lat, lon)]
 
         logger.debug('fit: loading forecasts')
         data = self.load_data(targets.index, dedupe_strategy='best')
@@ -489,7 +392,7 @@ class Model:
         return self
 
     def predict(self, times, dedupe_strategy='best'):
-        times = pd.DatetimeIndex(times, name='time', tz='UTC')
+        times = apollo.DatetimeIndex(times, name='time')
         times = times.sort_values().unique()
 
         logger.debug('predict: loading forecasts')
@@ -513,7 +416,7 @@ class Model:
             logger.debug('predict: setting night time to zero')
             times = predictions.index
             (lat, lon) = self.center
-            night = not daylight(times, lat, lon)
+            night = not apollo.is_daylight(times, lat, lon)
             predictions.loc[night, :] = 0
 
         return predictions
