@@ -6,32 +6,25 @@ from apollo import models
 
 def main(argv):
     parser = argparse.ArgumentParser(
-        description='list trained models or model templates'
+        description='list items within the Apollo database'
     )
 
     parser.add_argument(
-        '-t',
-        '--templates',
-        action='store_true',
-        help='list model templates instead of trained models'
+        'component',
+        choices=['models', 'templates'],
+        help='the component of the Apollo database to list'
     )
 
     args = parser.parse_args(argv)
 
-    if args.templates:
-        templates = models.list_templates()
-        if len(templates) == 0:
-            print('no model templates', file=sys.stderr)
-            sys.exit(1)
-        else:
-            print(*templates, sep='\n')
-            sys.exit(0)
-
+    if args.component == 'templates':
+        items = models.list_templates()
+    elif args.component == 'models':
+        items = models.list_models()
     else:
-        all_models = models.list_models()
-        if len(all_models) == 0:
-            print('no trained models', file=sys.stderr)
-            sys.exit(1)
-        else:
-            print(*all_models, sep='\n')
-            sys.exit(0)
+        print(f'unknown component: {args.component}')
+        sys.exit(2)
+
+    if len(items) != 0:
+        print(*items, sep='\n')
+    sys.exit(0)

@@ -169,7 +169,7 @@ def from_template_name(name, **kwargs):
     '''Load a model from named template in the Apollo database.
 
     Templates in the Apollo database can be listed with :func:`list_templates`
-    or from the command line with ``apollo models ls -t``.
+    or from the command line with ``apollo ls -t``.
 
     Arguments:
         name (str):
