@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from apollo import models2
+from apollo import models
 
 
 def main(argv):
@@ -19,7 +19,7 @@ def main(argv):
     args = parser.parse_args(argv)
 
     if args.templates:
-        templates = models2.list_templates()
+        templates = models.list_templates()
         if len(templates) == 0:
             print('no model templates', file=sys.stderr)
             sys.exit(1)
@@ -28,7 +28,7 @@ def main(argv):
             sys.exit(0)
 
     else:
-        models = models2.list_models()
+        models = models.list_models()
         if len(models) == 0:
             print('no trained models', file=sys.stderr)
             sys.exit(1)

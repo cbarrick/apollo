@@ -117,7 +117,7 @@ def from_template(template, **kwargs):
     '''Construct a model from a template.
 
     A template is a dictionary giving keyword arguments for the constructor
-    :class:`apollo.models2.Model`. Alternativly, the dictionary may contain
+    :class:`apollo.models.Model`. Alternativly, the dictionary may contain
     the key ``_ctor`` giving a dotted import path to an alternate constructor.
 
     The ``template`` argument may take several forms:
@@ -132,7 +132,7 @@ def from_template(template, **kwargs):
         A string that does not contain a path separator ('/' or '\') is
         interpreted as a named template. Otherwise it is interpretead as a path
         to a JSON file containing the template. Named templates can be listed
-        with :func:`apollo.models2.list_templates`.
+        with :func:`apollo.models.list_templates`.
 
     Arguments:
         template (dict or str or pathlib.Path or io.IOBase):
@@ -141,7 +141,7 @@ def from_template(template, **kwargs):
             Additional keyword arguments to pass to the model constructor.
 
     Returns:
-        apollo.models2.Model:
+        apollo.models.Model:
             An untrained model.
     '''
     # Convert str to Path.
@@ -149,7 +149,7 @@ def from_template(template, **kwargs):
         if os.sep in template:
             template = Path(template)
         else:
-            template = apollo.path('models2') / 'templates' / f'{template}.json'
+            template = apollo.path('models') / 'templates' / f'{template}.json'
 
     # Convert Path to file-like.
     if isinstance(template, Path):
@@ -164,7 +164,7 @@ def from_template(template, **kwargs):
 
     # Load from dict.
     logger.debug(f'using template: {template}')
-    ctor = template.pop('_ctor', 'apollo.models2.Model')
+    ctor = template.pop('_ctor', 'apollo.models.Model')
     ctor = import_from_str(ctor)
     model = ctor(**template)
     return model
@@ -174,13 +174,13 @@ def list_templates():
     '''List the named templates.
 
     Untrained models can be constructed from these template names using
-    :func:`apollo.models2.from_template`.
+    :func:`apollo.models.from_template`.
 
     Returns:
         list of str:
             The named templates.
     '''
-    base = apollo.path('models2') / 'templates'
+    base = apollo.path('models') / 'templates'
     base.mkdir(parents=True, exist_ok=True)
     template_paths = base.glob('*.json')
     template_stems = [p.stem for p in template_paths]
@@ -191,13 +191,13 @@ def list_models():
     '''List the trained models.
 
     Trained models can be constructed from these names using
-    :func:`apollo.models2.load`.
+    :func:`apollo.models.load`.
 
     Returns:
         list of str:
             The trained models.
     '''
-    base = apollo.path('models2') / 'models'
+    base = apollo.path('models') / 'models'
     base.mkdir(parents=True, exist_ok=True)
     model_paths = base.glob('*.pickle')
     model_stems = [p.stem for p in model_paths]
@@ -425,7 +425,7 @@ class Model:
         '''Persist a model to disk.
 
         Arguments:
-            model (apollo.models2.Model):
+            model (apollo.models.Model):
                 The model to persist.
             path (str or pathlib.Path or None):
                 The path at which to save the model. The default is a path
@@ -437,7 +437,7 @@ class Model:
                 The path at which the model was saved.
         '''
         if path is None:
-            base = apollo.path('models2') / 'models'
+            base = apollo.path('models') / 'models'
             base.mkdir(parents=True, exist_ok=True)
             path = base / f'{self.name}.pickle'
         else:
@@ -459,11 +459,11 @@ class Model:
                 a path to the model.
 
         Returns:
-            apollo.models2.Model:
+            apollo.models.Model:
                 The model.
         '''
         if isinstance(path, str) and os.sep not in path:
-            base = apollo.path('models2') / 'models'
+            base = apollo.path('models') / 'models'
             base.mkdir(parents=True, exist_ok=True)
             path = base / f'{name}.pickle'
         else:

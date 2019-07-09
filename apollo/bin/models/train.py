@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 import apollo
-from apollo import models2
+from apollo import models
 from apollo.datasets import ga_power
 
 
@@ -42,7 +42,7 @@ def main(argv):
     args = parser.parse_args(argv)
 
     logger.info('instantiating model from template')
-    model = models2.from_template(args.template, name=args.name)
+    model = models.from_template(args.template, name=args.name)
 
     logger.info('reading training data')
     targets = pd.read_csv(args.data_file, parse_dates=True, index_col=0)
