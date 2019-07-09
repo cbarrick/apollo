@@ -374,6 +374,13 @@ class Model:
         return data
 
     def fit(self, targets):
+        logger.debug('fit: handling NaNs and infinities')
+        targets = targets.replace([np.inf, -np.inf], np.nan)
+        targets = targets.dropna()
+
+        logger.debug('fit: casting to single precision')
+        targets = targets.astype('float32')
+
         logger.debug('fit: downsampling targets to 1H frequency')
         targets = targets.resample('1H').mean()
 
