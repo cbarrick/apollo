@@ -303,6 +303,27 @@ class Model:
         return data
 
     def fit(self, targets):
+        '''Fit the models to some target data.
+
+        The targets are given as a :class:`~pandas.DataFrame` with a
+        :class:`~pandas.DatetimeIndex`. The column names will be remembered,
+        and predictions produced by this model will use those same names.
+
+        All columns of the targets must be numeric and will be cast to single
+        precision floats. Infinities and NaNs will be dropped and the targets
+        will be downsampled (averaged) to a 1-hour frequency.
+
+        The targets will be standardized before being passed to the underlying
+        estimator.
+
+        Arguments:
+            targets (pandas.DataFrame):
+                The data to fit against.
+
+        Returns:
+            Model:
+                self
+        '''
         logger.debug('fit: reading column names')
         self.columns = list(targets.columns)
 
@@ -345,12 +366,36 @@ class Model:
         targets = self.target_scaler.fit_transform(targets)
 
         logger.debug('fit: fitting estimator')
-        self.estimator.fit(data.to_numpy(), targets.to_numpy())
+        self.estimator.fit(data.to_numpy(), targets)
         return self
 
     def predict(self, times, dedupe_strategy='best'):
+        '''Generate a prediction from this model.
+
+        The times to predict will be floored to the hour. The model is
+        incapable of producing predictions at a higher frequency.
+
+        The resulting predictions will have the same column names and scale
+        as the data frame used to train the model.
+
+        The ``dedupe_strategy`` argument can be used to override the value set
+        when the model was constructed. This allows you to evaluate the model
+        at different forecast periods than it was trained against.
+
+        Arguments:
+            times (numpy.ndarray like):
+                A series of timestamps to predict. Timezone-naive timestamps
+                will be interpreted as UTC.
+            dedupe_strategy (str):
+                The strategy for selecting input forecasts.
+
+        Returns:
+            pandas.DataFrame:
+                A data frame of predicted values, with the same columns as the
+                targets provided to :meth:`fit`.
+        '''
         times = apollo.DatetimeIndex(times, name='time')
-        times = times.sort_values().unique()
+        times = times.sort_values().floor('1h').unique()
 
         logger.debug('predict: loading forecasts')
         data = self.load_data(times, dedupe_strategy=dedupe_strategy)
