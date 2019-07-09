@@ -113,83 +113,11 @@ def make_estimator(e):
     return estimator
 
 
-def from_template(template, **kwargs):
-    '''Construct a model from a template.
-
-    A template is a dictionary giving keyword arguments for the constructor
-    :class:`apollo.models.Model`. Alternativly, the dictionary may contain
-    the key ``_ctor`` giving a dotted import path to an alternate constructor.
-
-    The ``template`` argument may take several forms:
-
-    :class:`dict`
-        A dictionary is interpreted as a template directly.
-    file-like object
-        A file-like object is parsed as JSON.
-    :class:`pathlib.Path` or :class:`str`
-        A path to a JSON file containing the template.
-
-    Arguments:
-        template (dict or str or pathlib.Path or io.IOBase):
-            A template dictionary or path to a template file.
-        **kwargs:
-            Additional keyword arguments to pass to the model constructor.
-
-    Returns:
-        apollo.models.Model:
-            An untrained model.
-    '''
-    # Convert str to Path.
-    if isinstance(template, str):
-        if os.sep in template:
-            template = Path(template)
-        else:
-            template = apollo.path('models') / 'templates' / f'{template}.json'
-
-    # Convert Path to file-like.
-    if isinstance(template, Path):
-        template = template.open('r')
-
-    # Convert file-like to dict.
-    if hasattr(template, 'read'):
-        template = json.load(template)
-
-    # The kwargs override the template.
-    template.update(kwargs)
-
-    # Load from dict.
-    logger.debug(f'using template: {template}')
-    ctor = template.pop('_ctor', 'apollo.models.Model')
-    ctor = import_from_str(ctor)
-    model = ctor(**template)
-    return model
-
-
-def from_template_name(name, **kwargs):
-    '''Load a model from named template in the Apollo database.
-
-    Templates in the Apollo database can be listed with :func:`list_templates`
-    or from the command line with ``apollo ls -t``.
-
-    Arguments:
-        name (str):
-            The name of a template in the Apollo database.
-        **kwargs:
-            Additional keyword arguments to pass to the model constructor.
-
-    Returns:
-        apollo.models.Model:
-            An untrained model.
-    '''
-    template = apollo.path(f'models/templates/{name}.json')
-    return from_template(template)
-
-
 def list_templates():
     '''List the named templates.
 
     Untrained models can be constructed from these template names using
-    :func:`apollo.models.from_template`.
+    :meth:`Model.from_template_name`.
 
     Returns:
         list of str:
@@ -461,7 +389,7 @@ class Model:
         if path is None:
             base = apollo.path('models') / 'models'
             base.mkdir(parents=True, exist_ok=True)
-            path = base / f'{self.name}.pickle'
+            path = base / f'{self.name}.model'
         else:
             path = Path(path)
 
@@ -470,26 +398,112 @@ class Model:
         return path
 
     @classmethod
-    def load(path_or_name):
-        '''Load a model from disk.
+    def from_template(cls, template, **kwargs):
+        '''Construct a model from a template.
+
+        A template is a dictionary giving keyword arguments for the constructor
+        :class:`apollo.models.Model`. Alternativly, the dictionary may contain
+        the key ``_cls`` giving a dotted import path to an alternate constructor.
+
+        The ``template`` argument may take several forms:
+
+        :class:`dict`
+            A dictionary is interpreted as a template directly.
+        file-like object
+            A file-like object is parsed as JSON.
+        :class:`pathlib.Path` or :class:`str`
+            A path to a JSON file containing the template.
 
         Arguments:
-            path_or_name (str or pathlib.Path):
-                If the argument is a string that does not contain a path
-                separator, it is interpreted as the name of a model stored in
-                the ``$APOLLO_DATA`` directory. Otherwise, it is interpreted as
-                a path to the model.
+            template (dict or str or pathlib.Path or io.IOBase):
+                A template dictionary or path to a template file.
+            **kwargs:
+                Additional keyword arguments to pass to the model constructor.
+
+        Returns:
+            apollo.models.Model:
+                An untrained model.
+        '''
+        # Convert str to Path.
+        if isinstance(template, str):
+            if os.sep in template:
+                template = Path(template)
+            else:
+                template = apollo.path('models') / 'templates' / f'{template}.json'
+
+        # Convert Path to file-like.
+        if isinstance(template, Path):
+            template = template.open('r')
+
+        # Convert file-like to dict.
+        if hasattr(template, 'read'):
+            template = json.load(template)
+
+        # The kwargs override the template.
+        template.update(kwargs)
+
+        # Allow the template to set an alternate class.
+        ctor = template.pop('_cls', None)
+        if ctor is not None:
+            cls = import_from_str(ctor)
+
+        # Load from dict.
+        logger.debug(f'using template: {template}')
+        model = cls(**template)
+        return model
+
+    @classmethod
+    def from_named_template(cls, template_name, **kwargs):
+        '''Load a model from named template in the Apollo database.
+
+        Templates in the Apollo database can be listed with :func:`list_templates`
+        or from the command line with ``apollo ls templates``.
+
+        Arguments:
+            template_name (str):
+                The name of a template in the Apollo database.
+            **kwargs:
+                Additional keyword arguments to pass to the model constructor.
+
+        Returns:
+            apollo.models.Model:
+                An untrained model.
+        '''
+        template = apollo.path(f'models/templates/{template_name}.json')
+        return cls.from_template(template)
+
+    @classmethod
+    def load(cls, path):
+        '''Load a model from a file.
+
+        Arguments:
+            path (str or pathlib.Path):
+                A path to a model.
 
         Returns:
             apollo.models.Model:
                 The model.
         '''
-        if isinstance(path, str) and os.sep not in path:
-            base = apollo.path('models') / 'models'
-            base.mkdir(parents=True, exist_ok=True)
-            path = base / f'{name}.pickle'
-        else:
-            path = Path(path)
-
+        path = Path(path)
         fd = path.open('rb')
         return pickle.load(fd)
+
+    @classmethod
+    def load_named(cls, name):
+        '''Load a model from the Apollo database.
+
+        Models in the Apollo database can be listed with :func:`list_models`
+        or from the command line with ``apollo ls models``.
+
+        Arguments:
+            name (str):
+                The name of the model.
+
+        Returns:
+            apollo.models.Model:
+                The model.
+        '''
+        base = apollo.path('models')
+        base.mkdir(parents=True, exist_ok=True)
+        path = base / f'{name}.model'
+        return cls.load(path)
