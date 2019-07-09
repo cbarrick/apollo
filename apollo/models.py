@@ -210,8 +210,9 @@ class Model:
         # The names of the output columns, derived from the targets.
         self.columns = None
 
-        # The standardizer, if one is to be used.
-        self.std_scaler = StandardScaler(copy=False)
+        # The standardizers. The feature scaler may not be used.
+        self.feature_scaler = StandardScaler(copy=False)
+        self.target_scaler = StandardScaler(copy=False)
 
     def load_data(self, times, dedupe_strategy='best'):
         '''Load input data for the given times.
@@ -302,12 +303,15 @@ class Model:
         return data
 
     def fit(self, targets):
-        logger.debug('fit: handling NaNs and infinities')
-        targets = targets.replace([np.inf, -np.inf], np.nan)
-        targets = targets.dropna()
+        logger.debug('fit: reading column names')
+        self.columns = list(targets.columns)
 
         logger.debug('fit: casting to single precision')
         targets = targets.astype('float32')
+
+        logger.debug('fit: handling NaNs and infinities')
+        targets = targets.replace([np.inf, -np.inf], np.nan)
+        targets = targets.dropna()
 
         logger.debug('fit: downsampling targets to 1H frequency')
         targets = targets.resample('1H').mean()
@@ -334,10 +338,12 @@ class Model:
             _discard(cols, 'time_of_year_cos')
             _discard(cols, 'time_of_year_sin')
             raw_data = data[cols]
-            self.std_scaler.fit(raw_data)
+            self.feature_scaler.fit(raw_data)
+
+        logger.debug('fit: standardizing the targets')
+        targets = self.target_scaler.fit_transform(targets)
 
         logger.debug('fit: fitting estimator')
-        self.columns = list(targets.columns)
         self.estimator.fit(data.to_numpy(), targets.to_numpy())
         return self
 
@@ -356,11 +362,14 @@ class Model:
             _discard(cols, 'time_of_year_cos')
             _discard(cols, 'time_of_year_sin')
             raw_data = data[cols]
-            data[cols] = self.std_scaler.transform(raw_data)
+            data[cols] = self.feature_scaler.transform(raw_data)
 
         logger.debug('predict: executing the model')
         predictions = self.estimator.predict(data.to_numpy())
         predictions = pd.DataFrame(predictions, data.index, self.columns)
+
+        logger.debug('predict: unscaling the predictions')
+        predictions = self.target_scaler.inverse_transform(predictions, copy=False)
 
         if self.daylight_only:
             logger.debug('predict: setting night time to zero')
