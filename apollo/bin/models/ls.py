@@ -28,10 +28,10 @@ def main(argv):
             sys.exit(0)
 
     else:
-        models = models.list_models()
-        if len(models) == 0:
+        all_models = models.list_models()
+        if len(all_models) == 0:
             print('no trained models', file=sys.stderr)
             sys.exit(1)
         else:
-            print(*models, sep='\n')
+            print(*all_models, sep='\n')
             sys.exit(0)
