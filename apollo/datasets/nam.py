@@ -531,7 +531,7 @@ def _combine(datasets):
             path = tmpdir / f'tmp_{i}.nc'
             ds.to_netcdf(path)
             paths.append(path)
-        ds = xr.open_mfdataset(paths)
+        ds = xr.open_mfdataset(paths, combine='by_coords')
     return ds
 
 
