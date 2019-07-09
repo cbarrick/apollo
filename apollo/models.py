@@ -338,7 +338,8 @@ class Model:
             _discard(cols, 'time_of_year_cos')
             _discard(cols, 'time_of_year_sin')
             raw_data = data[cols]
-            self.feature_scaler.fit(raw_data)
+            std_data = self.feature_scaler.fit_transform(raw_data)
+            data[cols] = std_data
 
         logger.debug('fit: standardizing the targets')
         targets = self.target_scaler.fit_transform(targets)
