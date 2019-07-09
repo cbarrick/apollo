@@ -126,17 +126,12 @@ def from_template(template, **kwargs):
         A dictionary is interpreted as a template directly.
     file-like object
         A file-like object is parsed as JSON.
-    :class:`pathlib.Path`
+    :class:`pathlib.Path` or :class:`str`
         A path to a JSON file containing the template.
-    :class:`str`
-        A string that does not contain a path separator ('/' or '\') is
-        interpreted as a named template. Otherwise it is interpretead as a path
-        to a JSON file containing the template. Named templates can be listed
-        with :func:`apollo.models.list_templates`.
 
     Arguments:
         template (dict or str or pathlib.Path or io.IOBase):
-            A template, template name, path to a template, or JSON file.
+            A template dictionary or path to a template file.
         **kwargs:
             Additional keyword arguments to pass to the model constructor.
 
@@ -168,6 +163,26 @@ def from_template(template, **kwargs):
     ctor = import_from_str(ctor)
     model = ctor(**template)
     return model
+
+
+def from_template_name(name, **kwargs):
+    '''Load a model from named template in the Apollo database.
+
+    Templates in the Apollo database can be listed with :func:`list_templates`
+    or from the command line with ``apollo models ls -t``.
+
+    Arguments:
+        name (str):
+            The name of a template in the Apollo database.
+        **kwargs:
+            Additional keyword arguments to pass to the model constructor.
+
+    Returns:
+        apollo.models.Model:
+            An untrained model.
+    '''
+    template = apollo.path(f'models/templates/{name}.json')
+    return from_template(template)
 
 
 def list_templates():
