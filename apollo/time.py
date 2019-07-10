@@ -1,7 +1,7 @@
 '''Time related functionality.
 
-These functions and classes are reexported at the top-level, e.g. prefer
-``apollo.Timestamp`` to ``apollo.timestamps.Timestamp``.
+The contents of this module are reexported at the top-level, e.g. prefer
+``apollo.Timestamp`` over ``apollo.timestamps.Timestamp``.
 '''
 
 import time
@@ -24,14 +24,14 @@ class Timestamp(pd.Timestamp):
     it is assumed to be UTC. Otherwise it is converted to UTC.
     '''
     def __new__(cls, *args, **kwargs):
-        # The important argument is ``ts_input``. The pandas constructor has
+        # The important argument is ``ts_input``. The Pandas constructor has
         # complex argument handling, so this must be as generic as possible.
         if len(args) != 0:
             ts_input = args[0]
         else:
             ts_input = kwargs.get('ts_input')
 
-        # Delegate to pandas.
+        # Delegate to Pandas.
         ts = super().__new__(cls, *args, **kwargs)
 
         # Ensure the timezone is UTC.
@@ -63,7 +63,7 @@ class DatetimeIndex(pd.DatetimeIndex):
     the special strings.
     '''
     def __new__(cls, *args, **kwargs):
-        # Delegate to pandas.
+        # Delegate to Pandas.
         index = super().__new__(cls, *args, **kwargs)
 
         # Ensure the timezone is UTC.
@@ -86,12 +86,12 @@ def date_range(start=None, end=None, *args, **kwargs):
     Unlike :func:`pandas.date_range`, the ``tz`` argument may only be ``None``
     or ``'UTC'``.
     '''
-    # Handle start and end with the same logic as `apollo.Timestamp`.
+    # Interpret start and end with the same logic as `apollo.Timestamp`.
     # This handles the strings 'now' and 'today' and enables mixed timezones.
     if start is not None: start = Timestamp(start)
     if end is not None: end = Timestamp(end)
 
-    # Delegate to pandas, then ensure the index is an `apollo.DatetimeIndex`.
+    # Delegate to Pandas, then ensure the index is an `apollo.DatetimeIndex`.
     index = pd.date_range(start, end, *args, **kwargs)
     index = DatetimeIndex(index)
     return index
@@ -112,6 +112,7 @@ def time_of_day(times):
 
             The data frame is indexed by the input timestamps.
     '''
+    times = DatetimeIndex(times, name='time')  # Ensure UTC.
     nanos = np.asarray(times, dtype='datetime64[ns]').astype('float32')
     seconds = nanos / 1e9
     days = seconds / 86400
@@ -119,7 +120,7 @@ def time_of_day(times):
     return pd.DataFrame({
         'time_of_day_sin': np.sin(days * 2 * np.pi),
         'time_of_day_cos': np.cos(days * 2 * np.pi),
-    }, index=DatetimeIndex(times))
+    }, index=times)
 
 
 def time_of_year(times):
@@ -137,6 +138,7 @@ def time_of_year(times):
 
             The data frame is indexed by the input timestamps.
     '''
+    times = DatetimeIndex(times, name='time')  # Ensure UTC.
     nanos = np.asarray(times, dtype='datetime64[ns]').astype('float32')
     seconds = nanos / 1e9
     days = seconds / 86400
@@ -150,7 +152,7 @@ def time_of_year(times):
     return pd.DataFrame({
         'time_of_year_sin': np.sin(years * 2 * np.pi),
         'time_of_year_cos': np.cos(years * 2 * np.pi),
-    }, index=DatetimeIndex(times))
+    }, index=times)
 
 
 def is_daylight(times, lat, lon):
