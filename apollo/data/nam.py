@@ -509,30 +509,22 @@ def _process_grib(ds, reftime, forecast):
     return ds
 
 
-def _combine(datasets):
-    '''Combine many datasets into one.
+def open_dataset(paths):
+    '''Open many netCDF files as a single dataset.
 
-    This function works by persisting each dataset into a temporary directory,
-    then re-opening them together as a single multifile dataset. This may
-    happen in memory or on disk, depending on how the temp filesystem is setup.
+    This is a wrapper around :func:`xarray.open_mfdataset` providing defaults
+    relevant to Apollo's filesystem layout.
 
     Arguments:
-        datasets (list of xarray.Dataset):
-            The datasets to combine.
+        paths (str or pathlib.Path or list):
+            One or more paths to the datasets.
 
     Returns:
         xarray.Dataset:
             The combined dataset.
     '''
-    with TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        paths = []
-        for i, data in enumerate(datasets):
-            path = tmpdir / f'tmp_{i}.nc'
-            ds.to_netcdf(path)
-            paths.append(path)
-        ds = xr.open_mfdataset(paths, combine='by_coords')
-    return ds
+    if isinstance(paths, (str, Path)): paths = [paths]
+    return xr.open_mfdataset(paths, combine='by_coords')
 
 
 def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwargs):
@@ -582,13 +574,13 @@ def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwarg
             ds = _process_grib(ds, reftime, forecast)
             ds.to_netcdf(path)
             paths.append(path)
-        ds = xr.open_mfdataset(paths)
+        ds = open_dataset(paths)
 
     if save_nc:
         path = nc_path(reftime)
         logger.info(f'writing {path}')
         ds.to_netcdf(path)
-        ds = xr.open_mfdataset([path])
+        ds = open_dataset([path])
 
     if not keep_gribs:
         for forecast in FORECAST_PERIOD:
@@ -650,7 +642,7 @@ def open(reftimes='now', on_miss='raise', **kwargs):
     if len(paths) == 0:
         raise CacheMiss('No applicable forecasts were found')
 
-    ds = xr.open_mfdataset(paths)
+    ds = open_dataset(paths)
 
     # Reconstruct `time` dimension by combining `reftime` and `forecast`.
     # - `reftime` is the time the forecast was made.
