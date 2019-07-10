@@ -20,7 +20,7 @@ dependencies:
   - xgboost
   - requests
   - pickle5
-  - pvlib
+  - pvlib-python
 
   # Documentation
   - sphinx
