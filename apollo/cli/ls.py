@@ -30,27 +30,27 @@ def parse_args(argv):
     return parser.parse_args(argv)
 
 
-def print_models():
+def print_models(prefix=''):
     '''Print a listing of the models.
     '''
     from apollo import models
     for m in models.list_models():
-        print(f'models/{m}')
+        print(f'{prefix}{m}')
 
 
-def print_templates():
+def print_templates(prefix=''):
     '''Print a listing of the templates.
     '''
     from apollo import models
-    for m in models.list_templates():
-        print(f'templates/{m}')
+    for t in models.list_templates():
+        print(f'{prefix}{t}')
 
 
 def print_all():
     '''Print all listings.
     '''
-    print_models()
-    print_templates()
+    print_models('models/')
+    print_templates('templates/')
 
 
 def main(argv):
