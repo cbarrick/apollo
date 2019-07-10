@@ -27,6 +27,8 @@ for each variable has a different name depending on the type of index
 measuring the axis, e.g. ``z_ISBL`` for isobaric pressure levels.
 '''
 
+import builtins
+import contextlib
 import logging
 from functools import reduce
 from pathlib import Path
@@ -514,7 +516,7 @@ def _process_grib(ds, reftime, forecast):
 
 
 def open_dataset(paths):
-    '''Open many netCDF files as a single dataset.
+    '''Open one or more netCDF files as a single dataset.
 
     This is a wrapper around :func:`xarray.open_mfdataset` providing defaults
     relevant to Apollo's filesystem layout.
@@ -527,8 +529,15 @@ def open_dataset(paths):
         xarray.Dataset:
             The combined dataset.
     '''
-    if isinstance(paths, (str, Path)): paths = [paths]
-    return xr.open_mfdataset(paths, combine='by_coords')
+    if isinstance(paths, (str, Path)):
+        paths = [paths]
+
+    # Xarray and libnetcdf sometimes send trash to stdout or stderr.
+    # We completly silence both streams temporarily.
+    with builtins.open('/dev/null', 'w') as dev_null:
+        with contextlib.redirect_stdout(dev_null):
+            with contextlib.redirect_stderr(dev_null):
+                return xr.open_mfdataset(paths, combine='by_coords')
 
 
 def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwargs):
@@ -683,3 +692,24 @@ def open_range(start, stop='now', on_miss='skip', **kwargs):
     stop = apollo.Timestamp(stop).floor('6h')
     reftimes = pd.date_range(start, stop, freq='6h')
     return open(reftimes, on_miss=on_miss, **kwargs)
+
+
+def iter_available_forecasts():
+    '''Iterate over the reftimes of available forecasts.
+
+    Yields:
+        pandas.Timestamp:
+            The forecast's reference time, with UTC timezone.
+    '''
+    for day_dir in sorted(DATA_DIR.iterdir()):
+        name = day_dir.name  # Formatted like "nam.20180528".
+        year = int(name[4:8])
+        month = int(name[8:10])
+        day = int(name[10:12])
+
+        for path in sorted(day_dir.iterdir()):
+            name = path.name  # Formatted like "nam.t18z.awphys.tm00.nc".
+            if not name.endswith('.nc'): continue
+            hour = int(name[5:7])
+
+            yield apollo.Timestamp(year=year, month=month, day=day, hour=hour)
