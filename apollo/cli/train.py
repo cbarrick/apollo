@@ -1,21 +1,12 @@
-import argparse
-import logging
-import sys
-
-import numpy as np
-import pandas as pd
-
-import apollo
-from apollo.models import Model
-from apollo.datasets import ga_power
+def description():
+    return 'Train a new model'
 
 
-logger = logging.getLogger(__name__)
+def parse_args(argv):
+    import argparse
 
-
-def main(argv):
     parser = argparse.ArgumentParser(
-        description='train a new model'
+        description=description()
     )
 
     parser.add_argument(
@@ -54,7 +45,22 @@ def main(argv):
         help='the training data (a CSV, defaults to stdin)'
     )
 
-    args = parser.parse_args(argv)
+    return parser.parse_args(argv)
+
+
+def main(argv):
+    import sys
+
+    import pandas as pd
+
+    import apollo
+    from apollo.models import Model
+    from apollo.datasets import ga_power
+
+    import logging
+    logger = logging.getLogger(__name__)
+
+    args = parse_args(argv)
 
     logger.info('instantiating model from template')
     if args.named_template:

@@ -1,88 +1,12 @@
-import argparse
-import logging
-import sys
-from collections import namedtuple
-from pathlib import Path
-
-import pandas as pd
-
-import apollo
-from apollo.datasets import nam
+def description():
+    return 'Check NAM forecasts for errors.'
 
 
-def reftimes(args):
-    '''Iterate over the reftimes specified by the command-line arguments.
+def parse_args(argv):
+    import argparse
 
-    Yields:
-        Timestamp:
-            A timestamp for the reftime.
-    '''
-    # The ``reftime`` mode gives a single reftime.
-    if args.reftime is not None:
-        reftime = apollo.Timestamp(args.reftime)
-        logging.info(f'selected the forecast for reftime {reftime}')
-        yield reftime
-
-    # The ``range`` mode gives the reftime between two inclusive endpoints.
-    elif args.range is not None:
-        start = apollo.Timestamp(args.range[0])
-        stop = apollo.Timestamp(args.range[1])
-        step = pd.Timedelta(6, 'h')
-        logging.info(f'selected the forecasts between {start} and {stop} (inclusive)')
-        while start <= stop:
-            yield start
-            start += step
-
-    # The ``count`` mode downloads the N most recent reftimes.
-    elif args.count is not None:
-        n = args.count
-        reftime = apollo.Timestamp('now').floor('6h')
-        step = pd.Timedelta(6, 'h')
-        logging.info(f'selected the {n} most recent forecasts (ending at {reftime})')
-        for _ in range(n):
-            yield reftime
-            reftime -= step
-
-    # The default is to use the most recent reftime.
-    else:
-        reftime = apollo.Timestamp('now').floor('6h')
-        logging.info(f'selected the most recent forecast ({reftime})')
-        yield reftime
-
-
-def local_reftimes(args):
-    '''Iterate over the reftimes for which we have data.
-    '''
-    for reftime in reftimes(args):
-        try:
-            nam.open(reftime)
-        except nam.CacheMiss:
-            continue
-        yield reftime
-
-
-def dataset_pairs(args):
-    '''Iterate over adjacent pairs of datasets, both ways.
-    '''
-    # Reload the data every time since a fix may change the data on disk.
-    it = iter(local_reftimes(args))
-    a = next(it)
-    while True:
-        try:
-            b = next(it)
-            data_a, data_b = nam.open(a), nam.open(b)
-            yield data_a, data_b
-            data_a.close(); data_b.close()
-            data_a, data_b = nam.open(a), nam.open(b)
-            yield data_b, data_a
-            a = b
-        except StopIteration:
-            return
-
-
-def main(argv=None):
     parser = argparse.ArgumentParser(
-        description='Check NAM forecasts for bugs.'
+        description=description()
     )
 
     parser.add_argument(
@@ -117,11 +41,104 @@ def main(argv=None):
         help='check the N most recent forecasts',
     )
 
-    args = parser.parse_args(argv)
+    return parser.parse_args(argv)
 
-    logging.debug('called with the following options:')
+
+
+def reftimes(args):
+    '''Iterate over the reftimes specified by the command-line arguments.
+
+    Yields:
+        Timestamp:
+            A timestamp for the reftime.
+    '''
+    import apollo
+    import pandas as pd
+
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # The ``reftime`` mode gives a single reftime.
+    if args.reftime is not None:
+        reftime = apollo.Timestamp(args.reftime)
+        logger.info(f'selected the forecast for reftime {reftime}')
+        yield reftime
+
+    # The ``range`` mode gives the reftime between two inclusive endpoints.
+    elif args.range is not None:
+        start = apollo.Timestamp(args.range[0])
+        stop = apollo.Timestamp(args.range[1])
+        step = pd.Timedelta(6, 'h')
+        logger.info(f'selected the forecasts between {start} and {stop} (inclusive)')
+        while start <= stop:
+            yield start
+            start += step
+
+    # The ``count`` mode downloads the N most recent reftimes.
+    elif args.count is not None:
+        n = args.count
+        reftime = apollo.Timestamp('now').floor('6h')
+        step = pd.Timedelta(6, 'h')
+        logger.info(f'selected the {n} most recent forecasts (ending at {reftime})')
+        for _ in range(n):
+            yield reftime
+            reftime -= step
+
+    # The default is to use the most recent reftime.
+    else:
+        reftime = apollo.Timestamp('now').floor('6h')
+        logger.info(f'selected the most recent forecast ({reftime})')
+        yield reftime
+
+
+def local_reftimes(args):
+    '''Iterate over the reftimes for which we have data.
+    '''
+    from apollo.datasets import nam
+
+    for reftime in reftimes(args):
+        try:
+            nam.open(reftime)
+        except nam.CacheMiss:
+            continue
+        yield reftime
+
+
+def dataset_pairs(args):
+    '''Iterate over adjacent pairs of datasets, both ways.
+    '''
+    from apollo.datasets import nam
+
+    # Reload the data every time since a fix may change the data on disk.
+    it = iter(local_reftimes(args))
+    a = next(it)
+    while True:
+        try:
+            b = next(it)
+            data_a, data_b = nam.open(a), nam.open(b)
+            yield data_a, data_b
+            data_a.close(); data_b.close()
+            data_a, data_b = nam.open(a), nam.open(b)
+            yield data_b, data_a
+            a = b
+        except StopIteration:
+            return
+
+
+def main(argv=None):
+    from pathlib import Path
+
+    import apollo
+    from apollo.datasets import nam
+
+    import logging
+    logger = logging.getLogger(__name__)
+
+    args = parse_args(argv)
+
+    logger.debug('called with the following options:')
     for arg, val in vars(args).items():
-        logging.debug(f'  {arg}: {val}')
+        logger.debug(f'  {arg}: {val}')
 
     now = apollo.Timestamp('now')
 
@@ -139,9 +156,9 @@ def main(argv=None):
             if not args.dry_run:
                 fix = input(f'Delete these variables from {time_a} [y/N]? ')
                 if fix.upper().startswith('Y'):
-                    logging.info(f'backing up dataset to {path_backup}')
+                    logger.info(f'backing up dataset to {path_backup}')
                     path_a.rename(path_backup)
-                    logging.info(f'deleting spurious variables from {path_a}')
+                    logger.info(f'deleting spurious variables from {path_a}')
                     history = a.attrs['history']
                     if not history.endswith('\n'): history += '\n'
                     for var in diff:
@@ -151,7 +168,3 @@ def main(argv=None):
                     ds = ds.drop(diff)
                     ds.to_netcdf(path_a)
                     assert path_a.exists()
-
-
-if __name__ == '__main__':
-    main()
