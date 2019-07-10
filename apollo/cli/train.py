@@ -55,7 +55,7 @@ def main(argv):
 
     import apollo
     from apollo.models import Model
-    from apollo.datasets import ga_power
+    from apollo.data import ga_power
 
     import logging
     logger = logging.getLogger(__name__)

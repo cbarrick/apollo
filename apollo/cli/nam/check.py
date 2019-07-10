@@ -94,7 +94,7 @@ def reftimes(args):
 def local_reftimes(args):
     '''Iterate over the reftimes for which we have data.
     '''
-    from apollo.datasets import nam
+    from apollo.data import nam
 
     for reftime in reftimes(args):
         try:
@@ -107,7 +107,7 @@ def local_reftimes(args):
 def dataset_pairs(args):
     '''Iterate over adjacent pairs of datasets, both ways.
     '''
-    from apollo.datasets import nam
+    from apollo.data import nam
 
     # Reload the data every time since a fix may change the data on disk.
     it = iter(local_reftimes(args))
@@ -129,7 +129,7 @@ def main(argv=None):
     from pathlib import Path
 
     import apollo
-    from apollo.datasets import nam
+    from apollo.data import nam
 
     import logging
     logger = logging.getLogger(__name__)

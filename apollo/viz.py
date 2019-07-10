@@ -257,7 +257,7 @@ def nam_map(xrds, feature, reftime=0, forecast=0, level=0, title=None,
         matplotlib.figure.Figure:
             The figure that was drawn.
     '''
-    from apollo.datasets import nam
+    from apollo.data import nam
 
     # Select the feature
     data = xrds[feature]

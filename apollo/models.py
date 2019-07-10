@@ -17,7 +17,7 @@ import pvlib
 from pvlib import solarposition
 
 import apollo
-from apollo.datasets import nam
+from apollo.data import nam
 
 
 logger = logging.getLogger(__name__)

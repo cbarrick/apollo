@@ -2,7 +2,7 @@
 '''Download NAM forecasts.
 
 This script is intended to be run as a cron job. Note that it imports
-from `apollo.datasets`, so you have to make sure the package is in your
+from `apollo.data`, so you have to make sure the package is in your
 PYTHONPATH. The easiest way is to `cd` into this repository.
 
 We run a cron job similar to the following to sync the local store:
@@ -123,7 +123,7 @@ def reftimes(args):
 
 def main(argv=None):
     import apollo
-    from apollo.datasets import nam
+    from apollo.data import nam
 
     import logging
     logger = logging.getLogger(__name__)
