@@ -54,7 +54,7 @@ def main(argv):
     import pandas as pd
 
     import apollo
-    from apollo.models import Model
+    from apollo import models
     from apollo.data import ga_power
 
     import logging
@@ -64,9 +64,9 @@ def main(argv):
 
     logger.info('instantiating model from template')
     if args.named_template:
-        model = Model.from_named_template(args.template, name=args.name)
+        model = models.from_named_template(args.template, name=args.name)
     else:
-        model = Model.from_template(args.template, name=args.name)
+        model = models.from_template(args.template, name=args.name)
 
     logger.info('reading training data')
     targets = pd.read_csv(args.data_file, parse_dates=True, index_col=0)

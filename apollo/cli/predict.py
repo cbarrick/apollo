@@ -55,7 +55,6 @@ def load_model(args):
 
     import apollo
     from apollo import models
-    from apollo.models import Model
 
     if args.named:
         name = args.model
@@ -64,14 +63,14 @@ def load_model(args):
             print(f'Unknown model: {name}', file=sys.stderr)
             print(f'Hint: use `apollo ls models` to list models', file=sys.stderr)
             sys.exit(1)
-        return Model.load_named(args.model)
+        return models.load_named(args.model)
 
     else:
         path = Path(args.model)
         if not path.exists():
             print(f'No such file: {path}', file=sys.stderr)
             sys.exit(1)
-        return Model.load(args.model)
+        return models.load(args.model)
 
 
 def load_times(args):
