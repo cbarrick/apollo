@@ -1,7 +1,6 @@
 import importlib
 import json
 import logging
-import os
 import uuid
 from pathlib import Path
 
@@ -42,7 +41,7 @@ def list_templates():
         list of str:
             The named templates.
     '''
-    base = apollo.path('models') / 'templates'
+    base = apollo.path('templates')
     base.mkdir(parents=True, exist_ok=True)
     template_paths = base.glob('*.json')
     template_stems = [p.stem for p in template_paths]
@@ -59,7 +58,7 @@ def list_models():
         list of str:
             The trained models.
     '''
-    base = apollo.path('models') / 'models'
+    base = apollo.path('models')
     base.mkdir(parents=True, exist_ok=True)
     model_paths = base.glob('*.pickle')
     model_stems = [p.stem for p in model_paths]
@@ -164,17 +163,15 @@ def save(model, path=None):
             The model to persist.
         path (str or pathlib.Path or None):
             The path at which to save the model. The default is a path
-            within your ``$APOLLO_DATA`` directory. Models saved to the
-            default path can be loaded by name.
+            within the Apollo database.
 
     Returns:
         pathlib.Path:
             The path at which the model was saved.
     '''
     if path is None:
-        base = apollo.path('models') / 'models'
-        base.mkdir(parents=True, exist_ok=True)
-        path = base / f'{model.name}.model'
+        path = apollo.path(f'models/{model.name}.model')
+        path.parent.mkdir(parents=True, exist_ok=True)
     else:
         path = Path(path)
 
@@ -213,9 +210,7 @@ def load_named(name):
         apollo.models.Model:
             The model.
     '''
-    base = apollo.path('models')
-    base.mkdir(parents=True, exist_ok=True)
-    path = base / f'{name}.model'
+    path = apollo.path(f'models/{name}.model')
     return load(path)
 
 
@@ -247,10 +242,7 @@ def from_template(template, **kwargs):
     '''
     # Convert str to Path.
     if isinstance(template, str):
-        if os.sep in template:
-            template = Path(template)
-        else:
-            template = apollo.path('models') / 'templates' / f'{template}.json'
+        template = Path(template)
 
     # Convert Path to file-like.
     if isinstance(template, Path):
@@ -292,7 +284,7 @@ def from_named_template(template_name, **kwargs):
         apollo.models.Model:
             An untrained model.
     '''
-    template = apollo.path(f'models/templates/{template_name}.json')
+    template = apollo.path(f'templates/{template_name}.json')
     return from_template(template)
 
 

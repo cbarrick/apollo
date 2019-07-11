@@ -48,10 +48,6 @@ import apollo
 logger = logging.getLogger(__name__)
 
 
-# The directory containing this dataset.
-DATA_DIR = apollo.path('NAM-NMM')
-
-
 # URLs of remote grib files.
 # PROD_URL typically has the most recent 7 days.
 # ARCHIVE_URL typically has the most recent 11 months, about 1 week behind.
@@ -240,7 +236,7 @@ def grib_path(reftime, forecast):
     filename_fmt = 'nam.t{ref.hour:02d}z.awphys{forecast:02d}.tm00.grib'
     prefix = prefix_fmt.format(forecast=forecast, ref=reftime)
     filename = filename_fmt.format(forecast=forecast, ref=reftime)
-    return DATA_DIR / prefix / filename
+    return apollo.path(f'NAM-NMM/{prefix}/{filename}')
 
 
 def nc_path(reftime):
@@ -260,7 +256,7 @@ def nc_path(reftime):
     reftime = reftime = apollo.Timestamp(reftime).floor('6h')
     prefix = f'nam.{reftime.year:04d}{reftime.month:02d}{reftime.day:02d}'
     filename = f'nam.t{reftime.hour:02d}z.awphys.tm00.nc'
-    return DATA_DIR / prefix / filename
+    return apollo.path(f'NAM-NMM/{prefix}/{filename}')
 
 
 def _download_grib(reftime, forecast, max_tries=8, timeout=10, fail_fast=False):
@@ -701,7 +697,7 @@ def iter_available_forecasts():
         pandas.Timestamp:
             The forecast's reference time, with UTC timezone.
     '''
-    for day_dir in sorted(DATA_DIR.iterdir()):
+    for day_dir in sorted(apollo.path('NAM-NMM').iterdir()):
         name = day_dir.name  # Formatted like "nam.20180528".
         year = int(name[4:8])
         month = int(name[8:10])

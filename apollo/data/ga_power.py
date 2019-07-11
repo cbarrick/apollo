@@ -36,8 +36,7 @@ def raw_connect():
         sqlite3.Connection:
             The database connection.
     '''
-    data_dir = apollo.path('GA-POWER')
-    path = data_dir / 'solar_farm.sqlite'
+    path = apollo.path('GA-POWER/solar_farm.sqlite')
     return sqlite3.connect(str(path))
 
 
