@@ -69,16 +69,10 @@ def setup_logging(args):
     else:
         level = args.log
 
-    # Configure the root logger.
-    log_format = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s')
-    log_handler = logging.StreamHandler()
-    log_handler.setFormatter(log_format)
-    root_logger = logging.getLogger('')
-    root_logger.handlers = [log_handler]  # Replace the existing log handlers.
-
-    # Only set the level for loggers under the `apollo` namespace.
-    apollo_logger = logging.getLogger('apollo')
-    apollo_logger.setLevel(level)
+    logging.basicConfig(
+        format='[%(asctime)s] %(levelname)s: %(message)s',
+        level=level,
+    )
 
 
 def iter_subcommands():
