@@ -7,6 +7,7 @@ def description():
         all        List everything in the database.
         models     List trained models.
         templates  List model templates.
+        nam        List NAM forecasts.
     ''')
 
 
@@ -21,7 +22,7 @@ def parse_args(argv):
     parser.add_argument(
         'component',
         metavar='COMPONENT',
-        choices=['all', 'models', 'templates'],
+        choices=['all', 'models', 'templates', 'nam'],
         default='all',
         nargs='?',
         help='The component to list, defaults to \'all\''
@@ -46,11 +47,24 @@ def print_templates(prefix=''):
         print(f'{prefix}{t}')
 
 
+def print_nam(prefix=''):
+    from apollo.data import nam
+    for ts in nam.iter_available_forecasts():
+        # - %G: The 4+ digit year (ISO 8601 compliant, unlike %Y)
+        # - %m: The 2 digit month.
+        # -  T: The date-time separator in ISO 8601.
+        # - %d: The 2 digit day.
+        # - %H: The 2 digit 24-hour hour.
+        # -  Z: Shorthand timezone specifier for +00:00:00 (UTC).
+        print(f'{prefix}{ts.strftime('%G-%m-%dT%HZ')}')
+
+
 def print_all():
     '''Print all listings.
     '''
     print_models('models/')
     print_templates('templates/')
+    print_nam('nam/')
 
 
 def main(argv):
@@ -64,6 +78,8 @@ def main(argv):
         print_templates()
     elif args.component == 'models':
         print_models()
+    elif args.component == 'nam':
+        print_nam()
     else:
         print(f'unknown component: {args.component}')
         sys.exit(2)
