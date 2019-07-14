@@ -709,3 +709,27 @@ def iter_available_forecasts():
             hour = int(name[5:7])
 
             yield apollo.Timestamp(year=year, month=month, day=day, hour=hour)
+
+
+def times_to_reftimes(times):
+    '''Compute the reference times for forecasts containing the given times.
+
+    On the edge case, this may select one extra forecast per time.
+
+    Arguments:
+        times (numpy.ndarray like):
+            A series of forecast times.
+
+    Returns:
+        apollo.DatetimeIndex:
+            The set of reftimes for forecasts containing the given times.
+    '''
+    reftimes = apollo.DatetimeIndex(times, name='reftime').unique()
+    a = reftimes.floor('6h').unique()
+    b = a - pd.Timedelta('6h')
+    c = a - pd.Timedelta('12h')
+    d = a - pd.Timedelta('18h')
+    e = a - pd.Timedelta('24h')
+    f = a - pd.Timedelta('30h')
+    g = a - pd.Timedelta('36h')
+    return a.union(b).union(c).union(d).union(e).union(f).union(g)

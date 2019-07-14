@@ -12,7 +12,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def get_root():
+def _get_root():
     '''Get the path to the Apollo database.
 
     This method reads from the ``APOLLO_DATA`` environment variable,
@@ -31,7 +31,7 @@ def get_root():
     return root
 
 
-def set_root(path):
+def _set_root(path):
     '''Set the path to the Apollo database.
 
     This method works by setting the ``APOLLO_DATA`` environment variable.
@@ -67,6 +67,6 @@ def path(component):
     if component.is_absolute():
         raise ValueError('Database paths must be relative')
 
-    path = get_root() / component
+    path = _get_root() / component
     path = path.resolve()
     return path

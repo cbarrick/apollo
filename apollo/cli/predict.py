@@ -63,17 +63,17 @@ def load_model(args):
             print(f'Unknown model: {name}', file=sys.stderr)
             print(f'Hint: use `apollo ls models` to list models', file=sys.stderr)
             sys.exit(1)
-        return models.load_named(args.model)
+        return models.load_named_model(args.model)
 
     else:
         path = Path(args.model)
         if not path.exists():
             print(f'No such file: {path}', file=sys.stderr)
             sys.exit(1)
-        return models.load(args.model)
+        return models.load_model(args.model)
 
 
-def load_times(args):
+def get_times(args):
     '''Load the target timestamps from CLI arguments.
 
     If the ``-r/--range`` argument is given, we construct a range of timestamps
@@ -104,6 +104,6 @@ def main(argv):
     import sys
     args = parse_args(argv)
     model = load_model(args)
-    times = load_times(args)
+    times = get_times(args)
     prediction = model.predict(times)
     predictions.to_csv(sys.stdout)

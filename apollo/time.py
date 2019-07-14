@@ -5,7 +5,11 @@ The contents of this module are reexported at the top-level, e.g. prefer
 '''
 
 import time
+
 import pandas as pd
+
+import pvlib
+from pvlib import solarposition
 
 
 def localtz():
