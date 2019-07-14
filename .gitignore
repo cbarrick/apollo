@@ -1,6 +1,10 @@
 # Project specific ignores
 # --------------------------------------------------
 
+# doc builds
+/docs/_build
+/docs/api/stubs
+
 # working files
 /dev.py
 /notes.md
