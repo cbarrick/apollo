@@ -50,23 +50,22 @@ def _set_root(path):
     return old_path
 
 
-# This function is reexported at the top-level. Prefer ``apollo.path``.
-def path(component):
-    '''Get a path within the Apollo database.
+# This function is reexported as ``apollo.path``.
+def path(p):
+    '''Get a path to a file within the Apollo database.
 
     Arguments:
-        component (str or Path):
+        p (str or pathlib.Path):
             A path relative to the database root.
 
     Returns:
         Path:
             An absolute path within the database.
     '''
-    component = Path(component)
+    root = _get_root().resolve()
+    path = (root / p).resolve()
 
-    if component.is_absolute():
-        raise ValueError('Database paths must be relative')
+    if not str(path).startswith(str(root)):
+        raise ValueError('Resolved paths must not escape the Apollo database')
 
-    path = _get_root() / component
-    path = path.resolve()
     return path
