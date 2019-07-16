@@ -697,18 +697,18 @@ def iter_available_forecasts():
         pandas.Timestamp:
             The forecast's reference time, with UTC timezone.
     '''
-    for day_dir in sorted(apollo.path('NAM-NMM').iterdir()):
+    for day_dir in sorted(apollo.path('NAM-NMM').glob('nam.*')):
         name = day_dir.name  # Formatted like "nam.20180528".
         year = int(name[4:8])
         month = int(name[8:10])
         day = int(name[10:12])
 
-        for path in sorted(day_dir.iterdir()):
+        for path in sorted(day_dir.glob('nam.*')):
             name = path.name  # Formatted like "nam.t18z.awphys.tm00.nc".
             if not name.endswith('.nc'): continue
             hour = int(name[5:7])
 
-            yield apollo.Timestamp(year=year, month=month, day=day, hour=hour)
+            yield apollo.Timestamp(f'{year:04}-{month:02}-{day:02}T{hour:02}Z')
 
 
 def times_to_reftimes(times):
