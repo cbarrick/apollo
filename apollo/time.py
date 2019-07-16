@@ -27,24 +27,34 @@ class Timestamp(pd.Timestamp):
     When constructing an Apollo timestamp, if the timezone would be ambiguous,
     it is assumed to be UTC. Otherwise it is converted to UTC.
     '''
-    def __new__(cls, *args, **kwargs):
-        # The important argument is ``ts_input``. The Pandas constructor has
-        # complex argument handling, so this must be as generic as possible.
-        if len(args) != 0:
-            ts_input = args[0]
-        else:
-            ts_input = kwargs.get('ts_input')
+    def __new__(cls, ts_input, tz=None):
+        '''Construct a new timestamp.
 
+        Arguments:
+            ts_input (str or datetime-like):
+                The raw timestamp. This is typically an ISO 8601 string or
+                one of the special strings ``'now'`` and ``'today'``. Unlike
+                Pandas, the special strings are considered timezone aware and
+                localized to the system clock.
+            tz (str or pytz.timezone or None):
+                If ``ts_input`` has an ambiguous timezone, interpret it with
+                this timezone. This argument cannot be given if ``ts_input``
+                is timezone aware.
+        '''
         # Delegate to Pandas.
-        ts = super().__new__(cls, *args, **kwargs)
+        ts = pd.Timestamp(ts_input, tz=tz)
 
         # Ensure the timezone is UTC.
-        # 'now' and 'today' must first be localized to the system clock.
+        # 'now' and 'today' must be localized to the system clock.
         if ts_input in ['now', 'today']:
-            ts = ts.tz_localize(localtz()).tz_convert('UTC')
-        elif ts.tz is None:
-            ts = ts.tz_localize('UTC')
+            assert tz is None, 'Cannot pass tz when ts_input is "now" or "today"'
+            tz = localtz()
+
+        if ts.tz is None:
+            tz = tz or 'UTC'
+            ts = ts.tz_localize(tz).tz_convert('UTC')
         else:
+            assert tz is None, 'Cannot pass tz when ts_input is timezone aware'
             ts = ts.tz_convert('UTC')
 
         # Ensure the result is an instance of this class.
@@ -62,18 +72,51 @@ class DatetimeIndex(pd.DatetimeIndex):
     is assumed to be UTC. Otherwise it is converted to UTC.
 
     When creating a DatetimeIndex from strings, the special strings ``'now'``
-    and ``'today'`` will almost certainly be misinterpreted. Always use proper
+    and ``'today'`` will almost certainly be misinterpreted. Always use true
     timestamps. The :class:`apollo.Timestamp` class will properly interpret
     the special strings.
     '''
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, data=None, tz=None, ambiguous='raise', name=None):
+        '''Construct a new datetime index.
+
+        This constructor only deals with explicit lists of timestamps. To
+        generate a datetime index over a range of dates, see
+        :func:`apollo.date_range`.
+
+        Arguments:
+            data (array or None):
+                The list of timestamps for the index.
+            tz (str or pytz.timezone or None):
+                If ``data`` has an ambiguous timezone, interpret it with
+                this timezone. This argument cannot be given if ``data``
+                is timezone aware.
+            ambiguous ('raise' or 'infer' or 'NaT' or array of bool):
+                Timestamps may be ambiguous due to daylight-savings time. For
+                example in Central European Time (UTC+01), when going from
+                03:00 DST to 02:00 non-DST, 02:30:00 local time occurs both at
+                00:30:00 UTC and at 01:30:00 UTC. In such a situation, this
+                parameter dictates how ambiguous times should be handled.
+
+                - ``'infer'`` will attempt to infer fall dst-transition hours
+                  based on order.
+                - ``'NaT'`` will return NaT where there are ambiguous times.
+                - ``'raise'`` will raise :class:`pandas.AmbiguousTimeError` if
+                  there are ambiguous times.
+                - An array of bools where True signifies a DST time, False
+                  signifies a non-DST time (note that this flag is only
+                  applicable for ambiguous times).
+            name (Any):
+                A name to be stored with the object.
+        '''
         # Delegate to Pandas.
-        index = super().__new__(cls, *args, **kwargs)
+        index = pd.DatetimeIndex(data, tz=tz, ambiguous=ambiguous, name=name)
 
         # Ensure the timezone is UTC.
         if index.tz is None:
-            index = index.tz_localize('UTC')
+            tz = tz or 'UTC'
+            index = index.tz_localize(tz).tz_convert('UTC')
         else:
+            assert tz is None, 'Cannot pass tz when data is timezone aware'
             index = index.tz_convert('UTC')
 
         # Ensure the result is an instance of this class.
@@ -81,24 +124,55 @@ class DatetimeIndex(pd.DatetimeIndex):
         return index
 
 
-def date_range(start=None, end=None, *args, **kwargs):
+def date_range(start=None, end=None, periods=None, freq=None, tz=None,
+        normalize=False, name=None, closed=None):
     '''Like :func:`pandas.date_range` but returns :class:`apollo.DatetimeIndex`.
 
     When constructing an Apollo index, if the timezone would be ambiguous, it
     is assumed to be UTC. Otherwise it is converted to UTC.
 
-    Unlike :func:`pandas.date_range`, the ``tz`` argument may only be ``None``
-    or ``'UTC'``.
+    When creating a DatetimeIndex from strings, the special strings ``'now'``
+    and ``'today'`` will almost certainly be misinterpreted. Always use true
+    timestamps. The :class:`apollo.Timestamp` class will properly interpret
+    the special strings.
+
+    Arguments:
+        start (str or datetime-like or None):
+            Left bound for generating dates.
+        end (str or datetime-like or None):
+            Right bound for generating dates.
+        periods (integer or None):
+            Number of periods to generate.
+        freq (str or DateOffset, default 'D'):
+            The frequency of the range. Frequency strings can have multiples,
+            e.g. ‘5H’. See Pandas for a list of frequency aliases.
+        tz (str or pytz.timezone, default 'UTC'):
+            The timezone in which to interpret ambiguous timestamps.
+        normalize (bool):
+            Normalize start/end dates to midnight before generating date range.
+        name (Any):
+            Name of the resulting :class:`DatetimeIndex`.
+        closed ('left' or 'right' or None):
+            Make the interval closed with respect to the given frequency to the
+            'left', 'right', or both sides.
     '''
     # Interpret start and end with the same logic as `apollo.Timestamp`.
     # This handles the strings 'now' and 'today' and enables mixed timezones.
-    if start is not None: start = Timestamp(start)
-    if end is not None: end = Timestamp(end)
+    if start is not None: start = Timestamp(start, tz=tz)
+    if end is not None: end = Timestamp(end, tz=tz)
 
     # Delegate to Pandas, then ensure the index is an `apollo.DatetimeIndex`.
-    index = pd.date_range(start, end, *args, **kwargs)
-    index = DatetimeIndex(index)
-    return index
+    # Do not pass `tz`; it has already been applied.
+    index = pd.date_range(
+        start=start,
+        end=end,
+        periods=periods,
+        freq=freq,
+        normalize=normalize,
+        name=name,
+        closed=closed,
+    )
+    return DatetimeIndex(index)
 
 
 def time_of_day(times):

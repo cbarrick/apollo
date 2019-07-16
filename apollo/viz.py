@@ -163,7 +163,7 @@ def date_heatmap_figure(series, cmap=None, bad_color=None, scale=1,
     '''
     # Generate random data if none is given. Useful for testing.
     if series is None:
-        index = apollo.DatetimeIndex(start='2016-12-01', end='2019-05-28', freq='1D')
+        index = apollo.date_range(start='2016-12-01', end='2019-05-28')
         series = np.random.randint(7, size=len(index))
         series = pd.Series(series, index)
 
