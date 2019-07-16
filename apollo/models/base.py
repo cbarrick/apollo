@@ -8,64 +8,10 @@ import pandas as pd
 import pickle5 as pickle
 
 import apollo
+from apollo.models import make_estimator
 
 
 logger = logging.getLogger(__name__)
-
-
-def make_estimator(e):
-    '''An enhanced version of :func:`sklearn.pipeline.make_pipeline`.
-
-    If the input is a string, it is interpreted as a dotted import path to
-    a constructor for the estimator. That constructor is called without
-    arguments to create the estimator.
-
-    If the input is a list, it is interpreted as a pipeline of transformers and
-    estimators. Each element must be a pair ``(name, params)`` where ``name``
-    is a dotted import path to a constructor, and ``params`` is a dict
-    providing hyper parameters. The final step must be an estimator, and the
-    intermediate steps must be transformers.
-
-    If the input is any other object, it is checked to contain ``fit`` and
-    ``predict`` methods and is assumed to be the estimator.
-
-    Otherwise this function raises an :class:`ValueError`.
-
-    Returns:
-        sklearn.base.BaseEstimator:
-            The estimator.
-
-    Raises:
-        ValueError:
-            The input could not be cast to an estimator.
-    '''
-    # If ``e`` is a dotted import path, import it then call it.
-    if isinstance(e, str):
-        ctor = apollo._import_from_str(e)
-        estimator = ctor()
-
-    # If it has a length, interpret ``e`` as a list of pipeline steps.
-    elif hasattr(e, '__len__'):
-        steps = []
-        for (name, params) in e:
-            if isinstance(ctor, str):
-                ctor = apollo._import_from_str(name)
-            step = ctor(**params)
-            steps.append(step)
-        estimator = make_pipeline(*steps)
-
-    # Otherwise interpret ``e`` directly as an estimator.
-    else:
-        estimator = e
-
-    # Ensure that it at least has `fit` and `predict`.
-    try:
-        getattr(estimator, 'fit')
-        getattr(estimator, 'predict')
-    except AttributeError:
-        raise ValueError('could not cast into an estimator')
-
-    return estimator
 
 
 class Model(ABC):
