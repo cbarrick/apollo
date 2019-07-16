@@ -123,7 +123,7 @@ def reftimes(args):
 
 def main(argv=None):
     import apollo
-    from apollo.data import nam
+    from apollo import nam
 
     import logging
     logger = logging.getLogger(__name__)

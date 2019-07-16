@@ -48,7 +48,7 @@ def print_templates(prefix=''):
 
 
 def print_nam(prefix=''):
-    from apollo.data import nam
+    from apollo import nam
     for ts in nam.iter_available_forecasts():
         # - %G: The 4+ digit year (ISO 8601 compliant, unlike %Y)
         # - %m: The 2 digit month.

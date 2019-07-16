@@ -94,7 +94,7 @@ def iter_reftimes(args):
 
 def main(argv):
     import sys
-    from apollo.data import nam
+    from apollo import nam
 
     import logging
     logger = logging.getLogger(__name__)

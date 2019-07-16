@@ -8,7 +8,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 import apollo
-from apollo.data import nam
+from apollo import nam
 from apollo.models.base import IrradianceModel
 
 
