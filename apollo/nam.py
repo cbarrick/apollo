@@ -64,7 +64,7 @@ FORECAST_PERIOD = FULL_FORECAST_PERIOD[:37]
 #: The projection of the NAM-NMM dataset as a `cartopy.crs.CRS`.
 #: The projection is officially called called "Grid 218" by NOAA.
 #: http://www.nco.ncep.noaa.gov/pmb/docs/on388/tableb.html#GRID218
-NAM218_PROJ = ccrs.LambertConformal(
+NAM218 = ccrs.LambertConformal(
     central_latitude=25,
     central_longitude=265,
     standard_parallels=(25, 25),
@@ -108,7 +108,7 @@ def proj_coords(lats, lons):
 
     This function converts latitude-longitude pairs into x-y pairs, where x and
     y are measured in meters relative to the NAM218 projection described by
-    :data:`NAM218_PROJ`.
+    :data:`NAM218`.
 
     NAM218 is the name of the projection used by NAM. It is a Lambert Conformal
     projection covering the contiguous United States.
@@ -132,7 +132,7 @@ def proj_coords(lats, lons):
     lats = np.asarray(lats)
     lons = np.asarray(lons)
     unproj = ccrs.PlateCarree()
-    coords = NAM218_PROJ.transform_points(unproj, lons.flatten(), lats.flatten())
+    coords = NAM218.transform_points(unproj, lons.flatten(), lats.flatten())
     x, y = coords[...,0], coords[...,1]
     x = x.reshape(lats.shape)
     y = y.reshape(lats.shape)

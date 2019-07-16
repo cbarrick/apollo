@@ -276,10 +276,10 @@ def nam_map(xrds, feature, reftime=0, forecast=0, level=0, title=None,
 
     # Get the axes.
     fig = plt.figure()
-    ax = plt.axes(projection=nam.NAM218_PROJ)
+    ax = plt.axes(projection=nam.NAM218)
 
     # Plot the data.
-    contours = data.plot.contourf(ax=ax, transform=nam.NAM218_PROJ, cmap=cmap)
+    contours = data.plot.contourf(ax=ax, transform=nam.NAM218, cmap=cmap)
 
     # Draw the map.
     feature = MAP_FEATURES[detail].with_scale(scale)
