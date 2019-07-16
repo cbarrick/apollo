@@ -56,7 +56,7 @@ def print_nam(prefix=''):
         # - %d: The 2 digit day.
         # - %H: The 2 digit 24-hour hour.
         # -  Z: Shorthand timezone specifier for +00:00:00 (UTC).
-        print(f'{prefix}{ts.strftime('%G-%m-%dT%HZ')}')
+        print(f'{prefix}{ts.strftime("%G-%m-%dT%HZ")}')
 
 
 def print_all():
