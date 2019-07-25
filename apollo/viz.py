@@ -27,7 +27,7 @@ def date_heatmap(series, start=None, end=None, mean=False, edgecolor='black',
     '''Plot a calendar heatmap given a datetime series.
 
     Arguments:
-        series (pd.Series):
+        series (pandas.Series):
             A series of numeric values with a datetime index. The index is
             interpreted by :func:`pandas.to_datetime`. Values occurring on the
             same day are combined by sum.
@@ -135,7 +135,7 @@ def date_heatmap_figure(series, cmap=None, bad_color=None, scale=1,
     '''Plot a calendar heatmap on a new figure.
 
     Arguments:
-        series (pd.Series):
+        series (pandas.Series):
             A series of numeric values with a datetime index. The index is
             interpreted by :func:`pandas.to_datetime`. Values occurring on the
             same day are combined by sum.
@@ -215,9 +215,9 @@ MAP_FEATURES = {
 }
 
 
-def nam_map(xrds, feature, reftime=0, forecast=0, level=0, title=None,
+def nam_figure(xrds, feature, reftime=0, forecast=0, level=0, title=None,
         detail='states', scale='10m', cmap='viridis', **kwargs):
-    '''Plot NAM data as a map on a new figure.
+    '''Plot a variable from a NAM forecast on a new figure.
 
     This function downloads shape files to draw the map. This may take a while
     the first time you use a specific combination of ``detail`` and ``scale``.

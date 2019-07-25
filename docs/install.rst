@@ -1,4 +1,4 @@
-Quickstart
+Installing Apollo Locally
 ==================================================
 
 .. contents::

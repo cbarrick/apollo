@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class Model(ABC):
-    '''Base class for Apollo models.
+    '''Base class for all Apollo models.
 
     In general, an Apollo model is an object which makes predictions, similar
     to a Scikit-learn estimator. The features being predicted are determined by
@@ -38,23 +38,23 @@ class Model(ABC):
       and loading models to and from the Apollo database. The name is accessed
       as an attribute.
 
-    - :meth:`load_data(index, **kwargs)`: Models are responsible for loading
-      their own feature data for training and prediction. This method recieves
-      a :class:`pandas.Index` and returns some object representing the feature
-      data. It may accept additional keyword arguments.
+    - :meth:`load_data`: Models are responsible for loading their own feature
+      data for training and prediction. This method recieves a Pandas index and
+      returns some object representing the feature data. It may accept
+      additional, optional arguments.
 
-    - :meth:`fit(targets, **kwargs)`: Like Scikit-learn estimators, Apollo
-      models must have a ``fit`` method for fitting the model. However, unlike
-      Scikit-learn estimators, Apollo models have a single required argument,
-      ``targets`` which must be a :class:`pandas.DataFrame`. Additional
-      arguments should be forwarded to :meth:`load_data`.
+    - :meth:`fit`: Like Scikit-learn estimators, Apollo models must have a
+      ``fit`` method for training the model. However, unlike Scikit-learn
+      estimators, Apollo models have a single required argument, a target
+      DataFrame to fit against. Additional arguments should be forwarded to
+      :meth:`load_data`.
 
-    - :meth:`predict(index, **kwargs)`: Again like Scikit-learn estimators,
-      Apollo models must have a ``predict`` method for generating predictions.
-      The input to this method is a :class:`pandas.Index` for the resulting
-      prediction. The return value is a :class:`pandas.DataFrame` using that
-      index and columns like the target data frame passed to :meth:`fit`.
-      Additional arguments should be forwarded to :meth:`load_data`.
+    - :meth:`predict`: Again like Scikit-learn estimators, Apollo models must
+      have a ``predict`` method for generating predictions. The input to this
+      method is a Pandas index for the resulting prediction. The return value
+      is a DataFrame using that index and columns like the target data frame
+      passed to :meth:`fit`. Additional arguments should be forwarded to
+      :meth:`load_data`.
 
     This base class provides default implementations of :meth:`fit` and
     :meth:`predict`, however using these requires you to understand a handfull
@@ -66,19 +66,15 @@ class Model(ABC):
       provide an estimator attribute if you use the default :meth:`fit` or
       :meth:`predict`.
 
-    - :meth:`preprocess(features, targets=None, fit=False)`: This method
-      transforms the "structured data" returned by :meth:`load_data` into the
-      "raw data" passed to the estimator. The ``targets`` argument may not be
-      given, and the ``fit`` argument is true when preprocessing for :meth:`fit`
-      and false when preprocessing for :meth:`predict`. The return value is a
-      pair ``(raw_features, raw_targets)`` where ``raw_targets`` is None when
-      ``targets`` is None. A default implementation is provided which simply
-      passes the feature and target data through :func:`numpy.asanyarray`.
+    - :meth:`preprocess`: This method transforms the "structured data" returned
+      by :meth:`load_data` and "structured targets" provided by the user into
+      the "raw data" and "raw targets" passed to the estimator. A default
+      implementation is provided which simply passes the feature and target
+      data through :func:`numpy.asanyarray`.
 
-    - :meth:`postprocess(raw_predictions, index)`: This method transforms the
-      "raw predictions" returned by the estimator into a fully-fledged
-      :class:`pandas.DataFrame`. The default implementation simply delegates
-      to the ``DataFrame`` constructor.
+    - :meth:`postprocess`: This method transforms the "raw predictions"
+      returned by the estimator into a fully-fledged DataFrame. The default
+      implementation simply delegates to the DataFrame constructor.
     '''
 
     def __init__(
@@ -145,10 +141,10 @@ class Model(ABC):
                 If true, fit lernable transforms against this target data.
 
         Returns:
-            raw_features:
-                Processed feature data.
-            raw_targets:
-                Processed target data or ``None`` if no target data was given.
+            pair of ndarray:
+                A pair of arrays ``(raw_features, raw_targets)`` containint
+                processed feature data and processed target data respectivly.
+                The ``raw_targets`` will be ``None`` if no ``target`` was given.
         '''
         raw_features = np.asanyarray(features)
         raw_targets = np.asanyarray(raw_targets) or None
@@ -233,7 +229,7 @@ class Model(ABC):
 
 
 class IrradianceModel(Model):
-    '''A base class for irradiance modeling.
+    '''Base class for irradiance modeling.
 
     This class implements :meth:`preprocess` and :meth:`postprocess` methods
     specifically for irradiance modeling. They require feature and target data

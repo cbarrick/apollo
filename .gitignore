@@ -1,9 +1,9 @@
 # Project specific ignores
 # --------------------------------------------------
 
-# doc builds
+# doc build artifacts
 /docs/_build
-/docs/api/stubs
+/docs/api
 
 # working files
 /dev.py

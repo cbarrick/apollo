@@ -14,7 +14,7 @@ long_description = (repo / 'README.md').read_text()
 
 setup(
     name='apollo',
-    version='0.1.0-dev1',
+    version='0.2.0',
     author='Chris Barrick',
     author_email='cbarrick1@gmail.com',
     url='https://github.com/cbarrick/apollo',

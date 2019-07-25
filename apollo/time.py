@@ -12,20 +12,20 @@ import pvlib
 from pvlib import solarposition
 
 
-def localtz():
+def _localtz():
     '''Return the local timezone as an offset in seconds.
     '''
     return time.localtime().tm_gmtoff
 
 
 class Timestamp(pd.Timestamp):
-    '''Apollo's timestamp type.
+    '''Apollo's timestamp type, extending Pandas.
 
-    Apollo timestamps extend :class:``pandas.Timestamp`` to ensure the structure
-    is always timezone aware and localized to UTC.
+    Timestamps in Apollo adhere to the following conventions:
 
-    When constructing an Apollo timestamp, if the timezone would be ambiguous,
-    it is assumed to be UTC. Otherwise it is converted to UTC.
+    - Timestamps are always UTC.
+    - Timezone-naive inputs are interpreted as UTC.
+    - Timezone-aware inputs in a different timezone are converted to UTC.
     '''
     def __new__(cls, ts_input, tz=None):
         '''Construct a new timestamp.
@@ -48,7 +48,7 @@ class Timestamp(pd.Timestamp):
         # 'now' and 'today' must be localized to the system clock.
         if ts_input in ['now', 'today']:
             assert tz is None, 'Cannot pass tz when ts_input is "now" or "today"'
-            tz = localtz()
+            tz = _localtz()
 
         if ts.tz is None:
             tz = tz or 'UTC'
@@ -61,15 +61,21 @@ class Timestamp(pd.Timestamp):
         ts = super().__new__(cls, ts)
         return ts
 
+    def __init__(self, *args, **kwargs):
+        '''
+        '''
+        # This method exists purely for documentation.
+        return super().__init__(self, *args, **kwargs)
+
 
 class DatetimeIndex(pd.DatetimeIndex):
-    '''Apollo's index type.
+    '''Apollo's index type, extending Pandas.
 
-    Apollo timestamps extend :class:``pandas.DatetimeIndex`` to ensure the
-    index is always timezone aware and localized to UTC.
+    Timestamps in Apollo adhere to the following conventions:
 
-    When constructing an Apollo index, if the timezone would be ambiguous, it
-    is assumed to be UTC. Otherwise it is converted to UTC.
+    - Timestamps are always UTC.
+    - Timezone-naive inputs are interpreted as UTC.
+    - Timezone-aware inputs in a different timezone are converted to UTC.
 
     When creating a DatetimeIndex from strings, the special strings ``'now'``
     and ``'today'`` will almost certainly be misinterpreted. Always use true
@@ -126,7 +132,10 @@ class DatetimeIndex(pd.DatetimeIndex):
 
 def date_range(start=None, end=None, periods=None, freq=None, tz=None,
         normalize=False, name=None, closed=None):
-    '''Like :func:`pandas.date_range` but returns :class:`apollo.DatetimeIndex`.
+    '''Return a fixed frequency DatetimeIndex.
+
+    This is like :func:`pandas.date_range` but returns a timezone-aware
+    :class:`apollo.DatetimeIndex`.
 
     When constructing an Apollo index, if the timezone would be ambiguous, it
     is assumed to be UTC. Otherwise it is converted to UTC.
@@ -176,7 +185,7 @@ def date_range(start=None, end=None, periods=None, freq=None, tz=None,
 
 
 def time_of_day(times):
-    '''Compute time-of-day features.
+    '''Compute sine and cosine with a period of 24 hours.
 
     Arguments:
         times (numpy.ndarray like):
@@ -185,8 +194,9 @@ def time_of_day(times):
     Returns:
         pandas.DataFrame:
             A data frame with 2 data variables:
-                - ``time_of_day_sin`` for the sin component of time-of-day
-                - ``time_of_day_cos`` for the cosin component of time-of-day
+
+            - ``time_of_day_sin`` for the sine component of time-of-day.
+            - ``time_of_day_cos`` for the cosine component of time-of-day.
 
             The data frame is indexed by the input timestamps.
     '''
@@ -202,7 +212,11 @@ def time_of_day(times):
 
 
 def time_of_year(times):
-    '''Compute time-of-year features.
+    '''Compute sine and cosine with a period of 365.25 days.
+
+    The time-of-year is measured in Julian years, exactly 365.25 days of 86400
+    seconds each. These are not exactly equal to a Gregorian year (a calendar
+    year) once you get into the crazy leap rules.
 
     Arguments:
         times (numpy.ndarray like):
@@ -211,8 +225,9 @@ def time_of_year(times):
     Returns:
         pandas.DataFrame:
             A data frame with 2 data variables:
-                - ``time_of_year_sin`` for the sin component of time-of-year.
-                - ``time_of_year_cos`` for the cosin component of time-of-year.
+
+            - ``time_of_year_sin`` for the sine component of time-of-year.
+            - ``time_of_year_cos`` for the cosine component of time-of-year.
 
             The data frame is indexed by the input timestamps.
     '''
@@ -220,11 +235,6 @@ def time_of_year(times):
     nanos = np.asarray(times, dtype='datetime64[ns]').astype('float32')
     seconds = nanos / 1e9
     days = seconds / 86400
-
-    # Convert the data into day and year units.
-    # The time-of-year is measured in Julian years, 365.25 days of 86400 seconds
-    # each. These are not exactly equal to a Gregorian year (i.e. a year on the
-    # western calendar) once you get into the crazy leap rules.
     years = days / 365.25
 
     return pd.DataFrame({
@@ -234,7 +244,7 @@ def time_of_year(times):
 
 
 def is_daylight(times, lat, lon):
-    '''Determine if the sun is above the horizon for the given times.
+    '''Determine if the sun is above the horizon.
 
     The resulting series has a one hour leeway for both sunrise and sunset.
 

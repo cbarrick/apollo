@@ -1,5 +1,6 @@
 from .storage import *
 from .time import *
+from .viz import *
 
 
 def _import_from_str(dotted):

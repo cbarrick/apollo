@@ -1,0 +1,11 @@
+p.caption {
+	font-size: 100% !important;
+}
+
+img.logo {
+	max-height: 5em !important;
+}
+
+.version {
+	color: #404040 !important;
+}

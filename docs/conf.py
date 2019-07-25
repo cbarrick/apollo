@@ -3,33 +3,16 @@
 # For a full list of configuration options, see the documentation:
 # http://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import os
-import sys
-
-
-# Path setup
-# --------------------------------------------------
-# All extensions and modules to document with autodoc must be in sys.path.
-
-def add_path(path):
-    '''Add a directory to the import path, relative to the documentation root.
-    '''
-    path = os.path.abspath(path)
-    sys.path.insert(0, path)
-
-
-add_path('..')  # The root of the repo, puts the `apollo` package on the path.
-
 
 # Project information
 # --------------------------------------------------
 
-project = 'apollo'
-version = ''
+project = 'Apollo'
+version = '0.2.0'
 release = ''
 
-copyright = '2018, UGA Institute for Artificial Intelligence'
-author = 'Chris Barrick'
+copyright = '2018, Georgia Power Company'
+author = 'Chris Barrick, Zach Jones, Fred Maier'
 
 
 # Configuration
@@ -63,14 +46,16 @@ extensions = [
 # --------------------------------------------------
 
 html_theme = 'sphinx_rtd_theme'
-# html_logo = '_static/logo.svg'
+html_logo = '_static/logo/apollo-logo-text-color.svg'
 html_static_path = ['_static']
+html_css_files = ['css/overrides.css']
 
 # Theme specific,
 # see https://sphinx-rtd-theme.readthedocs.io/en/latest/configuring.html
 html_theme_options = {
     'logo_only': True,
     'display_version': True,
+    'style_nav_header_background': '#EEEEEE',
 
     # Sidebar
     'collapse_navigation': False,
@@ -81,7 +66,7 @@ html_theme_options = {
 }
 
 
-# sphinx.ext.intersphinx
+# Extension: sphinx.ext.intersphinx
 # --------------------------------------------------
 
 # A mapping:  id -> (target, invintory)
@@ -94,24 +79,26 @@ intersphinx_mapping = {
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'xarray': ('http://xarray.pydata.org/en/stable/', None),
-    'torch': ('https://pytorch.org/docs/stable', None),
     'sklearn': ('http://scikit-learn.org/stable', None),
 }
 
 
-# sphinx.ext.autodoc
+# Extension: sphinx.ext.autodoc
 # --------------------------------------------------
 
-autodoc_default_flags = ['members']
+autodoc_default_options = {
+    'members': True,
+}
 
 
-# sphinx.ext.autosummary
+# Extension: sphinx.ext.autosummary
 # --------------------------------------------------
 
 autosummary_generate = True
+autosummary_generate_overwrite = True
 
 
-# sphinx.ext.napoleon
+# Extension: sphinx.ext.napoleon
 # --------------------------------------------------
 
 napoleon_google_docstring = True
@@ -120,8 +107,24 @@ napoleon_use_param = False
 napoleon_use_rtype = False
 
 
-# sphinx.ext.todo
+# Extension: sphinx.ext.todo
 # --------------------------------------------------
 
 # Toggle output for  ..todo::  and  ..todolist::
 todo_include_todos = True
+
+
+# Path setup
+# --------------------------------------------------
+# All extensions and modules to document with autodoc must be in sys.path.
+
+def add_path(path):
+    '''Add a directory to the import path, relative to the documentation root.
+    '''
+    import os
+    import sys
+    path = os.path.abspath(path)
+    sys.path.insert(0, path)
+
+
+add_path('..')  # The root of the repo, puts the `apollo` package on the path.

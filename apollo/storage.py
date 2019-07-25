@@ -59,7 +59,7 @@ def path(p):
             A path relative to the database root.
 
     Returns:
-        Path:
+        pathlib.Path:
             An absolute path within the database.
     '''
     root = _get_root().resolve()

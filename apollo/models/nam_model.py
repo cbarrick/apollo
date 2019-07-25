@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class NamModel(IrradianceModel):
-    '''A model class for predicting irradiance from NAM forecasts.
+    '''A concrete irradiance model using NAM forecasts.
     '''
 
     def __init__(

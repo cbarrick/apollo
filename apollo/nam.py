@@ -61,9 +61,16 @@ FULL_FORECAST_PERIOD = tuple(range(36)) + tuple(range(36, 85, 3))
 FORECAST_PERIOD = FULL_FORECAST_PERIOD[:37]
 
 
-#: The projection of the NAM-NMM dataset as a `cartopy.crs.CRS`.
-#: The projection is officially called called "Grid 218" by NOAA.
-#: http://www.nco.ncep.noaa.gov/pmb/docs/on388/tableb.html#GRID218
+#: A Lambert conformal map projection of NAM grid 218.
+#:
+#: NOAA numbers the differnt maps used by their their products. The specific
+#: map used by NAM forecasts is number 218.
+#:
+#: This is a Lambert conformal conic projection over a spherical globe covering
+#: the contiguous United States.
+#:
+#: .. seealso::
+#:     `Master List of NCEP Storage Grids <http://www.nco.ncep.noaa.gov/pmb/docs/on388/tableb.html#GRID218>`_
 NAM218 = ccrs.LambertConformal(
     central_latitude=25,
     central_longitude=265,
@@ -75,7 +82,7 @@ NAM218 = ccrs.LambertConformal(
 )
 
 
-#: The latitude and longitude of the solar array.
+#: The latitude and longitude of a solar array in Athens, GA.
 #:
 #: In practice, this gets rounded to the nearest coordinate in the NAM dataset.
 #: That location is ``(33.93593, -83.32683)`` and is near the intersection of
@@ -87,8 +94,11 @@ NAM218 = ccrs.LambertConformal(
 ATHENS_LATLON = (33.9052058, -83.382608)
 
 
-#: The planar features of the NAM dataset,
-#: i.e. those where the Z-axis has size 1.
+#: The planar features of the NAM dataset.
+#:
+#: These are the features which have only a trivial Z-axis. These include
+#: features at the surface (SFC), top of atmosphere (TOA), and entire
+#: atmosphere as a single layer (EATM).
 PLANAR_FEATURES = (
     'PRES_SFC',
     'HGT_SFC',
@@ -124,10 +134,9 @@ def proj_coords(lats, lons):
             The longitudes.
 
     Returns:
-        x (numpy.ndarray):
-            The x coordinate, measured in meters.
-        y (numpy.ndarray):
-            The y coordinate, measured in meters.
+        pair of arrays:
+            A pair of arrays ``(x, y)`` that give the x and y coordinates
+            respectivly, measured in meters.
     '''
     lats = np.asarray(lats)
     lons = np.asarray(lons)
@@ -511,7 +520,7 @@ def _process_grib(ds, reftime, forecast):
     return ds
 
 
-def open_dataset(paths):
+def _open_dataset(paths):
     '''Open one or more netCDF files as a single dataset.
 
     This is a wrapper around :func:`xarray.open_mfdataset` providing defaults
@@ -537,7 +546,7 @@ def open_dataset(paths):
 
 
 def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwargs):
-    '''Download a forecast for a given reference time.
+    '''Download a forecast.
 
     The download is skipped for GRIB files in the cache.
 
@@ -583,13 +592,13 @@ def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwarg
             ds = _process_grib(ds, reftime, forecast)
             ds.to_netcdf(path)
             paths.append(path)
-        ds = open_dataset(paths)
+        ds = _open_dataset(paths)
 
     if save_nc:
         path = nc_path(reftime)
         logger.info(f'writing {path}')
         ds.to_netcdf(path)
-        ds = open_dataset([path])
+        ds = _open_dataset([path])
 
     if not keep_gribs:
         for forecast in FORECAST_PERIOD:
@@ -601,14 +610,15 @@ def download(reftime='now', save_nc=True, keep_gribs=False, force=False, **kwarg
 
 
 def open(reftimes='now', on_miss='raise', **kwargs):
-    '''Open the forecasts for the given reference times.
+    '''Open a forecast for one or more reference times.
 
     Arguments:
         reftimes (timestamp or sequence):
             The reference time(s) to open. The default is to load the most
             recent forecast.
-        on_miss (str):
+        on_miss ('raise' or 'download' or 'skip'):
             Determines the behavior on a cache miss:
+
             - ``'raise'``: Raise a :class:`CacheMiss` exception.
             - ``'download'``: Attempt to download the missing forecast.
             - ``'skip'``: Skip missing forecasts. This mode will raise a
@@ -651,7 +661,7 @@ def open(reftimes='now', on_miss='raise', **kwargs):
     if len(paths) == 0:
         raise CacheMiss('No applicable forecasts were found')
 
-    ds = open_dataset(paths)
+    ds = _open_dataset(paths)
 
     # Reconstruct `time` dimension by combining `reftime` and `forecast`.
     # - `reftime` is the time the forecast was made.
@@ -664,7 +674,7 @@ def open(reftimes='now', on_miss='raise', **kwargs):
 
 
 def open_range(start, stop='now', on_miss='skip', **kwargs):
-    '''Open the forecasts for a range of reference times.
+    '''Open a forecast for a range of reference times.
 
     Arguments:
         start (timestamp):
