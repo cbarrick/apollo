@@ -186,6 +186,7 @@ class Model(ABC):
         '''
         data = self.load_data(targets.index, **kwargs)
         raw_data, raw_targets = self.preprocess(data, targets, fit=True)
+        logger.debug('fit: fitting estimator')
         self.estimator.fit(raw_data, raw_targets)
         return self
 
@@ -204,6 +205,7 @@ class Model(ABC):
         '''
         data = self.load_data(index, **kwargs)
         raw_data, _ = self.preprocess(data)
+        logger.debug('predict: executing estimator')
         raw_predictions = self.estimator.predict(raw_data)
         prediction = self.postprocess(raw_predictions, index)
         return predictions
@@ -226,6 +228,7 @@ class Model(ABC):
         else:
             path = Path(path)
 
+        logger.debug(f'save: writing model to {path}')
         fd = path.open('wb')
         pickle.dump(self, fd, protocol=5)
         return path
