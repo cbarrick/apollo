@@ -25,7 +25,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'apollo = apollo.__main__',
+            'apollo = apollo.__main__:main',
         ],
     },
 
