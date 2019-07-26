@@ -4,6 +4,7 @@ def description():
 
 def parse_args(argv):
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser(
         description=description()

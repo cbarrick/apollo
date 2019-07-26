@@ -175,12 +175,12 @@ def slice_geo(data, center, shape):
     y = center_data.y.values
 
     # Compute the slice bounds from the shape.
-    # We subtract 6 km (half a grid unit) from the deltas so that a shape of
-    # 12 km selects a 1x1 grid, 24 km selects 2x2, 36 km selects 3x3, etc.
+    # The distance between grid cells (axes x and y) may not be exactly 12km.
+    # We add 1.5km to the deltas to ensure we select the full area.
     if np.isscalar(shape): shape = (shape, shape)
     x_shape, y_shape = shape
-    x_delta = x_shape / 2 - 6000
-    y_delta = y_shape / 2 - 6000
+    x_delta = x_shape / 2 + 1500
+    y_delta = y_shape / 2 + 1500
     x_slice = slice(x - x_delta, x + x_delta)
     y_slice = slice(y - y_delta, y + y_delta)
 

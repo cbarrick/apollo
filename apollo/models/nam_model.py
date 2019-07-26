@@ -44,11 +44,11 @@ class NamModel(IrradianceModel):
         self.center = center
         self.shape = shape
 
-    def load_data(self, times, dedupe_strategy='best'):
+    def load_data(self, index, dedupe_strategy='best'):
         '''Load input data for the given times.
 
         Arguments:
-            times (pandas.DateTimeIndex):
+            index (pandas.DatetimeIndex):
                 The times to forecast.
             dedupe_strategy (str or int):
                 The strategy for selecting between duplicate forecasts.
@@ -114,6 +114,9 @@ class NamModel(IrradianceModel):
             data = data.unstack()
         data = data.unstack()
         data.columns = data.columns.to_flat_index()
+
+        # The index has lost its timezone information. Fix it.
+        data.index = apollo.DatetimeIndex(data.index)
 
         # We're done.
         return data

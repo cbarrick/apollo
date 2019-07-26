@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 import pickle5 as pickle
 
+import sklearn
+from sklearn.preprocessing import StandardScaler
+
 import apollo
 from apollo.models import make_estimator
 
@@ -244,6 +247,7 @@ class IrradianceModel(Model):
         add_time_of_year=True,
         daylight_only=False,
         center=None,
+        **kwargs,
     ):
         '''Construct a new model.
 
@@ -254,9 +258,9 @@ class IrradianceModel(Model):
                 A Scikit-learn estimator to generate predictions. It is
                 interpreted by :func:`apollo.models.make_estimator`.
             standardize (bool):
-                If true, standardize the data before sending it to the
-                estimator. This transform is not applied to the computed
-                time-of-day and time-of-year features.
+                If true, standardize the feature and target data before sending
+                it to the estimator. This transform is not applied to the
+                computed time-of-day and time-of-year features.
             add_time_of_day (bool):
                 If true, compute time-of-day features.
             add_time_of_year (bool):
@@ -269,7 +273,7 @@ class IrradianceModel(Model):
                 Used to compute the sunrise and sunset times. Required only
                 when ``daylight_only`` is True.
         '''
-        super().__init__(name, estimator)
+        super().__init__(**kwargs)
 
         self.add_time_of_day = bool(add_time_of_day)
         self.add_time_of_year = bool(add_time_of_year)
@@ -289,11 +293,14 @@ class IrradianceModel(Model):
         # If we're fitting, we record the column names.
         # Otherwise we ensure the targets have the expected columns.
         if fit:
+            logger.debug('preprocess: recording columns')
             self.columns = list(targets.columns)
         elif targets is not None:
+            logger.debug('preprocess: checking columns')
             assert set(targets.columns) == set(self.columns)
 
         # Drop NaNs and infinities.
+        logger.debug('preprocess: dropping NaNs and infinities')
         data = data.replace([np.inf, -np.inf], np.nan).dropna()
         if targets is not None:
             targets = targets.replace([np.inf, -np.inf], np.nan).dropna()
@@ -301,10 +308,12 @@ class IrradianceModel(Model):
         # We only support 1-hour frequencies.
         # For overlapping targets, take the mean.
         if targets is not None:
-            targets = targets.groupby(targets.index.floor(1, 'h')).mean()
+            logger.debug('preprocess: aggregating targets')
+            targets = targets.groupby(targets.index.floor('1h')).mean()
 
         # Ignore targets at night (optionally).
         if targets is not None and self.daylight_only:
+            logger.debug('preprocess: dropping night time targets')
             times = targets.index
             (lat, lon) = self.center
             targets = targets[apollo.is_daylight(times, lat, lon)]
@@ -312,6 +321,7 @@ class IrradianceModel(Model):
         # The indices for the data and targets may not match.
         # We can only consider their intersection.
         if targets is not None:
+            logger.debug('preprocess: joining features and targets')
             index = data.index.intersection(targets.index)
             data = data.loc[index]
             targets = targets.loc[index]
@@ -320,40 +330,50 @@ class IrradianceModel(Model):
 
         # Scale the feature data (optionally).
         if self.standardize:
+            logger.debug('preprocess: scaling features')
             cols = list(data.columns)
             raw_data = data[cols].to_numpy()
             if fit: self.feature_scaler.fit(raw_data)
             data[cols] = self.feature_scaler.transform(raw_data)
 
-        # Scale the target data.
-        # Unlike the features, we _always_ scale the targets.
-        if targets is not None:
+        # Scale the target data (optionally).
+        if self.standardize and targets is not None:
+            logger.debug('preprocess: scaling targets')
             cols = self.columns
             raw_targets = targets[cols].to_numpy()
             if fit: self.target_scaler.fit(raw_targets)
             targets[cols] = self.target_scaler.transform(raw_targets)
 
         # Compute additional features (optionally).
-        if self.add_time_of_day: data = data.join(apollo.time_of_day(index))
-        if self.add_time_of_year: data = data.join(apollo.time_of_year(index))
+        if self.add_time_of_day:
+            logger.debug('preprocess: computing time-of-day')
+            data = data.join(apollo.time_of_day(index))
+        if self.add_time_of_year:
+            logger.debug('preprocess: computing time-of-year')
+            data = data.join(apollo.time_of_year(index))
 
         # We always return both, even if targets was not given.
         # We must return numpy arrays.
+        logger.debug('preprocess: casting to numpy')
         return data.to_numpy(), targets.to_numpy()
 
     def postprocess(self, times, raw_predictions):
         '''
         '''
         # Reconstruct the data frame.
+        logger.debug('postprocess: constructing data frame')
         cols = self.cols
         index = apollo.DatetimeIndex(times, name='time')
         predictions = pd.DataFrame(raw_predictions, index=index, columns=cols)
 
         # Unscale the predictions.
-        predictions[cols] = self.target_scaler.inverse_transform(raw_predictions)
+        if self.standardize:
+            logger.debug('postprocess: unscaling predictions')
+            predictions[cols] = self.target_scaler.inverse_transform(raw_predictions)
 
         # Set overnight predictions to zero (optionally).
         if self.daylight_only:
+            logger.debug('postprocess: setting night time to zero')
             (lat, lon) = self.center
             night = not apollo.is_daylight(index, lat, lon)
             predictions.loc[night, :] = 0
