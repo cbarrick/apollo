@@ -6,6 +6,7 @@ The contents of this module are reexported at the top-level, e.g. prefer
 
 import time
 
+import numpy as np
 import pandas as pd
 
 import pvlib
