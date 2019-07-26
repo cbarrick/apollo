@@ -48,7 +48,7 @@ def load_model(args):
     If the ``-n/--named`` argument is given, we load a named model from the
     Apollo database.
 
-    Otherwise we load a model from a JSON template file.
+    Otherwise we load a model from a file.
     '''
     import sys
     from pathlib import Path
