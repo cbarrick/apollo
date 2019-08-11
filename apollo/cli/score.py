@@ -12,12 +12,6 @@ def description():
     ''')
 
 
-def log(message):
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(message)
-
-
 def parse_args(argv):
     import argparse
 
@@ -53,6 +47,18 @@ def parse_args(argv):
     )
 
     return parser.parse_args(argv)
+
+
+def log(message):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(message)
+
+
+def warn(message):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(message)
 
 
 def load_model(args):
@@ -91,8 +97,12 @@ def score(targets, predictions):
     from apollo import metrics
 
     log('scoring predictions')
-    assert (targets.index == predictions.index).all()
     assert (targets.columns == predictions.columns).all()
+
+    missing = len(targets.index) - len(predictions.index)
+    if missing != 0:
+        warn(f'missing {missing} predictions')
+        targets = targets.reindex(predictions.index)
 
     r2 = metrics.r2(targets, predictions)
     scores = pd.DataFrame([r2])
@@ -105,6 +115,5 @@ def main(argv):
     model = load_model(args)
     targets = read_targets(args)
     predictions = predict(model, targets.index)
-    assert (predictions.index == targets.index).all()
     scores = score(targets, predictions)
     scores.to_csv(sys.stdout)
