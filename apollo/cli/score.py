@@ -93,6 +93,7 @@ def predict(model, index):
 
 
 def score(targets, predictions):
+    import pandas as pd
     import apollo
     from apollo import metrics
 
