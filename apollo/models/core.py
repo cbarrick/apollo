@@ -580,7 +580,10 @@ class IrradianceModel(Model):
         # We always return both, even if targets was not given.
         # We must return numpy arrays.
         logger.debug('preprocess: casting to numpy')
-        return data.to_numpy(), targets.to_numpy()
+        if targets is None:
+            return data.to_numpy(), None
+        else:
+            return data.to_numpy(), targets.to_numpy()
 
     def postprocess(self, times, raw_predictions):
         '''
