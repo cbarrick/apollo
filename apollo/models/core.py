@@ -585,13 +585,13 @@ class IrradianceModel(Model):
         else:
             return data.to_numpy(), targets.to_numpy()
 
-    def postprocess(self, times, raw_predictions):
+    def postprocess(self, raw_predictions, index):
         '''
         '''
         # Reconstruct the data frame.
         logger.debug('postprocess: constructing data frame')
-        cols = self.cols
-        index = apollo.DatetimeIndex(times, name='time')
+        cols = self.columns
+        index = apollo.DatetimeIndex(index, name='time')
         predictions = pd.DataFrame(raw_predictions, index=index, columns=cols)
 
         # Unscale the predictions.
