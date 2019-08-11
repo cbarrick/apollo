@@ -393,13 +393,7 @@ class Model(ABC):
             pandas.DataFrame:
                 The predictions.
         '''
-        predictions = pd.DataFrame(raw_predictions, index=index)
-
-        # Reindex rows to check for missing values.
-        predictions.reindex(index)
-        print(predictions.isna().sum())
-
-        return predictions
+        return pd.DataFrame(raw_predictions, index=index)
 
     def fit(self, targets, **kwargs):
         '''Fit the models to some target data.
@@ -594,10 +588,7 @@ class IrradianceModel(Model):
         # We always return both, even if targets was not given.
         # We must return numpy arrays.
         logger.debug('preprocess: casting to numpy')
-        if targets is None:
-            return data.to_numpy(), None
-        else:
-            return data.to_numpy(), targets.to_numpy()
+        return data, targets
 
     def postprocess(self, raw_predictions, index):
         '''
