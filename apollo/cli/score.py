@@ -92,10 +92,18 @@ def predict(model, index):
     return model.predict(index)
 
 
-def score(targets, predictions):
+def compute_scores(targets, predictions):
     import pandas as pd
     import apollo
     from apollo import metrics
+
+    r2 = metrics.r2(targets, predictions)
+    scores = pd.DataFrame([r2])
+    return scores
+
+
+def score(targets, predictions, latlon=None):
+    import apollo
 
     log('scoring predictions')
     assert (targets.columns == predictions.columns).all()
@@ -105,8 +113,21 @@ def score(targets, predictions):
         warn(f'missing {missing} predictions')
         targets = targets.reindex(predictions.index)
 
-    r2 = metrics.r2(targets, predictions)
-    scores = pd.DataFrame([r2])
+    log('computing day-night scores')
+    scores = compute_scores(targets, predictions)
+
+    if latlon is not None:
+        log('computing day-only scores')
+        (lat, lon) = latlon
+        index = predictions.index
+        is_daylight = apollo.is_daylight(index, lat, lon)
+        predictions = predictions[is_daylight]
+        targets = targets[is_daylight]
+        daytime_scores = compute_scores(targets, predictions)
+        daytime_scores.index = daytime_scores.index + '_day_only'
+        scores.index = scores.index + '_day_night'
+        scores = scores.append(daytime_scores)
+
     scores.index.name = 'metric'
     return scores
 
@@ -117,5 +138,6 @@ def main(argv):
     model = load_model(args)
     targets = read_targets(args)
     predictions = predict(model, targets.index)
-    scores = score(targets, predictions)
+    latlon = getattr(model, 'center', None)
+    scores = score(targets, predictions, latlon)
     scores.to_csv(sys.stdout)
