@@ -92,18 +92,9 @@ def predict(model, index):
     return model.predict(index)
 
 
-def compute_scores(targets, predictions):
-    import pandas as pd
-    import apollo
-    from apollo import metrics
-
-    r2 = metrics.r2(targets, predictions)
-    scores = pd.DataFrame([r2])
-    return scores
-
-
 def score(targets, predictions, latlon=None):
     import apollo
+    from apollo import metrics
 
     log('scoring predictions')
     assert (targets.columns == predictions.columns).all()
@@ -114,7 +105,7 @@ def score(targets, predictions, latlon=None):
         targets = targets.reindex(predictions.index)
 
     log('computing day-night scores')
-    scores = compute_scores(targets, predictions)
+    scores = metrics.all(targets, predictions)
 
     if latlon is not None:
         log('computing day-only scores')
@@ -123,7 +114,7 @@ def score(targets, predictions, latlon=None):
         is_daylight = apollo.is_daylight(index, lat, lon)
         predictions = predictions[is_daylight]
         targets = targets[is_daylight]
-        daytime_scores = compute_scores(targets, predictions)
+        daytime_scores = metrics.all(targets, predictions)
         daytime_scores.index = daytime_scores.index + '_day_only'
         scores.index = scores.index + '_day_night'
         scores = scores.append(daytime_scores)

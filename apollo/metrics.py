@@ -1,7 +1,7 @@
 import pandas as pd
 
 import sklearn
-from sklearn.metrics import r2_score
+import sklearn.metrics as skmetrics
 
 
 def _apply(fn, targets, predictions, **kwargs):
@@ -48,6 +48,63 @@ def r2(targets, predictions):
         pandas.Series:
             The metric computed for each column.
     '''
-    scores = _apply(r2_score, targets, predictions)
+    scores = _apply(skmetrics.r2_score, targets, predictions)
     scores.name = 'r2'
     return scores
+
+
+def mae(targets, predictions):
+    '''Compute the mean absolute error.
+
+    Arguments:
+        targets (pandas.DataFrame):
+            The true observations.
+        predictions (pandas.DataFrame):
+            The predicted values.
+
+    Returns:
+        pandas.Series:
+            The metric computed for each column.
+    '''
+    scores = _apply(skmetrics.mean_absolute_error, targets, predictions)
+    scores.name = 'mae'
+    return scores
+
+
+def mse(targets, predictions):
+    '''Compute the mean squared error.
+
+    Arguments:
+        targets (pandas.DataFrame):
+            The true observations.
+        predictions (pandas.DataFrame):
+            The predicted values.
+
+    Returns:
+        pandas.Series:
+            The metric computed for each column.
+    '''
+    scores = _apply(skmetrics.mean_squared_error, targets, predictions)
+    scores.name = 'mse'
+    return scores
+
+
+def all(targets, predictions):
+    '''Compute all available metrics.
+
+    Arguments:
+        targets (pandas.DataFrame):
+            The true observations.
+        predictions (pandas.DataFrame):
+            The predicted values.
+
+    Returns:
+        pandas.DataFrame:
+            A data frame with the same columns as the targets/predictions and
+            one row for each metric.
+    '''
+    return pd.DataFrame({
+        'r2': r2(targets, predictions),
+        'mae': mae(targets, predictions),
+        'mse': mse(targets, predictions),
+    })
