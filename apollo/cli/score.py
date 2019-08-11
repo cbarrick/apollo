@@ -107,6 +107,7 @@ def score(targets, predictions):
 
     r2 = metrics.r2(targets, predictions)
     scores = pd.DataFrame([r2])
+    scores.index.name = 'metric'
     return scores
 
 
