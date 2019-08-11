@@ -4,10 +4,6 @@ from sklearn.metrics import r2_score
 def _apply(fn, targets, predictions, **kwargs):
     '''Apply a metric over the targets and predictions.
 
-    The targets and predictions are data frames with the same columns and index.
-    The columns may differ in order, but the row index must be the same for
-    both.
-
     Arguments:
         fn (callable):
             The metric function.
@@ -22,7 +18,7 @@ def _apply(fn, targets, predictions, **kwargs):
         pandas.Series:
             The metric computed for each column.
     '''
-    # Reindex to ensure the columns appear in the same order.
+    # Reindex columns to ensure they appear in the same order.
     predictions = predictions.reindex(targets.columns, axis=1)
     columns = targets.columns
 

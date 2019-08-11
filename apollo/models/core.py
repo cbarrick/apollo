@@ -294,8 +294,10 @@ class Model(ABC):
     - :meth:`preprocess`: This method transforms the "structured data" returned
       by :meth:`load_data` and "structured targets" provided by the user into
       the "raw data" and "raw targets" passed to the estimator. A default
-      implementation is provided which simply passes the feature and target
-      data through :func:`numpy.asanyarray`.
+      implementation is provided that passes the input to the
+      :class:`pandas.DataFrame` constructor. The values returned by the
+      preprocess method are cast to numpy arrays with :func:`numpy.asanyarray`
+      before being sent to the estimator.
 
     - :meth:`postprocess`: This method transforms the "raw predictions"
       returned by the estimator into a fully-fledged DataFrame. The default
@@ -366,13 +368,13 @@ class Model(ABC):
                 If true, fit lernable transforms against this target data.
 
         Returns:
-            pair of ndarray:
-                A pair of arrays ``(raw_features, raw_targets)`` containint
+            pair of pandas.DataFrame:
+                A pair of data frames ``(raw_features, raw_targets)`` containing
                 processed feature data and processed target data respectivly.
-                The ``raw_targets`` will be ``None`` if no ``target`` was given.
+                The ``raw_targets`` will be ``None`` if ``targets`` was None.
         '''
-        raw_features = np.asanyarray(features)
-        raw_targets = np.asanyarray(raw_targets) or None
+        raw_features = pd.DataFrame(features)
+        raw_targets = pd.DataFrame(raw_targets) if targets is not None else None
         return raw_features, raw_targets
 
     def postprocess(self, raw_predictions, index):
@@ -391,7 +393,13 @@ class Model(ABC):
             pandas.DataFrame:
                 The predictions.
         '''
-        return pd.DataFrame(raw_predictions, index=index)
+        predictions = pd.DataFrame(raw_predictions, index=index)
+
+        # Reindex rows to check for missing values.
+        predictions.reindex(index)
+        print(predictions.isna().sum())
+
+        return predictions
 
     def fit(self, targets, **kwargs):
         '''Fit the models to some target data.
@@ -407,9 +415,12 @@ class Model(ABC):
                 self
         '''
         data = self.load_data(targets.index, **kwargs)
-        raw_data, raw_targets = self.preprocess(data, targets, fit=True)
+        data, targets = self.preprocess(data, targets, fit=True)
+        logger.debug('fit: casting to numpy')
+        data = np.asanyarray(data)
+        targets = np.asanyarray(targets)
         logger.debug('fit: fitting estimator')
-        self.estimator.fit(raw_data, raw_targets)
+        self.estimator.fit(data, targets)
         return self
 
     def predict(self, index, **kwargs):
@@ -426,10 +437,13 @@ class Model(ABC):
                 A data frame of predicted values.
         '''
         data = self.load_data(index, **kwargs)
-        raw_data, _ = self.preprocess(data)
+        data, _ = self.preprocess(data)
+        index = data.index  # The preprocess step may change the index.
+        logger.debug('predict: casting to numpy')
+        data = np.asanyarray(data)
         logger.debug('predict: executing estimator')
-        raw_predictions = self.estimator.predict(raw_data)
-        prediction = self.postprocess(raw_predictions, index)
+        predictions = self.estimator.predict(data)
+        predictions = self.postprocess(predictions, index)
         return predictions
 
     def save(self, path=None):
@@ -590,9 +604,13 @@ class IrradianceModel(Model):
         '''
         # Reconstruct the data frame.
         logger.debug('postprocess: constructing data frame')
-        cols = self.columns
         index = apollo.DatetimeIndex(index, name='time')
-        predictions = pd.DataFrame(raw_predictions, index=index, columns=cols)
+        predictions = super().postprocess(raw_predictions, index)
+
+        # Set the columns.
+        cols = list(self.columns)
+        assert len(predictions.columns) == len(cols)
+        predictions.columns = pd.Index(cols)
 
         # Unscale the predictions.
         if self.standardize:
