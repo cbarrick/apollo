@@ -1,42 +1,50 @@
 def description():
-    return 'Execute an Apollo model.'
+    import textwrap
+    return textwrap.dedent('''\
+    Execute an Apollo model.
+
+    This command makes predictions for times between START and STOP at 1-hour
+    intervals. Both START and STOP must be given as ISO 8601 timestamps and are
+    rounded down to the hour. Timestamps are assumed to be UTC unless a
+    timezone is given.
+
+    If the --from-file/-f option is given, MODEL must be a path to a model file.
+    Otherwise, MODEL must be the name of a model in the Apollo database.
+    ''')
 
 
 def parse_args(argv):
     import argparse
 
     parser = argparse.ArgumentParser(
-        description=description()
+        description=description(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
-        '--named',
-        '-n',
+        '-f',
+        '--from-file',
         action='store_true',
-        help='Load a named model from the Apollo database.'
+        help='load the model from a file',
     )
 
     parser.add_argument(
         'model',
         metavar='MODEL',
-        help='The model to execute.'
+        help='the model to execute'
     )
 
-    target_options = parser.add_mutually_exclusive_group()
-
-    target_options.add_argument(
-        '--range',
-        '-r',
-        nargs=2,
-        metavar=['START', 'STOP'],
-        help='Make predictions for a range of times.'
+    parser.add_argument(
+        'start',
+        metavar='START',
+        help='the first timestamp'
     )
 
-    target_options.add_argument(
-        '--csv',
-        '-c',
-        metavar='FILE',
-        help='Make predictions for times listed as the first column in a CSV.'
+    parser.add_argument(
+        'stop',
+        nargs='?',
+        metavar='STOP',
+        help='the last timestamp (defaults to a 24-hour forecast)'
     )
 
     return parser.parse_args(argv)
@@ -44,60 +52,39 @@ def parse_args(argv):
 
 def load_model(args):
     '''Loads the model from CLI arguments.
-
-    If the ``-n/--named`` argument is given, we load a named model from the
-    Apollo database.
-
-    Otherwise we load a model from a file.
     '''
     import sys
-    from pathlib import Path
-
     import apollo
     from apollo import models
 
-    if args.named:
-        name = args.model
-        known_models = models.list_models()
-        if name not in known_models:
-            print(f'Unknown model: {name}', file=sys.stderr)
-            print(f'Hint: use `apollo ls models` to list models', file=sys.stderr)
-            sys.exit(1)
-        return models.load_named_model(args.model)
-
-    else:
-        path = Path(args.model)
-        if not path.exists():
-            print(f'No such file: {path}', file=sys.stderr)
-            sys.exit(1)
-        return models.load_model(args.model)
+    try:
+        if args.from_file:
+            return models.load_model_at(args.model)
+        else:
+            return models.load_model(args.model)
+    except FileNotFoundError:
+        print(
+            f'No such model: {args.model}\n' +
+            f'Hint: You can list known models with `apollo ls models`',
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 def get_times(args):
     '''Load the target timestamps from CLI arguments.
-
-    If the ``-r/--range`` argument is given, we construct a range of timestamps
-    at 1-hour frequency.
-
-    Otherwise we read a CSV and parse the first column as for timestamps.
     '''
-    import apollo
     import pandas as pd
-    import sys
+    import apollo
 
-    if args.range:
-        (start, stop) = args.range
-        return apollo.date_range(start, stop, freq='1H')
+    start = apollo.Timestamp(args.start).floor('1H')
 
+    if args.stop is None:
+        stop = start + pd.Timedelta(24, 'H')
     else:
-        if args.csv == '-': args.csv = sys.stdin
-        times = pd.read_csv(
-            args.csv,
-            parse_dates=True,
-            usecols=[0],
-            index_col=0,
-        )
-        return times.index
+        stop = apollo.Timestamp(args.stop).floor('1H')
+
+    return apollo.date_range(start, stop, freq='1H')
 
 
 def main(argv):
@@ -105,5 +92,5 @@ def main(argv):
     args = parse_args(argv)
     model = load_model(args)
     times = get_times(args)
-    prediction = model.predict(times)
+    predictions = model.predict(times)
     predictions.to_csv(sys.stdout)

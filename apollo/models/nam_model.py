@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 
 import apollo
 from apollo import nam
-from apollo.models.base import IrradianceModel
+from apollo.models.core import IrradianceModel
 
 
 logger = logging.getLogger(__name__)
