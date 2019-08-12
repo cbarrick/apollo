@@ -9,6 +9,7 @@ import pandas as pd
 import pickle5 as pickle
 
 import sklearn
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 import apollo
@@ -87,7 +88,7 @@ def make_estimator(e):
     elif hasattr(e, '__len__'):
         steps = []
         for (name, params) in e:
-            if isinstance(ctor, str):
+            if isinstance(name, str):
                 ctor = apollo._import_from_str(name)
             step = ctor(**params)
             steps.append(step)

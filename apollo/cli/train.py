@@ -80,7 +80,7 @@ def make_model(args):
     log('instantiating model from template')
 
     try:
-        if args.file:
+        if args.from_file:
             return models.make_model_from(args.template, name=args.name)
         else:
             return models.make_model(args.template, name=args.name)
