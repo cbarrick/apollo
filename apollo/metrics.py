@@ -109,4 +109,4 @@ def all(targets, predictions):
         'r2': r2(targets, predictions),
         'mae': mae(targets, predictions),
         'rmse': rmse(targets, predictions),
-    })
+    }).transpose()
