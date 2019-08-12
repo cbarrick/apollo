@@ -645,7 +645,7 @@ class IrradianceModel(Model):
         if self.daylight_only:
             logger.debug('postprocess: setting night time to zero')
             (lat, lon) = self.center
-            night = not apollo.is_daylight(index, lat, lon)
+            night = ~apollo.is_daylight(index, lat, lon)
             predictions.loc[night, :] = 0
 
         return predictions
