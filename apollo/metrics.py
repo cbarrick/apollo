@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 import sklearn
@@ -71,8 +72,8 @@ def mae(targets, predictions):
     return scores
 
 
-def mse(targets, predictions):
-    '''Compute the mean squared error.
+def rmse(targets, predictions):
+    '''Compute the root mean squared error.
 
     Arguments:
         targets (pandas.DataFrame):
@@ -85,7 +86,8 @@ def mse(targets, predictions):
             The metric computed for each column.
     '''
     scores = _apply(skmetrics.mean_squared_error, targets, predictions)
-    scores.name = 'mse'
+    scores = np.sqrt(scores)
+    scores.name = 'rmse'
     return scores
 
 
@@ -106,5 +108,5 @@ def all(targets, predictions):
     return pd.DataFrame({
         'r2': r2(targets, predictions),
         'mae': mae(targets, predictions),
-        'mse': mse(targets, predictions),
+        'rmse': rmse(targets, predictions),
     })
