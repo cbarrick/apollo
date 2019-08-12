@@ -55,12 +55,6 @@ def log(message):
     logger.info(message)
 
 
-def warn(message):
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.warning(message)
-
-
 def load_model(args):
     import sys
     import apollo
@@ -87,48 +81,10 @@ def read_targets(args):
     return pd.read_csv(args.file, parse_dates=True, index_col=0)
 
 
-def predict(model, index):
-    log('executing model')
-    return model.predict(index)
-
-
-def score(targets, predictions, latlon=None):
-    import apollo
-    from apollo import metrics
-
-    log('scoring predictions')
-    assert (targets.columns == predictions.columns).all()
-
-    missing = len(targets.index) - len(predictions.index)
-    if missing != 0:
-        warn(f'missing {missing} predictions')
-        targets = targets.reindex(predictions.index)
-
-    log('computing day-night scores')
-    scores = metrics.all(targets, predictions)
-
-    if latlon is not None:
-        log('computing day-only scores')
-        (lat, lon) = latlon
-        index = predictions.index
-        is_daylight = apollo.is_daylight(index, lat, lon)
-        predictions = predictions[is_daylight]
-        targets = targets[is_daylight]
-        daytime_scores = metrics.all(targets, predictions)
-        daytime_scores.index = daytime_scores.index + '_day_only'
-        scores.index = scores.index + '_day_night'
-        scores = scores.append(daytime_scores)
-
-    scores.index.name = 'metric'
-    return scores
-
-
 def main(argv):
     import sys
     args = parse_args(argv)
     model = load_model(args)
     targets = read_targets(args)
-    predictions = predict(model, targets.index)
-    latlon = getattr(model, 'center', None)
-    scores = score(targets, predictions, latlon)
+    scores = model.score(targets)
     scores.to_csv(sys.stdout)

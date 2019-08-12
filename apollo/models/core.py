@@ -12,6 +12,7 @@ import sklearn
 from sklearn.preprocessing import StandardScaler
 
 import apollo
+from apollo import metrics
 
 
 logger = logging.getLogger(__name__)
@@ -281,6 +282,13 @@ class Model(ABC):
       passed to :meth:`fit`. Additional arguments should be forwarded to
       :meth:`load_data`.
 
+    - :meth:`score`: All models have a score method, but unlike Scikit-learn,
+      this method produces a data frame rather than a scalar value. The data
+      frame has one column for each column in th training data, and each row
+      gives a different metric. It is not specified what metrics should be
+      computed nor how they should be interpreted. The default implementation
+      delegates to :func:`apollo.metrics.all`.
+
     This base class provides default implementations of :meth:`fit` and
     :meth:`predict`, however using these requires you to understand a handfull
     of lower-level pieces.
@@ -463,6 +471,29 @@ class Model(ABC):
         pickle.dump(self, fd, protocol=5)
         return path
 
+    def score(self, targets):
+        '''Score this model against some target values.
+
+        Arguments:
+            targets (pandas.DataFrame):
+                The targets to compare against.
+
+        Returns:
+            pandas.DataFrame:
+                A table of metrics.
+        '''
+        targets = targets.replace([np.inf, -np.inf], np.nan).dropna()
+        predictions = self.predict(targets.index)
+
+        n_missing = len(targets.index) - len(predictions.index)
+        if n_missing != 0:
+            logger.warning(f'missing {n_missing} predictions')
+            targets = targets.reindex(predictions.index)
+
+        scores = apollo.metrics.all(targets, predictions)
+        scores.index.name = 'metric'
+        return scores
+
 
 class IrradianceModel(Model):
     '''Base class for irradiance modeling.
@@ -616,3 +647,36 @@ class IrradianceModel(Model):
             predictions.loc[night, :] = 0
 
         return predictions
+
+    def score(self, targets):
+        '''Score this model against some target values.
+
+        Arguments:
+            targets (pandas.DataFrame):
+                The targets to compare against.
+
+        Returns:
+            pandas.DataFrame:
+                A table of metrics.
+        '''
+        targets = targets.replace([np.inf, -np.inf], np.nan).dropna()
+        predictions = self.predict(targets.index)
+
+        n_missing = len(targets.index) - len(predictions.index)
+        if n_missing != 0:
+            logger.warning(f'missing {n_missing} predictions')
+            targets = targets.reindex(predictions.index)
+
+        daynight_scores = apollo.metrics.all(targets, predictions)
+        daynight_scores.index = daynight_scores.index + '_day_night'
+
+        lat, lon = self.center
+        is_daylight = apollo.is_daylight(targets.index, lat, lon)
+        predictions = predictions[is_daylight]
+        targets = targets[is_daylight]
+        dayonly_scores = metrics.all(targets, predictions)
+        dayonly_scores.index = dayonly_scores.index + '_day_only'
+
+        scores = daynight_scores.append(dayonly_scores)
+        scores.index.name = 'metric'
+        return scores
