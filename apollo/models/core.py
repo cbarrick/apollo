@@ -640,7 +640,7 @@ class IrradianceModel(Model):
         # Unscale the predictions.
         if self.standardize:
             logger.debug('postprocess: unscaling predictions')
-            predictions[cols] = self.target_scaler.inverse_transform(raw_predictions)
+            predictions[cols] = self.target_scaler.inverse_transform(predictions)
 
         # Set overnight predictions to zero (optionally).
         if self.daylight_only:
