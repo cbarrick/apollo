@@ -471,19 +471,21 @@ class Model(ABC):
         pickle.dump(self, fd, protocol=5)
         return path
 
-    def score(self, targets):
+    def score(self, targets, **kwargs):
         '''Score this model against some target values.
 
         Arguments:
             targets (pandas.DataFrame):
                 The targets to compare against.
+            **kwargs:
+                Additional arguments are forwarded to :meth:`load_data`.
 
         Returns:
             pandas.DataFrame:
                 A table of metrics.
         '''
         targets = targets.replace([np.inf, -np.inf], np.nan).dropna()
-        predictions = self.predict(targets.index)
+        predictions = self.predict(targets.index, **kwargs)
 
         n_missing = len(targets.index) - len(predictions.index)
         if n_missing != 0:
@@ -648,19 +650,21 @@ class IrradianceModel(Model):
 
         return predictions
 
-    def score(self, targets):
+    def score(self, targets, **kwargs):
         '''Score this model against some target values.
 
         Arguments:
             targets (pandas.DataFrame):
                 The targets to compare against.
+            **kwargs:
+                Additional arguments are forwarded to :meth:`load_data`.
 
         Returns:
             pandas.DataFrame:
                 A table of metrics.
         '''
         targets = targets.replace([np.inf, -np.inf], np.nan).dropna()
-        predictions = self.predict(targets.index)
+        predictions = self.predict(targets.index, **kwargs)
 
         n_missing = len(targets.index) - len(predictions.index)
         if n_missing != 0:

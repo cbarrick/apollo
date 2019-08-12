@@ -120,3 +120,34 @@ class NamModel(IrradianceModel):
 
         # We're done.
         return data
+
+    def score(self, targets, **kwargs):
+        '''Score this model against some target values.
+
+        Arguments:
+            targets (pandas.DataFrame):
+                The targets to compare against.
+            **kwargs:
+                Additional arguments are forwarded to :meth:`load_data`.
+                The ``dedupe_strategy`` argument is ignored.
+
+        Returns:
+            pandas.DataFrame:
+                A table of metrics.
+        '''
+        kwargs.pop('dedupe_strategy', None)
+        scores = pd.DataFrame()
+
+        for quantile in range(6):
+            quantile_scores = super().score(
+                targets,
+                dedupe_strategy=quantile,
+                **kwargs
+            )
+            lo = quantile * 6
+            hi = lo + 5
+            quantile_scores.index += f'_{lo:02}h-{hi:02}h'
+            scores = scores.append(quantile_scores)
+
+        scores.index.name = 'metric'
+        return scores.sort_index()
