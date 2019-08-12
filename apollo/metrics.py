@@ -34,7 +34,7 @@ def _apply(fn, targets, predictions, **kwargs):
 
 
 def r2(targets, predictions):
-    '''Compute the coefficient of determination.
+    '''R^2 coefficient of determination.
 
     This function uses the same formula as Scikit-learn:
     <https://scikit-learn.org/stable/modules/model_evaluation.html#r2-score>
@@ -55,7 +55,7 @@ def r2(targets, predictions):
 
 
 def mae(targets, predictions):
-    '''Compute the mean absolute error.
+    '''Mean absolute error.
 
     Arguments:
         targets (pandas.DataFrame):
@@ -73,7 +73,7 @@ def mae(targets, predictions):
 
 
 def rmse(targets, predictions):
-    '''Compute the root mean squared error.
+    '''Root mean squared error.
 
     Arguments:
         targets (pandas.DataFrame):
@@ -88,6 +88,25 @@ def rmse(targets, predictions):
     scores = _apply(skmetrics.mean_squared_error, targets, predictions)
     scores = np.sqrt(scores)
     scores.name = 'rmse'
+    return scores
+
+
+def stdae(targets, predictions):
+    '''Standard deviation of absolute error.
+
+    Arguments:
+        targets (pandas.DataFrame):
+            The true observations.
+        predictions (pandas.DataFrame):
+            The predicted values.
+
+    Returns:
+        pandas.Series:
+            The metric computed for each column.
+    '''
+    fn = lambda t, p: np.std(np.abs(t - p), axis=0)
+    scores = _apply(fn, targets, predictions)
+    scores.name = 'stdae'
     return scores
 
 
@@ -109,4 +128,5 @@ def all(targets, predictions):
         'r2': r2(targets, predictions),
         'mae': mae(targets, predictions),
         'rmse': rmse(targets, predictions),
+        'stdae': stdae(targets, predictions),
     }).transpose()
