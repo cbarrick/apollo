@@ -1,6 +1,6 @@
 {
 	"estimator": [
-		["sklearn.linear_model.LinearRegression", {
+		["sklearn.svm.SVR", {
 			"kernel": "rbf",
 			"gamma": "scale",
 			"cache_size": 2000
