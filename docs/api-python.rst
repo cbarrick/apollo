@@ -13,8 +13,8 @@ Apollo's core API is the modeling framework.
     :nosignatures:
     :toctree: api
 
-    apollo.models.base.Model
-    apollo.models.base.IrradianceModel
+    apollo.models.Model
+    apollo.models.IrradianceModel
     apollo.models.NamModel
 
 **Utility Functions**
@@ -23,13 +23,14 @@ Apollo's core API is the modeling framework.
     :nosignatures:
     :toctree: api
 
-    apollo.models.list_templates
     apollo.models.list_models
-    apollo.models.make_estimator
+    apollo.models.list_templates
     apollo.models.load_model
-    apollo.models.load_named_model
-    apollo.models.from_template
-    apollo.models.from_named_template
+    apollo.models.load_model_at
+    apollo.models.load_model_from
+    apollo.models.make_estimator
+    apollo.models.make_model
+    apollo.models.make_model_from
 
 
 NAM Forecast Data
@@ -107,6 +108,20 @@ Apollo extends common Pandas utilities to support these conventions.
     apollo.Timestamp
     apollo.DatetimeIndex
     apollo.date_range
+
+
+Metrics
+---------------------------------------------------------------------------
+
+.. autosummary::
+    :nosignatures:
+    :toctree: api
+
+    apollo.metrics.all
+    apollo.metrics.mae
+    apollo.metrics.r2
+    apollo.metrics.rmse
+    apollo.metrics.stdae
 
 
 Visualizations
