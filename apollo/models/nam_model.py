@@ -16,43 +16,57 @@ logger = logging.getLogger(__name__)
 
 
 class NamModel(IrradianceModel):
-    '''A concrete irradiance model using NAM forecasts.
+    '''A concrete irradiance model using NAM forecasts as feature data.
+
+    This is the primary concrete model class of Apollo. It extends
+    :class:`apollo.models.base.IrradianceModel` to load data from
+    :mod:`apollo.nam`.
     '''
 
     def __init__(
         self, *,
         features=nam.PLANAR_FEATURES,
-        center=nam.ATHENS_LATLON,
+        latlon=nam.ATHENS_LATLON,
         shape=12000,
         **kwargs,
     ):
         '''Initialize a model.
 
         Keyword Arguments:
+            name (str or None):
+                A name for the estimator. If not given, a UUID is generated.
+            estimator (sklearn.base.BaseEstimator or str or list):
+                A Scikit-learn estimator to generate predictions. It is
+                interpreted by :func:`apollo.models.make_estimator`.
             features (list of str):
                 The NAM features to use for prediction.
-            center (pair of float):
+            latlon (pair of float):
                 The center of the geographic area, as a latitude-longited pair.
             shape (float or pair of float):
                 The height and width of the geographic area, measured in meters.
                 If a scalar, both height and width are the same size.
-            **kwargs:
-                Forwarded to :class:`IrradianceModel` and :class:`Model`.
+            standardize (bool):
+                If true, standardize the feature and target data before sending
+                it to the estimator. This transform is not applied to the
+                computed time-of-day and time-of-year features.
+            add_time_of_day (bool):
+                If true, compute time-of-day features.
+            add_time_of_year (bool):
+                If true, compute time-of-year features.
+            daylight_only (bool):
+                If true, timestamps which occur at night are ignored during
+                training and are always predicted to be zero.
         '''
-        super().__init__(**kwargs, center=center)
+        super().__init__(**kwargs, latlon=latlon)
         self.features = list(features)
-        self.center = center
         self.shape = shape
 
-    def load_data(self, index, dedupe_strategy='best'):
+    def load_data(self, index, _dedupe_strategy='best'):
         '''Load input data for the given times.
 
         Arguments:
             index (pandas.DatetimeIndex):
                 The times to forecast.
-            dedupe_strategy (str or int):
-                The strategy for selecting between duplicate forecasts.
-                **TODO:** Better documentation.
 
         Returns:
             pandas.DataFrame:
@@ -70,7 +84,7 @@ class NamModel(IrradianceModel):
 
         # Select geographic area.
         logger.debug('load: slicing geographic area')
-        data = nam.slice_geo(data, center=self.center, shape=self.shape)
+        data = nam.slice_geo(data, center=self.latlon, shape=self.shape)
 
         # Create a data frame.
         # This will have a multi-index of `(reftime, forecast, x, y, *z)`,
@@ -90,20 +104,20 @@ class NamModel(IrradianceModel):
         data = data.loc[index]
 
         # Handle duplicates.
-        logger.debug(f'load: selecting forecast hour (dedupe_strategy={dedupe_strategy})')
-        if dedupe_strategy == 'best':
+        logger.debug(f'load: selecting forecast hour (_dedupe_strategy={_dedupe_strategy})')
+        if _dedupe_strategy == 'best':
             data = data.groupby(data.index) \
                 .apply(lambda g: g[g.forecast == g.forecast.min()]) \
                 .droplevel(0)
-        elif isinstance(dedupe_strategy, int) and dedupe_strategy < 6:
+        elif isinstance(_dedupe_strategy, int) and _dedupe_strategy < 6:
             delta = pd.Timedelta('6h')
-            lo = delta * dedupe_strategy
+            lo = delta * _dedupe_strategy
             hi = lo + delta
             data = data.groupby(data.index) \
                 .apply(lambda g: g[(lo <= g.forecast) & (g.forecast < hi)]) \
                 .droplevel(0)
         else:
-            raise ValueError(f'invalid dedupe_strategy {repr(dedupe_strategy)}')
+            raise ValueError(f'invalid dedupe strategy: {repr(_dedupe_strategy)}')
 
         # We no longer need the forecast hour.
         data = data.drop('forecast', axis=1)
@@ -129,7 +143,6 @@ class NamModel(IrradianceModel):
                 The targets to compare against.
             **kwargs:
                 Additional arguments are forwarded to :meth:`load_data`.
-                The ``dedupe_strategy`` argument is ignored.
 
         Returns:
             pandas.DataFrame:
@@ -138,7 +151,7 @@ class NamModel(IrradianceModel):
         # Compute scores for every forecast period.
         scores = pd.DataFrame()
         for quantile in range(6):
-            kwargs['dedupe_strategy'] = quantile
+            kwargs['_dedupe_strategy'] = quantile
             quantile_scores = super().score(targets, **kwargs)
             lo = quantile * 6
             hi = lo + 5

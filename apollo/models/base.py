@@ -44,20 +44,19 @@ class Model(ABC):
 
     - :meth:`load_data`: Models are responsible for loading their own feature
       data for training and prediction. This method recieves a Pandas index and
-      returns some object representing the feature data. It may accept
+      returns a Pandas data frame containing the feature data. It may accept
       additional, optional arguments.
 
     - :meth:`fit`: Like Scikit-learn estimators, Apollo models must have a
       ``fit`` method for training the model. However, unlike Scikit-learn
       estimators, Apollo models have a single required argument, a target
-      DataFrame to fit against. Additional arguments should be forwarded to
+      data frame to fit against. Additional arguments are forwarded to
       :meth:`load_data`.
 
     - :meth:`predict`: Again like Scikit-learn estimators, Apollo models must
       have a ``predict`` method for generating predictions. The input to this
       method is a Pandas index for the resulting prediction. The return value
-      is a DataFrame using that index and columns like the target data frame
-      passed to :meth:`fit`. Additional arguments should be forwarded to
+      is a data frame of predictions. Additional arguments are forwarded to
       :meth:`load_data`.
 
     - :meth:`score`: All models have a score method, but unlike Scikit-learn,
@@ -68,26 +67,25 @@ class Model(ABC):
       delegates to :func:`apollo.metrics.all`.
 
     This base class provides default implementations of :meth:`fit` and
-    :meth:`predict`, however using these requires you to understand a handfull
-    of lower-level pieces.
+    :meth:`predict`. These defaults make use of the following lower-level
+    pieces:
 
     - :attr:`estimator`: The default implementation wraps a Scikit-learn style
       estimator to perform the actual predictions. It recieves as input the
       values produced by :meth:`preprocess` (described below). You **must**
       provide an estimator attribute if you use the default :meth:`fit` or
-      :meth:`predict`.
+      :meth:`predict` methods.
 
-    - :meth:`preprocess`: This method transforms the "structured data" returned
-      by :meth:`load_data` and "structured targets" provided by the user into
-      the "raw data" and "raw targets" passed to the estimator. A default
-      implementation is provided that passes the input to the
-      :class:`pandas.DataFrame` constructor. The values returned by the
-      preprocess method are cast to numpy arrays with :func:`numpy.asanyarray`
-      before being sent to the estimator.
+    - :meth:`preprocess`: This method transforms the feature data returned
+      by :meth:`load_data` and target data provided by the user into numpy
+      arrays to be passed to the estimator. This method may perform additional,
+      possibly learned, preprocessing steps. Subclasses should call the base
+      implementation to learn the column names from the targets.
 
-    - :meth:`postprocess`: This method transforms the "raw predictions"
-      returned by the estimator into a fully-fledged DataFrame. The default
-      implementation simply delegates to the DataFrame constructor.
+    - :meth:`postprocess`: This method transforms the raw predictions
+      returned by the estimator into a fully-fledged data frame. Subclasses
+      should call the base implementation to ensure the resulting data frame
+      has the proper column names.
     '''
 
     def __init__(
@@ -104,11 +102,12 @@ class Model(ABC):
             name (str or None):
                 A name for the estimator. If not given, a UUID is generated.
             estimator (sklearn.base.BaseEstimator or str or list):
-                A Scikit-learn estimator to generate predictions. It is
-                interpreted by :func:`apollo.models.make_estimator`.
+                A Scikit-learn estimator or a string or list to be interpreted
+                by :func:`apollo.models.make_estimator`.
         '''
         self._name = str(name or uuid.uuid4())
         self._estimator = make_estimator(estimator)
+        self._columns = None
 
     @property
     def name(self):
@@ -127,41 +126,55 @@ class Model(ABC):
         '''Load structured feature data according to some index.
 
         Arguments:
-            index (pandas.Index):
+            index (apollo.DatetimeIndex):
                 The index of the data.
             **kwargs:
                 Implementations may accept additional, optional arguments.
 
         Returns:
-            features:
-                Structured feature data, typically a :class:`pandas.DataFrame`
-                or a :class:`xarray.Dataset`.
+            features (pandas.DataFrame):
+                Feature data for the given index.
         '''
         pass
 
-    def preprocess(self, features, targets=None, fit=False):
-        '''Convert structured data into raw data for the estimator.
+    def preprocess(self, features, targets=None):
+        '''Convert feature and target data into numpy arrays for the estimator.
 
         The default implementation passes both the features and targets to
-        :func:`numpy.asanyarray`.
+        :func:`numpy.asanyarray`. If targets is not ``None``, it records the
+        column names from the targets.
 
         Arguments:
-            features:
-                Structured data returned by :meth:`load_data`.
-            targets:
-                The target data passed into :meth:`fit`.
-            fit (bool):
-                If true, fit lernable transforms against this target data.
+            features (pandas.DataFrame):
+                The feature data returned by :meth:`load_data`.
+            targets (pandas.DataFrame or None):
+                The target data passed into :meth:`fit`. This argument will be
+                a data frame during :meth:`fit` and ``None`` during
+                :meth:`predict`.
 
         Returns:
-            pair of pandas.DataFrame:
-                A pair of data frames ``(raw_features, raw_targets)`` containing
-                processed feature data and processed target data respectivly.
-                The ``raw_targets`` will be ``None`` if ``targets`` was None.
+            raw_features (numpy.ndarray):
+                The features in a form that can be sent to the estimator.
+            raw_targets (numpy.ndarray):
+                The targets in a form that can be sent to the estimator. If
+                no targets were given, this will be ``None``.
+            index (apollo.DatetimeIndex):
+                An index for the processed data.
         '''
-        raw_features = pd.DataFrame(features)
-        raw_targets = pd.DataFrame(raw_targets) if targets is not None else None
-        return raw_features, raw_targets
+        logger.debug('preprocess: casting to numpy')
+
+        if targets is None:
+            raw_features = np.asanyarray(features)
+            raw_targets = None
+            index = features.index
+
+        else:
+            raw_features = np.asanyarray(features)
+            raw_targets = np.asanyarray(targets)
+            index = features.index
+            self._columns = list(targets.columns)
+
+        return raw_features, raw_targets, index
 
     def postprocess(self, raw_predictions, index):
         '''Convert raw predictions into a :class:`pandas.DataFrame`.
@@ -170,16 +183,17 @@ class Model(ABC):
         :class:`pandas.DataFrame` constructor.
 
         Arguments:
-            raw_predictions:
+            raw_predictions (numpy.ndarray):
                 The output of ``self.estimator.predict``.
-            index (pandas.Index):
+            index (apollo.DatetimeIndex):
                 The index of the resulting data frame.
 
         Returns:
             pandas.DataFrame:
                 The predictions.
         '''
-        return pd.DataFrame(raw_predictions, index=index)
+        logger.debug('postprocess: constructing data frame')
+        return pd.DataFrame(raw_predictions, index=index, columns=self._columns)
 
     def fit(self, targets, **kwargs):
         '''Fit the models to some target data.
@@ -195,10 +209,7 @@ class Model(ABC):
                 self
         '''
         data = self.load_data(targets.index, **kwargs)
-        data, targets = self.preprocess(data, targets, fit=True)
-        logger.debug('fit: casting to numpy')
-        data = np.asanyarray(data)
-        targets = np.asanyarray(targets)
+        data, targets, _ = self.preprocess(data, targets)
         logger.debug('fit: fitting estimator')
         self.estimator.fit(data, targets)
         return self
@@ -207,7 +218,7 @@ class Model(ABC):
         '''Generate a prediction from this model.
 
         Arguments:
-            index (pandas.Index):
+            index (apollo.DatetimeIndex):
                 Make predictions for this index.
             **kwargs:
                 Additional arguments are forwarded to :meth:`load_data`.
@@ -217,10 +228,7 @@ class Model(ABC):
                 A data frame of predicted values.
         '''
         data = self.load_data(index, **kwargs)
-        data, _ = self.preprocess(data)
-        index = data.index  # The preprocess step may change the index.
-        logger.debug('predict: casting to numpy')
-        data = np.asanyarray(data)
+        data, _, index = self.preprocess(data)
         logger.debug('predict: executing estimator')
         predictions = self.estimator.predict(data)
         predictions = self.postprocess(predictions, index)
@@ -282,10 +290,12 @@ class Model(ABC):
 class IrradianceModel(Model):
     '''Base class for irradiance modeling.
 
-    This class implements :meth:`preprocess` and :meth:`postprocess` methods
-    specifically for irradiance modeling. They require feature and target data
-    to be both be a :class:`~pandas.DataFrame` indexed by timezone-aware
-    :class:`~pandas.DatetimeIndex`.
+    This class extends the :meth:`preprocess` and :meth:`postprocess` methods
+    specifically for irradiance modeling. This class can:
+
+    - Standardize features and targets for training.
+    - Compute additional time-of-day and time-of-year features.
+    - Discard training samples that occur when the sun is down.
     '''
 
     def __init__(
@@ -294,7 +304,7 @@ class IrradianceModel(Model):
         add_time_of_day=True,
         add_time_of_year=True,
         daylight_only=False,
-        center=None,
+        latlon=None,
         **kwargs,
     ):
         '''Construct a new model.
@@ -303,8 +313,8 @@ class IrradianceModel(Model):
             name (str or None):
                 A name for the estimator. If not given, a UUID is generated.
             estimator (sklearn.base.BaseEstimator or str or list):
-                A Scikit-learn estimator to generate predictions. It is
-                interpreted by :func:`apollo.models.make_estimator`.
+                A Scikit-learn estimator or a string or list to be interpreted
+                by :func:`apollo.models.make_estimator`.
             standardize (bool):
                 If true, standardize the feature and target data before sending
                 it to the estimator. This transform is not applied to the
@@ -316,36 +326,45 @@ class IrradianceModel(Model):
             daylight_only (bool):
                 If true, timestamps which occur at night are ignored during
                 training and are always predicted to be zero.
-            center (pair of float):
+            latlon (pair of float):
                 The center of the geographic area, as a latitude-longited pair.
                 Used to compute the sunrise and sunset times. Required only
                 when ``daylight_only`` is True.
         '''
         super().__init__(**kwargs)
 
+        self.standardize = bool(standardize)
         self.add_time_of_day = bool(add_time_of_day)
         self.add_time_of_year = bool(add_time_of_year)
         self.daylight_only = bool(daylight_only)
-        self.standardize = bool(standardize)
-
-        # The names of the output columns, derived from the targets.
-        self.columns = None
+        self.latlon = latlon
 
         # The standardizers. The feature scaler may not be used.
         self.feature_scaler = StandardScaler(copy=False)
         self.target_scaler = StandardScaler(copy=False)
 
-    def preprocess(self, data, targets=None, fit=False):
-        '''Process feature data into a numpy array.
+    def preprocess(self, data, targets=None):
+        '''Convert feature and target data into numpy arrays for the estimator.
+
+        Arguments:
+            features (pandas.DataFrame):
+                The feature data returned by :meth:`load_data`.
+            targets (pandas.DataFrame or None):
+                The target data passed into :meth:`fit`. This argument will be
+                a data frame during :meth:`fit` and ``None`` during
+                :meth:`predict`.
+
+        Returns:
+            raw_features (numpy.ndarray):
+                The features in a form that can be sent to the estimator.
+            raw_targets (numpy.ndarray):
+                The targets in a form that can be sent to the estimator. If
+                no targets were given, this will be ``None``.
+            index (apollo.DatetimeIndex):
+                An index for the processed data.
         '''
-        # If we're fitting, we record the column names.
-        # Otherwise we ensure the targets have the expected columns.
-        if fit:
-            logger.debug('preprocess: recording columns')
-            self.columns = list(targets.columns)
-        elif targets is not None:
-            logger.debug('preprocess: checking columns')
-            assert set(targets.columns) == set(self.columns)
+        # True when fitting the estimator.
+        fitting = (targets is not None)
 
         # Drop NaNs and infinities.
         logger.debug('preprocess: dropping NaNs and infinities')
@@ -363,7 +382,7 @@ class IrradianceModel(Model):
         if targets is not None and self.daylight_only:
             logger.debug('preprocess: dropping night time targets')
             times = targets.index
-            (lat, lon) = self.center
+            (lat, lon) = self.latlon
             targets = targets[apollo.is_daylight(times, lat, lon)]
 
         # The indices for the data and targets may not match.
@@ -375,21 +394,22 @@ class IrradianceModel(Model):
             targets = targets.loc[index]
         else:
             index = data.index
+        index = apollo.DatetimeIndex(index, name='time')
 
         # Scale the feature data (optionally).
         if self.standardize:
             logger.debug('preprocess: scaling features')
             cols = list(data.columns)
-            raw_data = data[cols].to_numpy()
-            if fit: self.feature_scaler.fit(raw_data)
-            data[cols] = self.feature_scaler.transform(raw_data)
+            raw_features = data[cols].to_numpy()
+            if fitting: self.feature_scaler.fit(raw_features)
+            data[cols] = self.feature_scaler.transform(raw_features)
 
         # Scale the target data (optionally).
         if self.standardize and targets is not None:
             logger.debug('preprocess: scaling targets')
-            cols = self.columns
+            cols = list(targets.columns)
             raw_targets = targets[cols].to_numpy()
-            if fit: self.target_scaler.fit(raw_targets)
+            if fitting: self.target_scaler.fit(raw_targets)
             targets[cols] = self.target_scaler.transform(raw_targets)
 
         # Compute additional features (optionally).
@@ -400,33 +420,36 @@ class IrradianceModel(Model):
             logger.debug('preprocess: computing time-of-year')
             data = data.join(apollo.time_of_year(index))
 
-        # We always return both, even if targets was not given.
-        # We must return numpy arrays.
-        logger.debug('preprocess: casting to numpy')
-        return data, targets
+        # We must delegate the the base implementation.
+        return super().preprocess(data, targets)
 
     def postprocess(self, raw_predictions, index):
-        '''
+        '''Convert raw predictions into a :class:`pandas.DataFrame`.
+
+        Arguments:
+            raw_predictions (numpy.ndarray):
+                The output of ``self.estimator.predict``.
+            index (apollo.DatetimeIndex):
+                The index of the resulting data frame.
+
+        Returns:
+            pandas.DataFrame:
+                The predictions.
         '''
         # Reconstruct the data frame.
-        logger.debug('postprocess: constructing data frame')
         index = apollo.DatetimeIndex(index, name='time')
         predictions = super().postprocess(raw_predictions, index)
-
-        # Set the columns.
-        cols = list(self.columns)
-        assert len(predictions.columns) == len(cols)
-        predictions.columns = pd.Index(cols)
 
         # Unscale the predictions.
         if self.standardize:
             logger.debug('postprocess: unscaling predictions')
+            cols = list(predictions.columns)
             predictions[cols] = self.target_scaler.inverse_transform(predictions)
 
         # Set overnight predictions to zero (optionally).
         if self.daylight_only:
             logger.debug('postprocess: setting night time to zero')
-            (lat, lon) = self.center
+            (lat, lon) = self.latlon
             night = ~apollo.is_daylight(index, lat, lon)
             predictions.loc[night, :] = 0
 
@@ -458,7 +481,7 @@ class IrradianceModel(Model):
             targets = targets.reindex(predictions.index)
 
         # Compute daytime mask.
-        lat, lon = self.center
+        lat, lon = self.latlon
         is_daylight = apollo.is_daylight(targets.index, lat, lon)
 
         # Compute the scores.

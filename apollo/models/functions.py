@@ -8,44 +8,9 @@ import sklearn
 from sklearn.pipeline import make_pipeline
 
 import apollo
-from apollo.models.base import Model
 
 
 logger = logging.getLogger(__name__)
-
-
-def list_templates():
-    '''List the model templates in the Apollo database.
-
-    Untrained models can be constructed from these template names using
-    :func:`apollo.models.make_model`.
-
-    Returns:
-        list of str:
-            The named templates.
-    '''
-    base = apollo.path('templates')
-    base.mkdir(parents=True, exist_ok=True)
-    template_paths = base.glob('*.json')
-    template_stems = [p.stem for p in template_paths]
-    return template_stems
-
-
-def list_models():
-    '''List trained models in the Apollo database.
-
-    Trained models can be constructed from these names using
-    :func:`apollo.models.load_named_model`.
-
-    Returns:
-        list of str:
-            The trained models.
-    '''
-    base = apollo.path('models')
-    base.mkdir(parents=True, exist_ok=True)
-    model_paths = base.glob('*.model')
-    model_stems = [p.stem for p in model_paths]
-    return model_stems
 
 
 def make_estimator(e):
@@ -103,6 +68,40 @@ def make_estimator(e):
     return estimator
 
 
+def list_templates():
+    '''List the model templates in the Apollo database.
+
+    Untrained models can be constructed from these template names using
+    :func:`apollo.models.make_model`.
+
+    Returns:
+        list of str:
+            The named templates.
+    '''
+    base = apollo.path('templates')
+    base.mkdir(parents=True, exist_ok=True)
+    template_paths = base.glob('*.json')
+    template_stems = [p.stem for p in template_paths]
+    return template_stems
+
+
+def list_models():
+    '''List trained models in the Apollo database.
+
+    Trained models can be constructed from these names using
+    :func:`apollo.models.load_named_model`.
+
+    Returns:
+        list of str:
+            The trained models.
+    '''
+    base = apollo.path('models')
+    base.mkdir(parents=True, exist_ok=True)
+    model_paths = base.glob('*.model')
+    model_stems = [p.stem for p in model_paths]
+    return model_stems
+
+
 def load_model_from(stream):
     '''Load a model from a file-like object.
 
@@ -115,7 +114,6 @@ def load_model_from(stream):
             The model.
     '''
     model = pickle.load(stream)
-    assert isinstance(model, Model), 'not an Apollo model'
     return model
 
 
@@ -245,7 +243,6 @@ def write_model_to(model, stream):
         stream (io.IOBase):
             A writable, binary stream.
     '''
-    assert isinstance(model, Model), 'not an Apollo model'
     pickle.dump(model, stream, protocol=5)
 
 
