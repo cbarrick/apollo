@@ -1,2 +1,2 @@
-from .core import *
+from .functions import *
 from .nam_model import NamModel

@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 
 import apollo
 from apollo import nam
-from apollo.models.core import IrradianceModel
+from apollo.models.base import IrradianceModel
 
 
 logger = logging.getLogger(__name__)
@@ -135,19 +135,16 @@ class NamModel(IrradianceModel):
             pandas.DataFrame:
                 A table of metrics.
         '''
-        kwargs.pop('dedupe_strategy', None)
+        # Compute scores for every forecast period.
         scores = pd.DataFrame()
-
         for quantile in range(6):
-            quantile_scores = super().score(
-                targets,
-                dedupe_strategy=quantile,
-                **kwargs
-            )
+            kwargs['dedupe_strategy'] = quantile
+            quantile_scores = super().score(targets, **kwargs)
             lo = quantile * 6
             hi = lo + 5
             quantile_scores.index += f'_{lo:02}h-{hi:02}h'
             scores = scores.append(quantile_scores)
 
+        # Ensure the index column has a name.
         scores.index.name = 'metric'
         return scores.sort_index()

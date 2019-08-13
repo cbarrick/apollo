@@ -13,8 +13,8 @@ Apollo's core API is the modeling framework.
     :nosignatures:
     :toctree: api
 
-    apollo.models.Model
-    apollo.models.IrradianceModel
+    apollo.models.base.Model
+    apollo.models.base.IrradianceModel
     apollo.models.NamModel
 
 **Utility Functions**
@@ -31,6 +31,9 @@ Apollo's core API is the modeling framework.
     apollo.models.make_estimator
     apollo.models.make_model
     apollo.models.make_model_from
+    apollo.models.write_model
+    apollo.models.write_model_at
+    apollo.models.write_model_to
 
 
 NAM Forecast Data
