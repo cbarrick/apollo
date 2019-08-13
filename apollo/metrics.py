@@ -110,6 +110,28 @@ def stdae(targets, predictions):
     return scores
 
 
+def n_samples(targets, predictions):
+    '''Number of samples.
+
+    Arguments:
+        targets (pandas.DataFrame):
+            The true observations.
+        predictions (pandas.DataFrame):
+            The predicted values.
+
+    Returns:
+        pandas.Series:
+            The metric computed for each column.
+    '''
+    targets = targets.dropna()
+    predictions = predictions.dropna()
+    index = targets.index.intersection(predictions.index)
+    fn = lambda _t, _p: len(index)
+    scores = _apply(fn, targets, predictions)
+    scores.name = 'n_samples'
+    return scores
+
+
 def all(targets, predictions):
     '''Compute all available metrics.
 
@@ -129,4 +151,5 @@ def all(targets, predictions):
         'mae': mae(targets, predictions),
         'rmse': rmse(targets, predictions),
         'stdae': stdae(targets, predictions),
+        'n_samples': n_samples(targets, predictions),
     }).transpose()
