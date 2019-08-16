@@ -1,5 +1,9 @@
 {
-	"estimator": "sklearn.linear_model.LinearRegression",
+	"estimator": [
+		["sklearn.neighbors.KNeighborsRegressor", {
+			"n_neighbors": 5
+		}]
+	],
 	"features": ["DSWRF_SFC", "UGRD_TOA", "VGRD_TOA"],
 	"add_time_of_day": true,
 	"add_time_of_year": true,
