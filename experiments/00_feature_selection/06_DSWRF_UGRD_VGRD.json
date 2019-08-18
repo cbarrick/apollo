@@ -1,0 +1,9 @@
+{
+	"estimator": "sklearn.linear_model.LinearRegression",
+	"features": ["DSWRF_SFC", "UGRD_TOA", "VGRD_TOA"],
+	"add_time_of_day": false,
+	"add_time_of_year": false,
+	"daylight_only": true,
+	"standardize": true,
+	"shape": 12000
+}
