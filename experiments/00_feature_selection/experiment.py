@@ -14,11 +14,8 @@ FEATURES = (
 )
 
 
-TEMPLATE = (
+BASE_TEMPLATE = (
     ('estimator', "sklearn.linear_model.LinearRegression"),
-    # ('features', ("DSWRF_SFC",)),
-    # ('add_time_of_day', False),
-    # ('add_time_of_year', False),
     ('daylight_only', True),
     ('standardize', True),
     ('shape', 12000),
@@ -90,7 +87,7 @@ def fit_and_eval(base_template, features, train, test):
     return template, features, model, score
 
 
-def greedy_search(train, test, features=FEATURES, base_template=TEMPLATE):
+def greedy_search(train, test, features=FEATURES, base_template=BASE_TEMPLATE):
     '''Select a feature set using a greedy search.
 
     Starting from an empty list, this function builds a feature set by
