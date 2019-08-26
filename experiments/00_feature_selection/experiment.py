@@ -31,7 +31,66 @@ def log(message):
     logger.info(message)
 
 
-def greedy_search(train, test, features=FEATURES, template=TEMPLATE):
+def fit_and_eval(base_template, features, train, test):
+    '''Create a model from a template, train it, then score it.
+
+    Arguments:
+        base_template (dict):
+            The base template for the model.
+        features (list of str):
+            The features to use. The features `'_time_of_day'` and
+            `'_time_of_year'` are special; they correspond the their
+            associated preprocess steps rather than direct features.
+        train (pandas.DataFrame):
+            The training data.
+        test (pandas.DataFrame):
+            The test data.
+
+    Returns:
+        template (dict):
+            The actual template of the model.
+        features:
+            The feature list passed in.
+        model (object):
+            The trained model.
+        score (float):
+            The r^2 coefficient of determination.
+            See :func:`apollo.metrics.r2`.
+    '''
+    import apollo
+    from apollo import metrics, models
+
+    # Create the actual template.
+    # The '_time_of_day' and '_time_of_year' features are special.
+    # They come from a preprocess step rather than the raw NAM data.
+    try:
+        features.remove('_time_of_day')
+        time_of_day = True
+    except ValueError:
+        time_of_day = False
+    try:
+        features.remove('_time_of_day')
+        time_of_year = True
+    except ValueError:
+        time_of_year = False
+    template = dict(base_template)
+    template.update(
+        features=features,
+        add_time_of_day=time_of_day,
+        add_time_of_year=time_of_year,
+    )
+
+    # We sum the r^2 for all columns into a scalar score, though
+    # technically r^2 shouldn't be compared for different targets.
+    model = models.make_model_from(template)
+    model.fit(train)
+    predictions = model.predict(test.index)
+    score = metrics.r2(test, predictions).sum()
+
+    return template, features, model, score
+
+
+def greedy_search(train, test, features=FEATURES, base_template=TEMPLATE):
     '''Select a feature set using a greedy search.
 
     Starting from an empty list, this function builds a feature set by
@@ -47,7 +106,7 @@ def greedy_search(train, test, features=FEATURES, template=TEMPLATE):
             The names of features to consider in the search. The features
             `'_time_of_day'` and `'_time_of_year'` are special; they correspond
             the their associated preprocess steps rather than direct features.
-        template (dict):
+        base_template (dict):
             The base model template for the search.
 
     Returns:
@@ -58,8 +117,8 @@ def greedy_search(train, test, features=FEATURES, template=TEMPLATE):
         best_template (dict):
             The template of the best model.
     '''
-    import apollo
-    from apollo import metrics, models
+    from multiprocessing import Pool
+    pool = Pool()
 
     best_features = []
     best_score = float('-inf')
@@ -70,48 +129,30 @@ def greedy_search(train, test, features=FEATURES, template=TEMPLATE):
         log(f'Current best features: {best_features}')
         prev_features = best_features.copy()
 
+        tasks = []
+
+        # Spawn a training process for each feature.
         for f in features:
             # Skip features that have already been selected.
             if f in prev_features: continue
 
             # Determine the feature set to use for this iteration.
-            current_features = prev_features + [f]
-            log(f'Checking {current_features}')
+            task_features = prev_features + [f]
 
-            # Create the template for this iteration.
-            # The '_time_of_day' and '_time_of_year' features are special.
-            # They come from a preprocess step rather than the raw NAM data.
-            tmpl_features = current_features.copy()
-            try:
-                tmpl_features.remove('_time_of_day')
-                time_of_day = True
-            except ValueError:
-                time_of_day = False
-            try:
-                tmpl_features.remove('_time_of_day')
-                time_of_year = True
-            except ValueError:
-                time_of_year = False
-            tmpl = dict(
-                **template,
-                features=tmpl_features,
-                add_time_of_day=time_of_day,
-                add_time_of_year=time_of_year,
-            )
+            # Spawn the task.
+            log(f'Spawning task: {task_features}')
+            args = [base_template, task_features, train, test]
+            task = pool.apply_async(fit_and_eval, args)
+            tasks.append(task)
 
-            # Evaluate the template.
-            # We sum the r^2 for all columns into a scalar score, though
-            # technically r^2 shouldn't be compared for different targets.
-            model = models.make_model_from(tmpl)
-            model.fit(train)
-            predictions = model.predict(test.index)
-            score = metrics.r2(test, predictions).sum()
-
-            # Update our "best" variables if this score is better.
+        # Update our "best" variables if any score is better.
+        for task in tasks:
+            task_template, task_features, model, score = task.get()
             if best_score < score:
-                best_features = current_features
+                log(f'Found improvement: {task_features}')
+                best_features = task_features
                 best_score = score
-                best_template = tmpl
+                best_template = task_template
                 best_model = model
 
         # After trying all variable, if the feature set has not changed,
