@@ -301,6 +301,7 @@ class IrradianceModel(Model):
     def __init__(
         self, *,
         standardize=False,
+        window=0,
         add_time_of_day=True,
         add_time_of_year=True,
         daylight_only=False,
@@ -319,6 +320,10 @@ class IrradianceModel(Model):
                 If true, standardize the feature and target data before sending
                 it to the estimator. This transform is not applied to the
                 computed time-of-day and time-of-year features.
+            window (int):
+                If greater than zero, apply a sliding window transformation to
+                the input data. The value is the size of the window, measured
+                in hours.
             add_time_of_day (bool):
                 If true, compute time-of-day features.
             add_time_of_year (bool):
@@ -334,6 +339,7 @@ class IrradianceModel(Model):
         super().__init__(**kwargs)
 
         self.standardize = bool(standardize)
+        self.window = int(window)
         self.add_time_of_day = bool(add_time_of_day)
         self.add_time_of_year = bool(add_time_of_year)
         self.daylight_only = bool(daylight_only)
@@ -411,6 +417,12 @@ class IrradianceModel(Model):
             raw_targets = targets[cols].to_numpy()
             if fitting: self.target_scaler.fit(raw_targets)
             targets[cols] = self.target_scaler.transform(raw_targets)
+
+        # Apply the sliding window
+        for n in range(self.window):
+            tmp = data.copy(deep=False)
+            tmp.index = tmp.index + pd.Timedelta('1h')
+            data = data.merge(tmp, 'inner')
 
         # Compute additional features (optionally).
         if self.add_time_of_day:
