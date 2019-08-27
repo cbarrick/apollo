@@ -82,7 +82,8 @@ def fit_and_eval(base_template, features, train, test):
     model = models.make_model_from(template)
     model.fit(train)
     predictions = model.predict(test.index)
-    score = metrics.r2(test, predictions).sum()
+    index = test.index.intersection(predictions.index)
+    score = metrics.r2(test[index], predictions[index]).sum()
 
     return template, features, model, score
 
